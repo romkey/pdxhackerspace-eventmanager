@@ -1,0 +1,55 @@
+# Git
+.git
+.gitignore
+
+# Logs
+log/*
+tmp/*
+
+# Documentation
+*.md
+README.rdoc
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Dependencies
+node_modules/
+vendor/bundle/
+
+# Testing
+test/
+spec/
+coverage/
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.log
+*.pid
+*.seed
+
+# Database
+*.sqlite3
+*.sqlite3-journal
+
+# Assets (will be precompiled)
+public/assets/
+public/packs/
+app/assets/builds/
+
+# Ignore master key for decrypting credentials
+config/master.key
+config/credentials/*.key
+

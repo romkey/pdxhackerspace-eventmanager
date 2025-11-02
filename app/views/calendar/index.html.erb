@@ -1,0 +1,81 @@
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h1><i class="bi bi-calendar3"></i> Event Calendar</h1>
+  <div>
+    <%= link_to "Events View", events_path, class: "btn btn-outline-secondary" %>
+    <% if user_signed_in? %>
+      <%= link_to "Create New Event", new_event_path, class: "btn btn-primary" %>
+    <% end %>
+  </div>
+</div>
+
+<p class="lead">Showing <%= @occurrences.count %> upcoming event occurrences</p>
+
+<% if @occurrences_by_month.any? %>
+  <% @occurrences_by_month.sort.each do |month, occurrences| %>
+    <div class="card mb-4">
+      <div class="card-header bg-primary text-white">
+        <h4 class="mb-0"><%= month.strftime('%B %Y') %></h4>
+      </div>
+      <div class="list-group list-group-flush">
+        <% occurrences.each do |occurrence| %>
+          <div class="list-group-item <%= 'list-group-item-warning' if occurrence.status == 'postponed' %> <%= 'list-group-item-danger' if occurrence.status == 'cancelled' %>">
+            <div class="row align-items-center">
+              <% if occurrence.banner.attached? %>
+                <div class="col-md-2 text-center">
+                  <%= image_tag occurrence.banner, class: "img-thumbnail", style: "max-width: 100px; max-height: 100px; object-fit: cover;" %>
+                </div>
+              <% end %>
+              <div class="<%= occurrence.banner.attached? ? 'col-md-2' : 'col-md-2' %>">
+                <div class="text-center">
+                  <div class="display-6"><%= occurrence.occurs_at.day %></div>
+                  <div class="text-muted"><%= occurrence.occurs_at.strftime('%a') %></div>
+                </div>
+              </div>
+              <div class="<%= occurrence.banner.attached? ? 'col-md-5' : 'col-md-7' %>">
+                <h5 class="mb-1">
+                  <%= link_to occurrence.event.title, event_path(occurrence.event), class: "text-decoration-none" %>
+                  <% if occurrence.status != 'active' %>
+                    <span class="badge bg-<%= occurrence.status == 'postponed' ? 'warning' : 'danger' %>">
+                      <%= occurrence.status.titleize %>
+                    </span>
+                  <% end %>
+                </h5>
+                <p class="mb-1 text-muted">
+                  <i class="bi bi-clock"></i> <%= occurrence.occurs_at.strftime('%I:%M %p') %> 
+                  · 
+                  <i class="bi bi-hourglass"></i> <%= occurrence.duration %> min
+                  ·
+                  <i class="bi bi-person"></i> <%= occurrence.event.hosts.map { |h| h.name || h.email }.join(', ') %>
+                </p>
+                <% if occurrence.status == 'postponed' && occurrence.postponed_until %>
+                  <p class="mb-1"><strong>Rescheduled to:</strong> <%= occurrence.postponed_until.strftime('%B %d, %Y at %I:%M %p') %></p>
+                <% end %>
+                <% if occurrence.cancellation_reason.present? %>
+                  <p class="mb-1"><strong>Reason:</strong> <%= occurrence.cancellation_reason %></p>
+                <% end %>
+                <p class="mb-0">
+                  <span class="badge bg-<%= occurrence.event.public? ? 'success' : (occurrence.event.members_only? ? 'info' : 'warning') %>">
+                    <i class="bi bi-<%= occurrence.event.public? ? 'globe' : (occurrence.event.members_only? ? 'people' : 'lock') %>"></i>
+                    <%= occurrence.event.visibility.titleize %>
+                  </span>
+                  <span class="badge bg-secondary">
+                    <i class="bi bi-<%= occurrence.event.open_to == 'public' ? 'door-open' : (occurrence.event.open_to == 'members' ? 'people-fill' : 'envelope') %>"></i>
+                    <%= occurrence.event.open_to == 'public' ? 'Open to All' : (occurrence.event.open_to == 'members' ? 'Members Only' : 'By Invitation') %>
+                  </span>
+                </p>
+              </div>
+              <div class="col-md-3 text-end">
+                <%= link_to "View Event", event_path(occurrence.event), class: "btn btn-sm btn-outline-primary mb-1 w-100" %>
+                <%= link_to "View Occurrence", event_occurrence_path(occurrence), class: "btn btn-sm btn-primary w-100" %>
+              </div>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+<% else %>
+  <div class="alert alert-info">
+    <p class="mb-0">No upcoming event occurrences scheduled.</p>
+  </div>
+<% end %>

@@ -1,0 +1,56 @@
+<h1 class="mb-4">User Management</h1>
+
+<div class="card">
+  <div class="card-body">
+    <div class="table-responsive">
+      <table class="table table-hover">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Provider</th>
+            <th>Events</th>
+            <th>Joined</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @users.each do |user| %>
+            <tr>
+              <td><%= user.name || '-' %></td>
+              <td><%= user.email %></td>
+              <td>
+                <span class="badge bg-<%= user.admin? ? 'danger' : 'primary' %>">
+                  <%= user.role.titleize %>
+                </span>
+              </td>
+              <td><%= user.provider || 'Local' %></td>
+              <td><%= user.events.count %></td>
+              <td><%= user.created_at.strftime('%b %d, %Y') %></td>
+              <td>
+                <%= link_to "View", user_path(user), class: "btn btn-sm btn-info" %>
+                <%= link_to "Edit", edit_user_path(user), class: "btn btn-sm btn-warning" %>
+                <% if user != current_user %>
+                  <% unless user.admin? %>
+                    <%= button_to "Make Admin", make_admin_user_path(user), 
+                        method: :post, 
+                        class: "btn btn-sm btn-success",
+                        form: { style: "display: inline-block;" } %>
+                  <% end %>
+                  <%= button_to "Delete", user_path(user), 
+                      method: :delete, 
+                      class: "btn btn-sm btn-danger",
+                      form: { 
+                        style: "display: inline-block;",
+                        data: { turbo_confirm: "Are you sure you want to delete this user?" }
+                      } %>
+                <% end %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

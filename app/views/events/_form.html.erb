@@ -1,0 +1,178 @@
+<%= form_with(model: event, local: true, class: "needs-validation") do |f| %>
+  <% if event.errors.any? %>
+    <div class="alert alert-danger">
+      <h4><%= pluralize(event.errors.count, "error") %> prohibited this event from being saved:</h4>
+      <ul>
+        <% event.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="mb-3">
+    <%= f.label :title, class: "form-label" %>
+    <%= f.text_field :title, class: "form-control", required: true, placeholder: "Weekly Meetup" %>
+  </div>
+
+  <div class="mb-3">
+    <%= f.label :description, class: "form-label" %>
+    <%= f.text_area :description, class: "form-control", rows: 5, placeholder: "Describe your event..." %>
+  </div>
+
+  <div class="mb-3">
+    <%= f.label :more_info_url, "More Info URL (Optional)", class: "form-label" %>
+    <%= f.url_field :more_info_url, class: "form-control", placeholder: "https://example.com/event-details" %>
+    <small class="form-text text-muted">
+      <i class="bi bi-link-45deg"></i> Add a link where attendees can learn more (website, registration page, etc.)
+    </small>
+  </div>
+
+  <div class="mb-3">
+    <%= f.label :banner_image, "Banner Image (Optional)", class: "form-label" %>
+    <%= f.file_field :banner_image, class: "form-control", accept: "image/*" %>
+    <small class="form-text text-muted">
+      <i class="bi bi-image"></i> Upload a banner image for this event (JPG, PNG, GIF)
+    </small>
+    <% if event.banner_image.attached? %>
+      <div class="mt-2">
+        <%= image_tag event.banner_image, class: "img-thumbnail", style: "max-width: 300px;" %>
+        <div class="form-check mt-2">
+          <%= f.check_box :remove_banner_image, class: "form-check-input" %>
+          <%= f.label :remove_banner_image, "Remove current banner image", class: "form-check-label" %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+
+  <div class="row">
+    <div class="col-md-6 mb-3">
+      <%= f.label :start_time, "Start Date & Time", class: "form-label" %>
+      <%= f.datetime_local_field :start_time, class: "form-control", required: true %>
+    </div>
+
+    <div class="col-md-6 mb-3">
+      <%= f.label :duration, "Duration (minutes)", class: "form-label" %>
+      <%= f.number_field :duration, class: "form-control", value: event.duration || 60, min: 15, step: 15 %>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-md-8 mb-3">
+      <%= f.label :recurrence_type, "Recurrence Pattern", class: "form-label" %>
+      <%= f.select :recurrence_type, 
+          [['One Time Event', 'once'], 
+           ['Weekly', 'weekly'], 
+           ['Monthly', 'monthly'],
+           ['Custom', 'custom']], 
+          {}, 
+          class: "form-select", 
+          id: "recurrence_type_select" %>
+    </div>
+
+    <div class="col-md-4 mb-3" id="max_occurrences_field">
+      <%= f.label :max_occurrences, "Show Next", class: "form-label" %>
+      <%= f.number_field :max_occurrences, class: "form-control", value: event.max_occurrences || 5, min: 1, max: 20 %>
+      <small class="form-text text-muted">Number of occurrences to display</small>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-md-6 mb-3">
+      <%= f.label :visibility, "Event Visibility", class: "form-label" %>
+      <%= f.select :visibility, 
+          [
+            ['Public - Anyone can view', 'public'],
+            ['Members Only - Signed in users can view', 'members'],
+            ['Private - Only you and admins can view', 'private']
+          ], 
+          {}, 
+          class: "form-select" %>
+      <small class="form-text text-muted">
+        Who can see this event
+      </small>
+    </div>
+
+    <div class="col-md-6 mb-3">
+      <%= f.label :open_to, "Open To", class: "form-label" %>
+      <%= f.select :open_to, 
+          [
+            ['Public - Open to everyone', 'public'],
+            ['Members Only - Members can attend', 'members'],
+            ['By Invitation - Private invitation only', 'private']
+          ], 
+          {}, 
+          class: "form-select" %>
+      <small class="form-text text-muted">
+        Who can attend this event
+      </small>
+    </div>
+  </div>
+
+  <div id="weekly_options" class="mb-3" style="display: none;">
+    <label class="form-label">Repeat on days:</label>
+    <div class="d-flex flex-wrap gap-2">
+      <% Date::DAYNAMES.each_with_index do |day, index| %>
+        <div class="form-check">
+          <%= check_box_tag "recurrence_days[]", index, false, id: "day_#{index}", class: "form-check-input" %>
+          <%= label_tag "day_#{index}", day, class: "form-check-label" %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <div id="monthly_options" class="mb-3" style="display: none;">
+    <div class="row">
+      <div class="col-md-6">
+        <label class="form-label">Occurrence:</label>
+        <%= select_tag :recurrence_occurrence,
+            options_for_select([
+              ['First', 'first'],
+              ['Second', 'second'],
+              ['Third', 'third'],
+              ['Fourth', 'fourth'],
+              ['Last', 'last']
+            ]),
+            class: "form-select" %>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Day:</label>
+        <%= select_tag :recurrence_day,
+            options_for_select([
+              ['Monday', 'monday'],
+              ['Tuesday', 'tuesday'],
+              ['Wednesday', 'wednesday'],
+              ['Thursday', 'thursday'],
+              ['Friday', 'friday'],
+              ['Saturday', 'saturday'],
+              ['Sunday', 'sunday']
+            ]),
+            class: "form-select" %>
+      </div>
+    </div>
+  </div>
+
+  <div class="mt-4">
+    <%= f.submit class: "btn btn-primary" %>
+    <%= link_to "Cancel", events_path, class: "btn btn-secondary" %>
+  </div>
+<% end %>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const recurrenceSelect = document.getElementById('recurrence_type_select');
+    const weeklyOptions = document.getElementById('weekly_options');
+    const monthlyOptions = document.getElementById('monthly_options');
+
+    function updateRecurrenceOptions() {
+      const value = recurrenceSelect.value;
+      
+      weeklyOptions.style.display = value === 'weekly' ? 'block' : 'none';
+      monthlyOptions.style.display = value === 'monthly' ? 'block' : 'none';
+    }
+
+    recurrenceSelect.addEventListener('change', updateRecurrenceOptions);
+    updateRecurrenceOptions();
+  });
+</script>
+

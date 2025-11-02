@@ -1,0 +1,335 @@
+# EventManager
+
+A Rails-based event management system for hackerspaces. Allows users to create, manage, and discover events with support for recurring schedules, user authentication via Authentik or local accounts, and public iCal feeds.
+
+## Features
+
+- **User Authentication**
+  - Local account creation with Devise
+  - Single Sign-On via Authentik (OAuth2)
+  - Role-based access control (Admin/User)
+
+- **Event Management**
+  - Create one-time or recurring events
+  - Flexible recurrence patterns:
+    - Weekly (specific days)
+    - Monthly (e.g., "first Tuesday", "third Monday")
+    - Custom patterns
+  - Event status management (Active, Postponed, Cancelled)
+  - Rich event details (title, description, duration)
+
+- **Admin Features**
+  - User management dashboard
+  - Promote users to admin
+  - View all events and users
+
+- **Public Features**
+  - Public event listing (no authentication required)
+  - iCal feed generation for each event
+  - Calendar integration for recurring events
+
+- **Modern UI**
+  - Bootstrap 5 styling
+  - Responsive design
+  - Intuitive navigation
+
+## Prerequisites
+
+### Option 1: Docker (Recommended)
+- Docker Engine 20.10+
+- Docker Compose 2.0+
+
+### Option 2: Native Installation
+- Ruby 3.1.2
+- PostgreSQL 12+
+- Node.js and Yarn
+- (Optional) Authentik instance for SSO
+
+## Installation
+
+### Docker Installation (Recommended)
+
+The easiest way to get started is with Docker:
+
+```bash
+# Clone the repository
+git clone <repository-url>
+cd EventManager
+
+# Start all services
+docker-compose up -d
+
+# Access the application
+open http://localhost:3000
+```
+
+That's it! The application will be running with a PostgreSQL database, migrations applied, and sample data loaded.
+
+**Default credentials:**
+- Admin: admin@example.com / password123
+- User: user1@example.com / password123
+
+For more Docker commands and troubleshooting, see [DOCKER.md](DOCKER.md).
+
+### Native Installation
+
+If you prefer to run without Docker:
+
+#### 1. Clone the Repository
+
+```bash
+git clone <repository-url>
+cd EventManager
+```
+
+#### 2. Install Dependencies
+
+```bash
+bundle install
+yarn install
+```
+
+#### 3. Configure Database
+
+Edit `config/database.yml` with your PostgreSQL credentials, or set environment variables:
+
+```bash
+export DATABASE_HOST=localhost
+export DATABASE_USER=your_username
+export DATABASE_PASSWORD=your_password
+```
+
+#### 4. Create and Setup Database
+
+```bash
+rails db:create
+rails db:migrate
+rails db:seed
+```
+
+#### 5. Configure Authentik (Optional)
+
+If you want to use Authentik for authentication, set the following environment variables:
+
+```bash
+export AUTHENTIK_CLIENT_ID=your_client_id
+export AUTHENTIK_CLIENT_SECRET=your_client_secret
+export AUTHENTIK_SITE_URL=https://your-authentik-instance.com
+```
+
+Create a `.env` file in the project root:
+
+```
+AUTHENTIK_CLIENT_ID=your_client_id
+AUTHENTIK_CLIENT_SECRET=your_client_secret
+AUTHENTIK_SITE_URL=https://your-authentik-instance.com
+```
+
+To use `.env` files, add `gem 'dotenv-rails'` to your Gemfile and run `bundle install`.
+
+#### 6. Start the Application
+
+Development mode with asset compilation:
+
+```bash
+./bin/dev
+```
+
+Or manually:
+
+```bash
+# Terminal 1 - Rails server
+rails server
+
+# Terminal 2 - Asset compilation
+yarn build
+yarn watch:css
+```
+
+#### 7. Access the Application
+
+Open your browser and navigate to:
+
+```
+http://localhost:3000
+```
+
+## Default User Accounts
+
+After running `rails db:seed`, you'll have these accounts:
+
+- **Admin**: admin@example.com / password123
+- **User 1**: user1@example.com / password123
+- **User 2**: user2@example.com / password123
+
+## Usage
+
+### Creating Events
+
+1. Sign in to your account
+2. Click "New Event" in the navigation bar
+3. Fill in the event details:
+   - Title and description
+   - Start date/time and duration
+   - Recurrence pattern (if applicable)
+4. Save the event
+
+### Managing Events
+
+Event owners and admins can:
+- Edit event details
+- Postpone events (with a reason)
+- Cancel events (with a reason)
+- Reactivate postponed/cancelled events
+- Delete events
+
+### Subscribing to Events
+
+Each event has a unique iCal feed URL that can be added to calendar applications:
+
+1. Navigate to an event
+2. Click "iCal Feed" button
+3. Copy the URL or click to download
+4. Add to your calendar app (Google Calendar, Apple Calendar, Outlook, etc.)
+
+For recurring events, the iCal feed will include all occurrences for the next year.
+
+### User Management (Admin Only)
+
+Admins can access the user management dashboard at `/users` to:
+- View all registered users
+- Edit user profiles
+- Promote users to admin
+- Delete users
+
+## Recurrence Patterns
+
+The system uses the `ice_cube` gem to handle complex recurring events:
+
+### Weekly Events
+Select specific days of the week (e.g., every Tuesday and Thursday)
+
+### Monthly Events
+Choose patterns like:
+- First Tuesday of every month
+- Third Monday of every month
+- Last Friday of every month
+
+### Custom Patterns
+Extend the `Event.build_schedule` method in `app/models/event.rb` for custom recurrence rules.
+
+## Authentik Integration
+
+### Setting up Authentik Provider
+
+1. Log in to your Authentik admin panel
+2. Navigate to Applications → Providers
+3. Create a new OAuth2/OpenID Provider:
+   - Name: EventManager
+   - Client Type: Confidential
+   - Redirect URIs: `http://localhost:3000/users/auth/authentik/callback` (adjust for production)
+4. Note the Client ID and Client Secret
+5. Create an Application and link it to the provider
+6. Update your environment variables with the credentials
+
+## Deployment
+
+### Production Setup
+
+1. Set production environment variables:
+   - `SECRET_KEY_BASE`
+   - `DATABASE_URL`
+   - `AUTHENTIK_*` variables (if using)
+
+2. Precompile assets:
+   ```bash
+   RAILS_ENV=production rails assets:precompile
+   ```
+
+3. Run migrations:
+   ```bash
+   RAILS_ENV=production rails db:migrate
+   ```
+
+4. Update `config/environments/production.rb` with your production domain for Devise mailer.
+
+### Recommended Deployment Platforms
+
+- Heroku
+- Digital Ocean App Platform
+- AWS Elastic Beanstalk
+- Docker/Kubernetes
+
+## Technology Stack
+
+- **Framework**: Ruby on Rails 7.0
+- **Database**: PostgreSQL
+- **Authentication**: Devise + OmniAuth
+- **Authorization**: Pundit
+- **Recurring Events**: IceCube
+- **Calendar Export**: iCalendar
+- **Frontend**: Bootstrap 5, Hotwire (Turbo + Stimulus)
+- **JavaScript**: esbuild
+- **CSS**: Sass
+
+## Project Structure
+
+```
+app/
+├── controllers/        # Application controllers
+├── models/            # ActiveRecord models
+├── policies/          # Pundit authorization policies
+├── views/             # ERB templates
+│   ├── events/       # Event CRUD views
+│   ├── users/        # User management views
+│   └── home/         # Landing page
+├── helpers/           # View helpers
+└── javascript/        # Stimulus controllers
+config/
+├── initializers/      # Devise, OmniAuth configuration
+└── routes.rb         # Application routes
+db/
+├── migrate/          # Database migrations
+└── seeds.rb          # Seed data
+lib/
+└── omniauth/         # Custom Authentik OAuth strategy
+```
+
+## API Endpoints
+
+### Public Endpoints
+- `GET /` - Home page
+- `GET /events` - List all events
+- `GET /events/:id` - Event details
+- `GET /events/:token/ical` - iCal feed
+
+### Authenticated Endpoints
+- `POST /events` - Create event
+- `PATCH /events/:id` - Update event
+- `DELETE /events/:id` - Delete event
+- `POST /events/:id/postpone` - Postpone event
+- `POST /events/:id/cancel` - Cancel event
+- `POST /events/:id/reactivate` - Reactivate event
+
+### Admin Endpoints
+- `GET /users` - List all users
+- `GET /users/:id` - User profile
+- `PATCH /users/:id` - Update user
+- `DELETE /users/:id` - Delete user
+- `POST /users/:id/make_admin` - Promote to admin
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Write tests
+5. Submit a pull request
+
+## License
+
+This project is available as open source under the terms of the MIT License.
+
+## Support
+
+For issues and questions, please open an issue on the GitHub repository.

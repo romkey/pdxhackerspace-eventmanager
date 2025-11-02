@@ -1,0 +1,267 @@
+// Bootstrap 5.x SCSS (uses @import as documented by Bootstrap)
+// Deprecation warnings are silenced in package.json build script
+@import 'bootstrap/scss/bootstrap';
+@import 'bootstrap-icons/font/bootstrap-icons';
+
+/* Dark Mode Support - Auto-detect from system settings */
+
+// Ensure dark mode variables are available
+@media (prefers-color-scheme: dark) {
+  body {
+    background-color: #212529;
+    color: #dee2e6;
+  }
+
+  // Ensure all text elements have proper contrast
+  h1, h2, h3, h4, h5, h6,
+  p, span, div, dt, dd, em, strong,
+  .card-text, .card-title {
+    color: #dee2e6;
+  }
+
+  .card {
+    background-color: #2b3035;
+    border-color: #495057;
+    color: #dee2e6;
+  }
+
+  .card-body,
+  .card-header,
+  .card-footer {
+    color: #dee2e6;
+  }
+
+  .list-group-item {
+    background-color: #2b3035;
+    border-color: #495057;
+    color: #dee2e6;
+  }
+
+  .modal-content {
+    background-color: #2b3035;
+    color: #dee2e6;
+  }
+
+  .modal-header,
+  .modal-body,
+  .modal-footer {
+    color: #dee2e6;
+  }
+
+  .modal-header.bg-danger {
+    color: #fff !important;
+  }
+
+  .bg-light {
+    background-color: #343a40 !important;
+    color: #dee2e6;
+  }
+
+  .text-muted {
+    color: #adb5bd !important;
+  }
+
+  // Make sure small and form text is readable
+  small,
+  .small,
+  .form-text {
+    color: #adb5bd !important;
+  }
+
+  // Links
+  a {
+    color: #6ea8fe;
+  }
+
+  a:hover {
+    color: #9ec5fe;
+  }
+
+  // Definition lists
+  dt {
+    color: #dee2e6;
+  }
+
+  dd {
+    color: #dee2e6;
+  }
+
+  .alert {
+    border-color: #495057;
+  }
+
+  .alert-info {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+    color: #fff;
+  }
+
+  .alert-warning {
+    background-color: #664d03;
+    border-color: #997404;
+    color: #ffecb5;
+  }
+
+  .alert-danger {
+    background-color: #842029;
+    border-color: #a52834;
+    color: #f8d7da;
+  }
+
+  .alert-success {
+    background-color: #0f5132;
+    border-color: #198754;
+    color: #d1e7dd;
+  }
+
+  .border-warning {
+    border-color: #997404 !important;
+  }
+
+  .border-danger {
+    border-color: #a52834 !important;
+  }
+
+  .table {
+    color: #dee2e6;
+    --bs-table-bg: #2b3035;
+    --bs-table-striped-bg: #343a40;
+    --bs-table-hover-bg: #343a40;
+  }
+
+  .table thead th {
+    color: #dee2e6;
+    background-color: #343a40;
+    border-color: #495057;
+  }
+
+  .table tbody td,
+  .table tbody th {
+    color: #dee2e6;
+    border-color: #495057;
+  }
+
+  .table-hover tbody tr:hover {
+    background-color: #343a40;
+  }
+
+  .table-hover tbody tr:hover td {
+    color: #dee2e6;
+  }
+
+  footer {
+    background-color: #343a40 !important;
+    border-top: 1px solid #495057;
+  }
+
+  .form-control,
+  .form-select {
+    background-color: #343a40;
+    border-color: #495057;
+    color: #dee2e6;
+  }
+
+  .form-control:focus,
+  .form-select:focus {
+    background-color: #343a40;
+    border-color: #86b7fe;
+    color: #dee2e6;
+  }
+
+  .form-control::placeholder {
+    color: #6c757d;
+    opacity: 1;
+  }
+
+  .form-label {
+    color: #dee2e6;
+  }
+
+  textarea.form-control::placeholder {
+    color: #6c757d;
+    opacity: 1;
+  }
+
+  // Ensure button text is visible
+  .btn-outline-primary,
+  .btn-outline-secondary,
+  .btn-outline-info,
+  .btn-outline-danger,
+  .btn-outline-warning {
+    color: #dee2e6;
+    border-color: #495057;
+  }
+
+  .btn-outline-primary:hover {
+    color: #fff;
+  }
+
+  .btn-outline-secondary:hover {
+    color: #fff;
+  }
+
+  .btn-outline-info:hover {
+    color: #fff;
+  }
+
+  .btn-outline-danger:hover {
+    color: #fff;
+  }
+
+  .btn-outline-warning:hover {
+    color: #212529;
+  }
+}
+
+/* Light mode specific overrides (if needed) */
+@media (prefers-color-scheme: light) {
+  // Light mode is the default, but you can add specific overrides here
+}
+
+/* Custom styles for both modes */
+.timeline-item {
+  position: relative;
+}
+
+.jumbotron {
+  padding: 2rem 1rem;
+  margin-bottom: 2rem;
+  border-radius: 0.3rem;
+}
+
+/* Event and occurrence banner styles */
+.event-banner,
+.occurrence-banner {
+  overflow: hidden;
+  border-radius: 0.5rem;
+}
+
+.event-banner img,
+.occurrence-banner img {
+  transition: transform 0.3s ease;
+}
+
+.event-banner:hover img,
+.occurrence-banner:hover img {
+  transform: scale(1.02);
+}
+
+@media (prefers-color-scheme: dark) {
+  .jumbotron {
+    background-color: #343a40 !important;
+  }
+
+  .event-banner,
+  .occurrence-banner {
+    border: 1px solid #495057;
+  }
+
+  .img-thumbnail {
+    background-color: #343a40;
+    border-color: #495057;
+  }
+
+  .card-img-top {
+    border-bottom: 1px solid #495057;
+  }
+}

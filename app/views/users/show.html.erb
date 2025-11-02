@@ -1,0 +1,67 @@
+<div class="row">
+  <div class="col-lg-8 mx-auto">
+    <h1 class="mb-4"><%= @user.name || @user.email %></h1>
+
+    <div class="card mb-4">
+      <div class="card-body">
+        <h5 class="card-title">User Information</h5>
+        <dl class="row">
+          <dt class="col-sm-3">Name:</dt>
+          <dd class="col-sm-9"><%= @user.name || '-' %></dd>
+
+          <dt class="col-sm-3">Email:</dt>
+          <dd class="col-sm-9"><%= @user.email %></dd>
+
+          <dt class="col-sm-3">Role:</dt>
+          <dd class="col-sm-9">
+            <span class="badge bg-<%= @user.admin? ? 'danger' : 'primary' %>">
+              <%= @user.role.titleize %>
+            </span>
+          </dd>
+
+          <dt class="col-sm-3">Provider:</dt>
+          <dd class="col-sm-9"><%= @user.provider || 'Local' %></dd>
+
+          <dt class="col-sm-3">Member Since:</dt>
+          <dd class="col-sm-9"><%= @user.created_at.strftime('%B %d, %Y') %></dd>
+        </dl>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-body">
+        <h5 class="card-title">Events Created (<%= @user.events.count %>)</h5>
+        <% if @user.events.any? %>
+          <div class="list-group">
+            <% @user.events.order(start_time: :desc).limit(10).each do |event| %>
+              <%= link_to event_path(event), class: "list-group-item list-group-item-action" do %>
+                <div class="d-flex w-100 justify-content-between">
+                  <h6 class="mb-1"><%= event.title %></h6>
+                  <small class="text-muted"><%= event.start_time.strftime('%b %d, %Y') %></small>
+                </div>
+                <p class="mb-1"><%= truncate(event.description, length: 100) %></p>
+                <small>
+                  <span class="badge bg-<%= event.status == 'active' ? 'success' : 'warning' %>">
+                    <%= event.status.titleize %>
+                  </span>
+                  <% if event.recurring? %>
+                    <span class="badge bg-info"><%= event.recurrence_type.titleize %></span>
+                  <% end %>
+                </small>
+              <% end %>
+            <% end %>
+          </div>
+        <% else %>
+          <p class="text-muted">No events created yet.</p>
+        <% end %>
+      </div>
+    </div>
+
+    <div class="mt-3">
+      <%= link_to "← Back to Users", users_path, class: "btn btn-secondary" %>
+      <% if current_user == @user || current_user.admin? %>
+        <%= link_to "Edit Profile", edit_user_path(@user), class: "btn btn-warning" %>
+      <% end %>
+    </div>
+  </div>
+</div>

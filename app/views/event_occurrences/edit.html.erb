@@ -1,0 +1,83 @@
+<div class="row">
+  <div class="col-lg-8 mx-auto">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><%= link_to "Events", events_path %></li>
+        <li class="breadcrumb-item"><%= link_to @event.title, event_path(@event) %></li>
+        <li class="breadcrumb-item"><%= link_to @occurrence.occurs_at.strftime('%b %d'), event_occurrence_path(@occurrence) %></li>
+        <li class="breadcrumb-item active">Edit</li>
+      </ol>
+    </nav>
+
+    <h1 class="mb-4">Edit Occurrence</h1>
+    <h5 class="text-muted mb-4"><%= @occurrence.occurs_at.strftime('%A, %B %d, %Y at %I:%M %p') %></h5>
+
+    <div class="card">
+      <div class="card-body">
+        <%= form_with(model: @occurrence, url: event_occurrence_path(@occurrence), method: :patch, local: true) do |f| %>
+          <% if @occurrence.errors.any? %>
+            <div class="alert alert-danger">
+              <h4><%= pluralize(@occurrence.errors.count, "error") %> prohibited this occurrence from being saved:</h4>
+              <ul>
+                <% @occurrence.errors.full_messages.each do |message| %>
+                  <li><%= message %></li>
+                <% end %>
+              </ul>
+            </div>
+          <% end %>
+
+          <div class="alert alert-info">
+            <strong>Note:</strong> Changes here only affect this specific occurrence on <%= @occurrence.occurs_at.strftime('%B %d, %Y') %>.
+            To change all future occurrences, <%= link_to "edit the event series", edit_event_path(@event) %>.
+          </div>
+
+          <div class="mb-3">
+            <%= f.label :custom_description, "Custom Description (Optional)", class: "form-label" %>
+            <%= f.text_area :custom_description, class: "form-control", rows: 5, 
+                placeholder: "Leave blank to use the event's default description..." %>
+            <small class="form-text text-muted">
+              Override the event description for this specific occurrence
+            </small>
+          </div>
+
+          <div class="mb-3">
+            <%= f.label :duration_override, "Custom Duration (Optional)", class: "form-label" %>
+            <%= f.number_field :duration_override, class: "form-control", 
+                placeholder: "Default: #{@event.duration} minutes", min: 15, step: 15 %>
+            <small class="form-text text-muted">
+              Override the event duration for this occurrence (in minutes)
+            </small>
+          </div>
+
+          <div class="mb-3">
+            <%= f.label :banner_image, "Custom Banner Image (Optional)", class: "form-label" %>
+            <%= f.file_field :banner_image, class: "form-control", accept: "image/*" %>
+            <small class="form-text text-muted">
+              <i class="bi bi-image"></i> Upload a custom banner for this occurrence, or leave blank to use the event's banner
+            </small>
+            <% if @occurrence.banner_image.attached? %>
+              <div class="mt-2">
+                <strong>Current custom banner:</strong><br>
+                <%= image_tag @occurrence.banner_image, class: "img-thumbnail", style: "max-width: 300px;" %>
+                <div class="form-check mt-2">
+                  <%= f.check_box :remove_banner_image, class: "form-check-input" %>
+                  <%= f.label :remove_banner_image, "Remove custom banner (use event's banner)", class: "form-check-label" %>
+                </div>
+              </div>
+            <% elsif @event.banner_image.attached? %>
+              <div class="mt-2">
+                <strong>Currently using event's banner:</strong><br>
+                <%= image_tag @event.banner_image, class: "img-thumbnail", style: "max-width: 300px; opacity: 0.7;" %>
+              </div>
+            <% end %>
+          </div>
+
+          <div class="mt-4">
+            <%= f.submit "Update Occurrence", class: "btn btn-primary" %>
+            <%= link_to "Cancel", event_occurrence_path(@occurrence), class: "btn btn-secondary" %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>

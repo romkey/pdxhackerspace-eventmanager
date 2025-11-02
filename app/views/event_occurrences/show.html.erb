@@ -1,0 +1,189 @@
+<div class="row">
+  <div class="col-lg-8">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><%= link_to "Events", events_path %></li>
+        <li class="breadcrumb-item"><%= link_to @event.title, event_path(@event) %></li>
+        <li class="breadcrumb-item active" aria-current="page"><%= @occurrence.occurs_at.strftime('%B %d, %Y') %></li>
+      </ol>
+    </nav>
+
+    <% if @occurrence.banner.attached? %>
+      <div class="mb-4 occurrence-banner">
+        <%= image_tag @occurrence.banner, class: "img-fluid rounded", style: "width: 100%; max-height: 400px; object-fit: cover;", alt: @event.title %>
+        <% if @occurrence.banner_image.attached? %>
+          <small class="text-muted d-block mt-1"><i class="bi bi-image-fill"></i> Custom banner for this occurrence</small>
+        <% end %>
+      </div>
+    <% end %>
+
+    <div class="d-flex justify-content-between align-items-start mb-3">
+      <h1><%= @event.title %></h1>
+      <% if @occurrence.status != 'active' %>
+        <span class="badge bg-<%= @occurrence.status == 'postponed' ? 'warning' : 'danger' %> fs-5">
+          <%= @occurrence.status.titleize %>
+        </span>
+      <% end %>
+    </div>
+
+    <h5 class="text-muted mb-4"><%= @occurrence.occurs_at.strftime('%A, %B %d, %Y at %I:%M %p') %></h5>
+
+    <% if @occurrence.status == 'postponed' && @occurrence.postponed_until %>
+      <div class="alert alert-warning">
+        <h5 class="alert-heading">
+          <i class="bi bi-clock-history"></i> Occurrence Postponed
+        </h5>
+        <p class="mb-0"><strong>Rescheduled to:</strong> <%= @occurrence.postponed_until.strftime('%B %d, %Y at %I:%M %p') %></p>
+        <% if @occurrence.cancellation_reason.present? %>
+          <hr>
+          <p class="mb-0"><strong>Reason:</strong> <%= @occurrence.cancellation_reason %></p>
+        <% end %>
+      </div>
+    <% elsif @occurrence.status == 'cancelled' %>
+      <div class="alert alert-danger">
+        <h5 class="alert-heading">
+          <i class="bi bi-x-circle"></i> Occurrence Cancelled
+        </h5>
+        <% if @occurrence.cancellation_reason.present? %>
+          <p class="mb-0"><strong>Reason:</strong> <%= @occurrence.cancellation_reason %></p>
+        <% else %>
+          <p class="mb-0">This occurrence has been cancelled.</p>
+        <% end %>
+      </div>
+    <% end %>
+
+    <div class="card mb-4">
+      <div class="card-body">
+        <h5 class="card-title">Description</h5>
+        <p class="card-text"><%= simple_format(@occurrence.description) %></p>
+        
+        <% if @event.more_info_url.present? %>
+          <div class="mt-3">
+            <%= link_to @event.more_info_url, target: "_blank", rel: "noopener noreferrer", class: "btn btn-outline-primary" do %>
+              <i class="bi bi-box-arrow-up-right"></i> Learn More About This Event
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card mb-3">
+      <div class="card-body">
+        <h5 class="card-title">Occurrence Details</h5>
+        <dl class="row mb-0">
+          <dt class="col-sm-5">Date:</dt>
+          <dd class="col-sm-7"><%= @occurrence.occurs_at.strftime('%B %d, %Y') %></dd>
+
+          <dt class="col-sm-5">Time:</dt>
+          <dd class="col-sm-7"><%= @occurrence.occurs_at.strftime('%I:%M %p') %></dd>
+
+          <dt class="col-sm-5">Duration:</dt>
+          <dd class="col-sm-7"><%= @occurrence.duration %> minutes</dd>
+
+          <dt class="col-sm-5">Event:</dt>
+          <dd class="col-sm-7"><%= link_to @event.title, event_path(@event) %></dd>
+
+          <dt class="col-sm-5">Hosts:</dt>
+          <dd class="col-sm-7"><%= @event.hosts.map { |h| h.name || h.email }.join(', ') %></dd>
+
+          <dt class="col-sm-5">Status:</dt>
+          <dd class="col-sm-7"><%= @occurrence.status.titleize %></dd>
+        </dl>
+      </div>
+    </div>
+
+    <% if user_signed_in? && (current_user.admin? || @event.hosted_by?(current_user)) %>
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title">Manage Occurrence</h5>
+          <div class="d-grid gap-2">
+            <%= link_to "Edit Details", edit_event_occurrence_path(@occurrence), class: "btn btn-warning" %>
+            
+            <% if @occurrence.status == 'active' %>
+              <button type="button" class="btn btn-outline-warning" data-bs-toggle="modal" data-bs-target="#postponeModal">
+                Postpone This Occurrence
+              </button>
+              <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#cancelModal">
+                Cancel This Occurrence
+              </button>
+            <% else %>
+              <%= button_to "Reactivate", reactivate_event_occurrence_path(@occurrence), 
+                  method: :post, 
+                  class: "btn btn-success" %>
+            <% end %>
+            
+            <%= button_to "Delete This Occurrence", event_occurrence_path(@occurrence), 
+                method: :delete, 
+                class: "btn btn-danger",
+                form: { data: { turbo_confirm: "Delete this occurrence? The event series will remain." } } %>
+          </div>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<div class="mt-3">
+  <%= link_to "← Back to Event", event_path(@event), class: "btn btn-secondary" %>
+  <%= link_to "View Calendar", calendar_path, class: "btn btn-outline-secondary" %>
+</div>
+
+<!-- Postpone Modal -->
+<div class="modal fade" id="postponeModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <%= form_with url: postpone_event_occurrence_path(@occurrence), method: :post do |f| %>
+        <div class="modal-header">
+          <h5 class="modal-title">Postpone This Occurrence</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Postpone Until</label>
+            <input type="datetime-local" 
+                   class="form-control" 
+                   name="postponed_until"
+                   value="<%= 1.week.from_now.strftime('%Y-%m-%dT%H:%M') %>">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Reason (Optional)</label>
+            <textarea class="form-control" name="reason" rows="3"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <%= f.submit "Postpone", class: "btn btn-warning" %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<!-- Cancel Modal -->
+<div class="modal fade" id="cancelModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <%= form_with url: cancel_event_occurrence_path(@occurrence), method: :post do |f| %>
+        <div class="modal-header bg-danger text-white">
+          <h5 class="modal-title">Cancel This Occurrence</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="alert alert-info">
+            This will only cancel this specific occurrence. The event series will continue.
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Reason (Optional)</label>
+            <textarea class="form-control" name="reason" rows="3"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Don't Cancel</button>
+          <%= f.submit "Cancel Occurrence", class: "btn btn-danger" %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>
