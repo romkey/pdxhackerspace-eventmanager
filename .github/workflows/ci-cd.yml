@@ -16,6 +16,7 @@ jobs:
   lint:
     name: Lint Code
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     
     steps:
       - name: Checkout code
@@ -37,6 +38,7 @@ jobs:
   test:
     name: Run Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     needs: lint
 
     services:
@@ -68,6 +70,18 @@ jobs:
           ruby-version: '3.1.2'
           bundler-cache: true
 
+      - name: Get yarn cache directory path
+        id: yarn-cache-dir-path
+        run: echo "dir=$(yarn cache dir)" >> $GITHUB_OUTPUT
+
+      - name: Cache yarn dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
+          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-yarn-
+
       - name: Install dependencies
         run: |
           bundle install --jobs 4 --retry 3
@@ -79,7 +93,7 @@ jobs:
           bundle exec rails db:schema:load
 
       - name: Run tests
-        run: bundle exec rspec --format documentation
+        run: bundle exec rspec --format progress
 
       - name: Upload coverage reports (optional)
         if: always()
@@ -92,6 +106,7 @@ jobs:
   build:
     name: Build Docker Image
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     needs: test
     # Only run build on PRs and version tags, not on main branch pushes
     if: github.event_name == 'pull_request' || startsWith(github.ref, 'refs/tags/v')
@@ -148,6 +163,7 @@ jobs:
   security-scan:
     name: Security Scan
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     needs: build
     if: startsWith(github.ref, 'refs/tags/v')
     
@@ -189,6 +205,7 @@ jobs:
   dependency-check:
     name: Dependency Security Check
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     needs: lint
     
     steps:
