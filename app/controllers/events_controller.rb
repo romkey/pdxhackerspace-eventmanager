@@ -1,6 +1,8 @@
 class EventsController < ApplicationController
+  skip_before_action :verify_authenticity_token, only: [:ical]
+  
   before_action :authenticate_user!, except: %i[index show ical]
-  before_action :set_event, only: %i[show edit update destroy postpone cancel reactivate]
+  before_action :set_event, only: %i[show edit update destroy postpone cancel reactivate ical]
   before_action :authorize_event, only: %i[edit update destroy postpone cancel reactivate]
 
   def index
