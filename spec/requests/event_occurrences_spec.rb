@@ -106,10 +106,10 @@ RSpec.describe "EventOccurrences", type: :request do
       before { sign_in user }
 
       it "deletes the occurrence" do
-        occurrence_id = occurrence.id
-        expect {
+        occurrence.id
+        expect do
           delete event_occurrence_path(occurrence)
-        }.to change(EventOccurrence, :count).by(-1)
+        end.to change(EventOccurrence, :count).by(-1)
       end
 
       it "does not delete the event" do
@@ -128,10 +128,10 @@ RSpec.describe "EventOccurrences", type: :request do
       before { sign_in other_user }
 
       it "does not delete the occurrence" do
-        occurrence_id = occurrence.id
-        expect {
+        occurrence.id
+        expect do
           delete event_occurrence_path(occurrence)
-        }.not_to change(EventOccurrence, :count)
+        end.not_to change(EventOccurrence, :count)
       end
     end
   end
@@ -216,4 +216,3 @@ RSpec.describe "EventOccurrences", type: :request do
     end
   end
 end
-

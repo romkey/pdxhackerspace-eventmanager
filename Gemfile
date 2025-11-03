@@ -53,7 +53,7 @@ gem "ice_cube"
 gem "icalendar"
 
 # Windows does not include zoneinfo files, so bundle the tzinfo-data gem
-gem "tzinfo-data", platforms: %i[ mingw mswin x64_mingw jruby ]
+gem "tzinfo-data", platforms: %i[mingw mswin x64_mingw jruby]
 
 # Reduces boot times through caching; required in config/boot.rb
 gem "bootsnap", require: false
@@ -66,27 +66,27 @@ gem "bootsnap", require: false
 
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
-  gem "debug", platforms: %i[ mri mingw x64_mingw ]
-  
+  gem "debug", platforms: %i[mri mingw x64_mingw]
+
   # Testing framework
-  gem "rspec-rails", "~> 6.0"
   gem "factory_bot_rails"
   gem "faker"
-  
+  gem "rspec-rails", "~> 6.0"
+
   # Code quality and security
+  gem "brakeman", require: false
+  gem "bundler-audit", require: false
   gem "rubocop", require: false
   gem "rubocop-rails", require: false
   gem "rubocop-rspec", require: false
-  gem "brakeman", require: false
-  gem "bundler-audit", require: false
 end
 
 group :test do
   # Additional testing tools
   gem "capybara"
+  gem "database_cleaner-active_record"
   gem "selenium-webdriver"
   gem "shoulda-matchers", "~> 5.0"
-  gem "database_cleaner-active_record"
   gem "simplecov", require: false
 end
 
@@ -100,4 +100,3 @@ group :development do
   # Speed up commands on slow machines / big apps [https://github.com/rails/spring]
   # gem "spring"
 end
-

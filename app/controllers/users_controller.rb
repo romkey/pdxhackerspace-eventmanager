@@ -1,18 +1,16 @@
 class UsersController < ApplicationController
   before_action :authenticate_user!
-  before_action :set_user, only: [:show, :edit, :update, :destroy, :make_admin]
-  before_action :authorize_user, only: [:index, :show, :edit, :update, :destroy, :make_admin]
+  before_action :set_user, only: %i[show edit update destroy make_admin]
+  before_action :authorize_user, only: %i[index show edit update destroy make_admin]
 
   def index
     authorize User
     @users = User.all.order(created_at: :desc)
   end
 
-  def show
-  end
+  def show; end
 
-  def edit
-  end
+  def edit; end
 
   def update
     if @user.update(user_params)

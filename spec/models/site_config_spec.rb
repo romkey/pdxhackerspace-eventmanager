@@ -2,8 +2,8 @@ require 'rails_helper'
 
 RSpec.describe SiteConfig, type: :model do
   describe 'validations' do
-    it { should validate_presence_of(:organization_name) }
-    
+    it { is_expected.to validate_presence_of(:organization_name) }
+
     it 'validates email format' do
       config = build(:site_config, contact_email: 'invalid-email')
       expect(config).not_to be_valid
@@ -22,8 +22,8 @@ RSpec.describe SiteConfig, type: :model do
   end
 
   describe 'attachments' do
-    it { should have_one_attached(:favicon) }
-    it { should have_one_attached(:banner_image) }
+    it { is_expected.to have_one_attached(:favicon) }
+    it { is_expected.to have_one_attached(:banner_image) }
   end
 
   describe '.instance' do
@@ -56,8 +56,8 @@ RSpec.describe SiteConfig, type: :model do
   describe 'singleton pattern' do
     it 'maintains only one record' do
       create(:site_config)
-      config = SiteConfig.instance
-      
+      SiteConfig.instance
+
       expect(SiteConfig.count).to eq(1)
     end
   end

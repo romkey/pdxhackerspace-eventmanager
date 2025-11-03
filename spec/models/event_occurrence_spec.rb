@@ -3,14 +3,14 @@ require 'rails_helper'
 RSpec.describe EventOccurrence, type: :model do
   describe 'validations' do
     subject { build(:event_occurrence) }
-    
-    it { should validate_presence_of(:occurs_at) }
-    it { should validate_inclusion_of(:status).in_array(%w[active postponed cancelled]) }
+
+    it { is_expected.to validate_presence_of(:occurs_at) }
+    it { is_expected.to validate_inclusion_of(:status).in_array(%w[active postponed cancelled]) }
   end
 
   describe 'associations' do
-    it { should belong_to(:event) }
-    it { should have_one_attached(:banner_image) }
+    it { is_expected.to belong_to(:event) }
+    it { is_expected.to have_one_attached(:banner_image) }
   end
 
   describe 'scopes' do
@@ -49,7 +49,7 @@ RSpec.describe EventOccurrence, type: :model do
       end
 
       it 'orders by occurs_at ascending' do
-        future_occ2 = create(:event_occurrence, event: event, occurs_at: 2.weeks.from_now)
+        create(:event_occurrence, event: event, occurs_at: 2.weeks.from_now)
         upcoming = EventOccurrence.upcoming
         expect(upcoming.first.occurs_at).to be < upcoming.last.occurs_at
       end
@@ -62,7 +62,7 @@ RSpec.describe EventOccurrence, type: :model do
       end
 
       it 'orders by occurs_at descending' do
-        past_occ2 = create(:event_occurrence, event: event, occurs_at: 2.weeks.ago)
+        create(:event_occurrence, event: event, occurs_at: 2.weeks.ago)
         past = EventOccurrence.past
         expect(past.first.occurs_at).to be > past.last.occurs_at
       end
@@ -71,7 +71,7 @@ RSpec.describe EventOccurrence, type: :model do
 
   describe '#description' do
     let(:event) { create(:event, description: 'Event description') }
-    
+
     context 'when occurrence has custom description' do
       let(:occurrence) { create(:event_occurrence, :with_custom_description, event: event) }
 
@@ -99,7 +99,7 @@ RSpec.describe EventOccurrence, type: :model do
 
   describe '#duration' do
     let(:event) { create(:event, duration: 120) }
-    
+
     context 'when occurrence has duration override' do
       let(:occurrence) { create(:event_occurrence, :with_duration_override, event: event) }
 
@@ -261,4 +261,3 @@ RSpec.describe EventOccurrence, type: :model do
     end
   end
 end
-

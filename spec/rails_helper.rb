@@ -41,18 +41,18 @@ RSpec.configure do |config|
   # examples within a transaction, remove the following line or assign false
   # instead of true.
   config.use_transactional_fixtures = true
-  
+
   # Include FactoryBot methods
   config.include FactoryBot::Syntax::Methods
-  
+
   # Include Devise test helpers
   config.include Devise::Test::IntegrationHelpers, type: :request
   config.include Devise::Test::ControllerHelpers, type: :controller
   config.include Devise::Test::IntegrationHelpers, type: :feature
-  
+
   # Include Pundit test helpers
   config.include Pundit::RSpec::Matchers
-  
+
   # Capybara configuration
   Capybara.default_driver = :rack_test
   Capybara.javascript_driver = :selenium_chrome_headless

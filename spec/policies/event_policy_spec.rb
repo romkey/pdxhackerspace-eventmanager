@@ -58,7 +58,7 @@ RSpec.describe EventPolicy, type: :policy do
         it 'allows viewing and creating' do
           expect(policy.show?).to be true
           expect(policy.index?).to be true
-          
+
           new_event = build(:event)
           new_policy = described_class.new(user, new_event)
           expect(new_policy.create?).to be true

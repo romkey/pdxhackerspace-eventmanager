@@ -2,22 +2,24 @@ class CalendarController < ApplicationController
   def index
     # Get all upcoming occurrences for events the user can see
     @occurrences = if current_user
-      # Signed in users see occurrences based on event visibility
-      EventOccurrence
-        .joins(:event)
-        .where(event: policy_scope(Event))
-        .upcoming
-        .includes(event: [:hosts, :user, banner_image_attachment: :blob], banner_image_attachment: :blob)
-        .limit(50)
-    else
-      # Public users only see public event occurrences
-      EventOccurrence
-        .joins(:event)
-        .where(events: { visibility: 'public' })
-        .upcoming
-        .includes(event: [:hosts, :user, banner_image_attachment: :blob], banner_image_attachment: :blob)
-        .limit(50)
-    end
+                     # Signed in users see occurrences based on event visibility
+                     EventOccurrence
+                       .joins(:event)
+                       .where(event: policy_scope(Event))
+                       .upcoming
+                       .includes(event: [:hosts, :user,
+                                         { banner_image_attachment: :blob }], banner_image_attachment: :blob)
+                       .limit(50)
+                   else
+                     # Public users only see public event occurrences
+                     EventOccurrence
+                       .joins(:event)
+                       .where(events: { visibility: 'public' })
+                       .upcoming
+                       .includes(event: [:hosts, :user,
+                                         { banner_image_attachment: :blob }], banner_image_attachment: :blob)
+                       .limit(50)
+                   end
 
     # Group by month for display
     @occurrences_by_month = @occurrences.group_by { |occ| occ.occurs_at.beginning_of_month }
@@ -27,11 +29,12 @@ class CalendarController < ApplicationController
       format.json do
         # For JSON, only return public event occurrences
         public_occurrences = EventOccurrence
-          .joins(:event)
-          .where(events: { visibility: 'public' })
-          .upcoming
-          .includes(event: [:hosts, banner_image_attachment: :blob], banner_image_attachment: :blob)
-          .limit(100)
+                             .joins(:event)
+                             .where(events: { visibility: 'public' })
+                             .upcoming
+                             .includes(event: [:hosts,
+                                               { banner_image_attachment: :blob }], banner_image_attachment: :blob)
+                             .limit(100)
 
         occurrences_data = public_occurrences.map do |occ|
           {

@@ -90,7 +90,7 @@ RSpec.describe "SiteConfig", type: :request do
       it "updates the configuration" do
         patch site_config_path, params: update_params
         site_config.reload
-        
+
         expect(site_config.organization_name).to eq("Updated Hackerspace")
         expect(site_config.contact_email).to eq("contact@updated.org")
         expect(site_config.contact_phone).to eq("(555) 999-8888")
@@ -133,7 +133,7 @@ RSpec.describe "SiteConfig", type: :request do
             filename: "test.ico",
             content_type: "image/x-icon"
           )
-          
+
           patch site_config_path, params: { site_config: { remove_favicon: '1' } }
           site_config.reload
           expect(site_config.favicon.attached?).to be false
@@ -145,7 +145,7 @@ RSpec.describe "SiteConfig", type: :request do
             filename: "test.jpg",
             content_type: "image/jpeg"
           )
-          
+
           patch site_config_path, params: { site_config: { remove_banner_image: '1' } }
           site_config.reload
           expect(site_config.banner_image.attached?).to be false
@@ -154,4 +154,3 @@ RSpec.describe "SiteConfig", type: :request do
     end
   end
 end
-

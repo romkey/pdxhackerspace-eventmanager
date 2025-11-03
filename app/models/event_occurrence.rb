@@ -65,20 +65,20 @@ class EventOccurrence < ApplicationRecord
   def log_update
     return unless current_user_for_journal
     return unless saved_changes.any?
-    
+
     tracked_changes = {}
     saved_changes.each do |key, (old_val, new_val)|
       next if %w[updated_at created_at].include?(key)
-      
-      if %w[custom_description cancellation_reason].include?(key)
-        tracked_changes[key] = { 'from' => old_val, 'to' => new_val }
-      else
-        tracked_changes[key] = { 'from' => old_val, 'to' => new_val }
-      end
+
+      tracked_changes[key] = if %w[custom_description cancellation_reason].include?(key)
+                               { 'from' => old_val, 'to' => new_val }
+                             else
+                               { 'from' => old_val, 'to' => new_val }
+                             end
     end
-    
+
     return if tracked_changes.empty?
-    
+
     EventJournal.log_occurrence_change(
       self,
       current_user_for_journal,
@@ -89,10 +89,10 @@ class EventOccurrence < ApplicationRecord
 
   def log_status_change(action, reason, user)
     return unless user
-    
+
     changes_data = { 'status' => action }
     changes_data['reason'] = reason if reason.present?
-    
+
     EventJournal.log_occurrence_change(
       self,
       user,
@@ -104,21 +104,21 @@ class EventOccurrence < ApplicationRecord
   def log_banner_change
     return unless current_user_for_journal
     return if new_record?
-    
+
     # Check if banner was added
-    if banner_image.attached? && banner_image.attachment.blob.created_at > 5.seconds.ago
-      EventJournal.log_occurrence_change(
-        self,
-        current_user_for_journal,
-        'banner_added',
-        { 
-          'banner_image' => {
-            'filename' => banner_image.filename.to_s,
-            'size' => "#{(banner_image.byte_size.to_f / 1024).round(2)} KB",
-            'content_type' => banner_image.content_type
-          }
+    return unless banner_image.attached? && banner_image.attachment.blob.created_at > 5.seconds.ago
+
+    EventJournal.log_occurrence_change(
+      self,
+      current_user_for_journal,
+      'banner_added',
+      {
+        'banner_image' => {
+          'filename' => banner_image.filename.to_s,
+          'size' => "#{(banner_image.byte_size.to_f / 1024).round(2)} KB",
+          'content_type' => banner_image.content_type
         }
-      )
-    end
+      }
+    )
   end
 end

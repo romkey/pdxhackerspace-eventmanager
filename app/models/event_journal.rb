@@ -72,7 +72,7 @@ class EventJournal < ApplicationRecord
   # Get formatted changes for display
   def formatted_changes
     return {} unless change_data.present?
-    
+
     change_data.transform_keys do |key|
       key.to_s.titleize
     end

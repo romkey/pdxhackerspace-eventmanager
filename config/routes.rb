@@ -22,13 +22,13 @@ Rails.application.routes.draw do
       post :cancel
       post :reactivate
     end
-    
+
     # Host management
-    resources :event_hosts, only: [:create, :destroy], shallow: true
+    resources :event_hosts, only: %i[create destroy], shallow: true
   end
 
   # Event Occurrences routes
-  resources :event_occurrences, only: [:show, :edit, :update, :destroy], path: 'occurrences' do
+  resources :event_occurrences, only: %i[show edit update destroy], path: 'occurrences' do
     member do
       post :postpone
       post :cancel
@@ -43,12 +43,12 @@ Rails.application.routes.draw do
   get 'events/:token/ical', to: 'events#ical', as: 'event_ical'
 
   # Users management (admin only)
-  resources :users, only: [:index, :show, :edit, :update, :destroy] do
+  resources :users, only: %i[index show edit update destroy] do
     member do
       post :make_admin
     end
   end
 
   # Site configuration (admin only, singleton)
-  resource :site_config, only: [:edit, :update]
+  resource :site_config, only: %i[edit update]
 end

@@ -5,7 +5,7 @@ class EventHostsController < ApplicationController
 
   def create
     @user_to_add = User.find(params[:user_id])
-    
+
     if @event.add_host(@user_to_add)
       # Log the host addition
       EventJournal.log_event_change(
@@ -23,7 +23,7 @@ class EventHostsController < ApplicationController
   def destroy
     @host = User.find(params[:id])
     host_name = @host.name || @host.email
-    
+
     if @event.remove_host(@host)
       # Log the host removal
       EventJournal.log_event_change(
@@ -45,8 +45,8 @@ class EventHostsController < ApplicationController
   end
 
   def authorize_event_management
-    unless current_user.admin? || @event.hosted_by?(current_user)
-      redirect_to @event, alert: "You are not authorized to manage hosts for this event."
-    end
+    return if current_user.admin? || @event.hosted_by?(current_user)
+
+    redirect_to @event, alert: "You are not authorized to manage hosts for this event."
   end
 end

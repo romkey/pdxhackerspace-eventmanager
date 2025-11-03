@@ -2,13 +2,13 @@ require 'rails_helper'
 
 RSpec.describe EventJournal, type: :model do
   describe 'validations' do
-    it { should validate_presence_of(:action) }
+    it { is_expected.to validate_presence_of(:action) }
   end
 
   describe 'associations' do
-    it { should belong_to(:event) }
-    it { should belong_to(:user) }
-    it { should belong_to(:occurrence).optional }
+    it { is_expected.to belong_to(:event) }
+    it { is_expected.to belong_to(:user) }
+    it { is_expected.to belong_to(:occurrence).optional }
   end
 
   describe 'scopes' do
@@ -31,14 +31,14 @@ RSpec.describe EventJournal, type: :model do
     let(:changes) { { 'title' => { 'from' => 'Old', 'to' => 'New' } } }
 
     it 'creates a journal entry' do
-      expect {
+      expect do
         EventJournal.log_event_change(event, user, 'updated', changes)
-      }.to change(EventJournal, :count).by(1)
+      end.to change(EventJournal, :count).by(1)
     end
 
     it 'sets the correct attributes' do
       journal = EventJournal.log_event_change(event, user, 'updated', changes)
-      
+
       expect(journal.event).to eq(event)
       expect(journal.user).to eq(user)
       expect(journal.action).to eq('updated')
@@ -53,14 +53,14 @@ RSpec.describe EventJournal, type: :model do
     let(:changes) { { 'status' => 'cancelled' } }
 
     it 'creates a journal entry' do
-      expect {
+      expect do
         EventJournal.log_occurrence_change(occurrence, user, 'cancelled', changes)
-      }.to change(EventJournal, :count).by(1)
+      end.to change(EventJournal, :count).by(1)
     end
 
     it 'sets the correct attributes' do
       journal = EventJournal.log_occurrence_change(occurrence, user, 'cancelled', changes)
-      
+
       expect(journal.event).to eq(occurrence.event)
       expect(journal.user).to eq(user)
       expect(journal.action).to eq('cancelled')
@@ -209,4 +209,3 @@ RSpec.describe EventJournal, type: :model do
     end
   end
 end
-

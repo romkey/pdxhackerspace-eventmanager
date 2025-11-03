@@ -1,5 +1,5 @@
 class Event < ApplicationRecord
-  belongs_to :user  # Original creator
+  belongs_to :user # Original creator
   has_many :event_hosts, dependent: :destroy
   has_many :hosts, through: :event_hosts, source: :user
   has_many :event_occurrences, dependent: :destroy
@@ -24,7 +24,8 @@ class Event < ApplicationRecord
   validates :status, inclusion: { in: %w[active postponed cancelled] }
   validates :visibility, inclusion: { in: %w[public members private] }
   validates :open_to, inclusion: { in: %w[public members private] }
-  validates :more_info_url, format: { with: URI::DEFAULT_PARSER.make_regexp(%w[http https]), message: "must be a valid URL" }, allow_blank: true
+  validates :more_info_url,
+            format: { with: URI::DEFAULT_PARSER.make_regexp(%w[http https]), message: "must be a valid URL" }, allow_blank: true
 
   scope :active, -> { where(status: 'active') }
   scope :postponed, -> { where(status: 'postponed') }
@@ -36,7 +37,7 @@ class Event < ApplicationRecord
   # Get occurrence dates for a date range (from IceCube schedule)
   def occurrence_dates(start_date, end_date)
     return [] unless recurrence_rule.present?
-    
+
     schedule = IceCube::Schedule.from_yaml(recurrence_rule)
     schedule.occurrences_between(start_date, end_date)
   end
@@ -77,6 +78,7 @@ class Event < ApplicationRecord
   # Host management
   def hosted_by?(user)
     return false unless user
+
     user.admin? || hosts.include?(user)
   end
 
@@ -87,6 +89,7 @@ class Event < ApplicationRecord
   def remove_host(user)
     # Don't allow removing the creator unless they're not the only host
     return false if user == self.user && hosts.count <= 1
+
     event_hosts.find_by(user: user)&.destroy
   end
 
@@ -97,7 +100,7 @@ class Event < ApplicationRecord
   # Generate future occurrences based on recurrence rules
   def generate_occurrences(limit = nil)
     limit ||= max_occurrences || 5
-    
+
     if recurrence_type == 'once'
       # One-time event - create single occurrence if it doesn't exist
       occurrences.find_or_create_by!(occurs_at: start_time.to_datetime)
@@ -105,7 +108,7 @@ class Event < ApplicationRecord
       # Recurring event - generate occurrences
       schedule = IceCube::Schedule.from_yaml(recurrence_rule)
       future_dates = schedule.occurrences_between(Time.now, 1.year.from_now).first(limit)
-      
+
       future_dates.each do |date|
         # Convert Time to DateTime for PostgreSQL
         occurrences.find_or_create_by!(occurs_at: date.to_datetime)
@@ -129,7 +132,7 @@ class Event < ApplicationRecord
   # Build IceCube schedule from parameters
   def self.build_schedule(start_time, recurrence_type, recurrence_params = {})
     schedule = IceCube::Schedule.new(start_time)
-    
+
     case recurrence_type
     when 'weekly'
       # Weekly on specific day(s)
@@ -152,7 +155,7 @@ class Event < ApplicationRecord
       # For more complex recurrence patterns
       # Can be extended based on specific needs
     end
-    
+
     schedule
   end
 
@@ -174,14 +177,14 @@ class Event < ApplicationRecord
 
   def regenerate_occurrences_if_needed
     # Regenerate if recurrence settings changed
-    if saved_change_to_recurrence_rule? || saved_change_to_start_time? || saved_change_to_max_occurrences?
-      regenerate_future_occurrences!
-    end
+    return unless saved_change_to_recurrence_rule? || saved_change_to_start_time? || saved_change_to_max_occurrences?
+
+    regenerate_future_occurrences!
   end
 
   def log_creation
     return unless current_user_for_journal
-    
+
     EventJournal.log_event_change(
       self,
       current_user_for_journal,
@@ -198,22 +201,22 @@ class Event < ApplicationRecord
   def log_update
     return unless current_user_for_journal
     return unless saved_changes.any?
-    
+
     tracked_changes = {}
     saved_changes.each do |key, (old_val, new_val)|
       # Skip timestamps and internal fields
       next if %w[updated_at created_at ical_token].include?(key)
-      
+
       # Store full text for text fields
-      if %w[title description more_info_url cancellation_reason].include?(key)
-        tracked_changes[key] = { 'from' => old_val, 'to' => new_val }
-      else
-        tracked_changes[key] = { 'from' => old_val, 'to' => new_val }
-      end
+      tracked_changes[key] = if %w[title description more_info_url cancellation_reason].include?(key)
+                               { 'from' => old_val, 'to' => new_val }
+                             else
+                               { 'from' => old_val, 'to' => new_val }
+                             end
     end
-    
+
     return if tracked_changes.empty?
-    
+
     EventJournal.log_event_change(
       self,
       current_user_for_journal,
@@ -225,21 +228,21 @@ class Event < ApplicationRecord
   def log_banner_change
     return unless current_user_for_journal
     return if new_record?
-    
+
     # Check if banner was added
-    if banner_image.attached? && banner_image.attachment.blob.created_at > 5.seconds.ago
-      EventJournal.log_event_change(
-        self,
-        current_user_for_journal,
-        'banner_added',
-        { 
-          'banner_image' => {
-            'filename' => banner_image.filename.to_s,
-            'size' => "#{(banner_image.byte_size.to_f / 1024).round(2)} KB",
-            'content_type' => banner_image.content_type
-          }
+    return unless banner_image.attached? && banner_image.attachment.blob.created_at > 5.seconds.ago
+
+    EventJournal.log_event_change(
+      self,
+      current_user_for_journal,
+      'banner_added',
+      {
+        'banner_image' => {
+          'filename' => banner_image.filename.to_s,
+          'size' => "#{(banner_image.byte_size.to_f / 1024).round(2)} KB",
+          'content_type' => banner_image.content_type
         }
-      )
-    end
+      }
+    )
   end
 end

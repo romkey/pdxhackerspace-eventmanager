@@ -21,7 +21,7 @@ RSpec.describe "JSON API", type: :request do
     it "returns only public and active events" do
       get events_path(format: :json)
       json = JSON.parse(response.body)
-      
+
       event_titles = json['events'].map { |e| e['title'] }
       expect(event_titles).to include('Public Event')
       expect(event_titles).not_to include('Members Event', 'Private Event', 'Cancelled Event')
@@ -30,7 +30,7 @@ RSpec.describe "JSON API", type: :request do
     it "includes event metadata" do
       get events_path(format: :json)
       json = JSON.parse(response.body)
-      
+
       expect(json).to have_key('events')
       expect(json).to have_key('generated_at')
       expect(json).to have_key('count')
@@ -40,7 +40,7 @@ RSpec.describe "JSON API", type: :request do
       get events_path(format: :json)
       json = JSON.parse(response.body)
       event = json['events'].first
-      
+
       expect(event).to have_key('id')
       expect(event).to have_key('title')
       expect(event).to have_key('description')
@@ -54,11 +54,11 @@ RSpec.describe "JSON API", type: :request do
     it "includes hosts as simple array of names" do
       user = create(:user, name: 'John Doe')
       event = create(:event, visibility: 'public', user: user)
-      
+
       get events_path(format: :json)
       json = JSON.parse(response.body)
       event_json = json['events'].find { |e| e['id'] == event.id }
-      
+
       expect(event_json['hosts']).to be_an(Array)
       expect(event_json['hosts']).to include('John Doe')
       # Ensure no email addresses are exposed
@@ -69,7 +69,7 @@ RSpec.describe "JSON API", type: :request do
       get events_path(format: :json)
       json = JSON.parse(response.body)
       event = json['events'].first
-      
+
       expect(event['occurrences']).to be_an(Array)
       if event['occurrences'].any?
         occurrence = event['occurrences'].first
@@ -83,11 +83,11 @@ RSpec.describe "JSON API", type: :request do
 
     it "includes banner URLs when present" do
       event_with_banner = create(:event, :with_banner, visibility: 'public')
-      
+
       get events_path(format: :json)
       json = JSON.parse(response.body)
       event_json = json['events'].find { |e| e['id'] == event_with_banner.id }
-      
+
       expect(event_json['banner_url']).to be_present
       expect(event_json['banner_url']).to include('rails/active_storage')
     end
@@ -96,7 +96,7 @@ RSpec.describe "JSON API", type: :request do
       get events_path(format: :json)
       json = JSON.parse(response.body)
       event = json['events'].find { |e| e['id'] == public_event.id }
-      
+
       expect(event['banner_url']).to be_nil
     end
 
@@ -128,7 +128,7 @@ RSpec.describe "JSON API", type: :request do
     it "returns only public event occurrences" do
       get calendar_path(format: :json)
       json = JSON.parse(response.body)
-      
+
       event_titles = json['occurrences'].map { |o| o['event']['title'] }
       expect(event_titles).to include('Public Event')
       expect(event_titles).not_to include('Members Event', 'Private Event')
@@ -137,14 +137,14 @@ RSpec.describe "JSON API", type: :request do
     it "does not include grouped_by_month" do
       get calendar_path(format: :json)
       json = JSON.parse(response.body)
-      
+
       expect(json).not_to have_key('grouped_by_month')
     end
 
     it "includes occurrence metadata" do
       get calendar_path(format: :json)
       json = JSON.parse(response.body)
-      
+
       expect(json).to have_key('occurrences')
       expect(json).to have_key('generated_at')
       expect(json).to have_key('count')
@@ -153,9 +153,9 @@ RSpec.describe "JSON API", type: :request do
     it "includes occurrence details" do
       get calendar_path(format: :json)
       json = JSON.parse(response.body)
-      
+
       return if json['occurrences'].empty?
-      
+
       occurrence = json['occurrences'].first
       expect(occurrence).to have_key('id')
       expect(occurrence).to have_key('occurs_at')
@@ -168,12 +168,12 @@ RSpec.describe "JSON API", type: :request do
     it "includes event information for each occurrence" do
       get calendar_path(format: :json)
       json = JSON.parse(response.body)
-      
+
       return if json['occurrences'].empty?
-      
+
       occurrence = json['occurrences'].first
       event = occurrence['event']
-      
+
       expect(event).to have_key('id')
       expect(event).to have_key('title')
       expect(event).to have_key('hosts')
@@ -185,11 +185,11 @@ RSpec.describe "JSON API", type: :request do
       user = create(:user, name: 'Jane Doe')
       event = create(:event, visibility: 'public', user: user)
       create(:event_occurrence, event: event, occurs_at: 1.week.from_now)
-      
+
       get calendar_path(format: :json)
       json = JSON.parse(response.body)
       occurrence = json['occurrences'].find { |o| o['event']['id'] == event.id }
-      
+
       expect(occurrence['event']['hosts']).to be_an(Array)
       expect(occurrence['event']['hosts']).to include('Jane Doe')
       # Ensure no email addresses
@@ -199,20 +199,20 @@ RSpec.describe "JSON API", type: :request do
     it "sorts occurrences by date (earliest first)" do
       get calendar_path(format: :json)
       json = JSON.parse(response.body)
-      
+
       return if json['occurrences'].length < 2
-      
+
       dates = json['occurrences'].map { |o| Time.parse(o['occurs_at']) }
       expect(dates).to eq(dates.sort)
     end
 
     it "includes postponed occurrence details" do
       postponed_occurrence = create(:event_occurrence, :postponed, event: public_event, occurs_at: 3.weeks.from_now)
-      
+
       get calendar_path(format: :json)
       json = JSON.parse(response.body)
       occ_json = json['occurrences'].find { |o| o['id'] == postponed_occurrence.id }
-      
+
       expect(occ_json['status']).to eq('postponed')
       expect(occ_json['postponed_until']).to be_present
       expect(occ_json['cancellation_reason']).to be_present
@@ -220,11 +220,11 @@ RSpec.describe "JSON API", type: :request do
 
     it "includes cancelled occurrence details" do
       cancelled_occurrence = create(:event_occurrence, :cancelled, event: public_event, occurs_at: 4.weeks.from_now)
-      
+
       get calendar_path(format: :json)
       json = JSON.parse(response.body)
       occ_json = json['occurrences'].find { |o| o['id'] == cancelled_occurrence.id }
-      
+
       expect(occ_json['status']).to eq('cancelled')
       expect(occ_json['cancellation_reason']).to be_present
     end
@@ -232,22 +232,22 @@ RSpec.describe "JSON API", type: :request do
     it "includes banner URLs" do
       event_with_banner = create(:event, :with_banner, visibility: 'public')
       occ_with_banner = create(:event_occurrence, event: event_with_banner, occurs_at: 5.weeks.from_now)
-      
+
       get calendar_path(format: :json)
       json = JSON.parse(response.body)
       occ_json = json['occurrences'].find { |o| o['id'] == occ_with_banner.id }
-      
+
       expect(occ_json['banner_url']).to be_present
     end
 
     it "indicates when occurrence has custom banner" do
       event = create(:event, :with_banner, visibility: 'public')
       occ_with_custom = create(:event_occurrence, :with_banner, event: event, occurs_at: 6.weeks.from_now)
-      
+
       get calendar_path(format: :json)
       json = JSON.parse(response.body)
       occ_json = json['occurrences'].find { |o| o['id'] == occ_with_custom.id }
-      
+
       expect(occ_json['has_custom_banner']).to be true
     end
 
@@ -257,4 +257,3 @@ RSpec.describe "JSON API", type: :request do
     end
   end
 end
-

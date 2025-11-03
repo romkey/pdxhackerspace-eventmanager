@@ -3,19 +3,14 @@ class SiteConfigsController < ApplicationController
   before_action :set_site_config
   before_action :authorize_site_config
 
-  def edit
-  end
+  def edit; end
 
   def update
     # Handle favicon removal
-    if params[:site_config][:remove_favicon] == '1'
-      @site_config.favicon.purge
-    end
+    @site_config.favicon.purge if params[:site_config][:remove_favicon] == '1'
 
     # Handle banner removal
-    if params[:site_config][:remove_banner_image] == '1'
-      @site_config.banner_image.purge
-    end
+    @site_config.banner_image.purge if params[:site_config][:remove_banner_image] == '1'
 
     # Remove the removal flags from params before updating
     params[:site_config].delete(:remove_favicon)
@@ -50,4 +45,3 @@ class SiteConfigsController < ApplicationController
     )
   end
 end
-

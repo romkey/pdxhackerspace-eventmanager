@@ -1,6 +1,6 @@
 class EventOccurrencesController < ApplicationController
-  before_action :set_occurrence, only: [:show, :edit, :update, :destroy, :postpone, :cancel, :reactivate]
-  before_action :authorize_occurrence, only: [:edit, :update, :destroy, :postpone, :cancel, :reactivate]
+  before_action :set_occurrence, only: %i[show edit update destroy postpone cancel reactivate]
+  before_action :authorize_occurrence, only: %i[edit update destroy postpone cancel reactivate]
 
   def show
     @event = @occurrence.event
@@ -12,7 +12,7 @@ class EventOccurrencesController < ApplicationController
 
   def update
     @occurrence.current_user_for_journal = current_user
-    
+
     # Handle banner image removal
     if params[:event_occurrence][:remove_banner_image] == '1'
       EventJournal.log_occurrence_change(
@@ -23,7 +23,7 @@ class EventOccurrencesController < ApplicationController
       )
       @occurrence.banner_image.purge
     end
-    
+
     if @occurrence.update(occurrence_params)
       redirect_to @occurrence, notice: 'Occurrence was successfully updated.'
     else
@@ -70,12 +70,13 @@ class EventOccurrencesController < ApplicationController
 
   def authorize_occurrence
     @event = @occurrence.event
-    unless current_user && (current_user.admin? || @event.hosted_by?(current_user))
-      redirect_to @occurrence, alert: "You are not authorized to manage this occurrence."
-    end
+    return if current_user && (current_user.admin? || @event.hosted_by?(current_user))
+
+    redirect_to @occurrence, alert: "You are not authorized to manage this occurrence."
   end
 
   def occurrence_params
-    params.require(:event_occurrence).permit(:custom_description, :duration_override, :status, :banner_image, :remove_banner_image)
+    params.require(:event_occurrence).permit(:custom_description, :duration_override, :status, :banner_image,
+                                             :remove_banner_image)
   end
 end

@@ -1,0 +1,111 @@
+require:
+  - rubocop-rails
+  - rubocop-rspec
+
+AllCops:
+  TargetRubyVersion: 3.1
+  NewCops: enable
+  SuggestExtensions: false
+  Exclude:
+    - 'bin/**/*'
+    - 'db/schema.rb'
+    - 'db/migrate/**/*'
+    - 'node_modules/**/*'
+    - 'vendor/**/*'
+    - 'tmp/**/*'
+    - 'log/**/*'
+    - 'storage/**/*'
+
+# Disable frozen string literal comment requirement
+Style/FrozenStringLiteralComment:
+  Enabled: false
+
+# Allow both single and double quotes
+Style/StringLiterals:
+  Enabled: false
+
+Style/StringLiteralsInInterpolation:
+  Enabled: false
+
+# Reasonable line length for modern displays
+Layout/LineLength:
+  Max: 120
+  Exclude:
+    - 'config/**/*'
+    - 'spec/**/*'
+
+# Allow longer methods in specs
+Metrics/MethodLength:
+  Max: 15
+  Exclude:
+    - 'spec/**/*'
+    - 'db/seeds.rb'
+
+# Allow longer blocks in specs and routes
+Metrics/BlockLength:
+  Exclude:
+    - 'spec/**/*'
+    - 'config/routes.rb'
+    - 'config/environments/*.rb'
+    - 'db/seeds.rb'
+
+# Allow longer classes
+Metrics/ClassLength:
+  Max: 150
+  Exclude:
+    - 'spec/**/*'
+
+# Allow more complex methods
+Metrics/AbcSize:
+  Max: 20
+  Exclude:
+    - 'spec/**/*'
+    - 'db/seeds.rb'
+
+# Allow multiple expect statements in specs
+RSpec/MultipleExpectations:
+  Max: 5
+
+# Allow longer example lengths
+RSpec/ExampleLength:
+  Max: 15
+
+# Allow nested groups
+RSpec/NestedGroups:
+  Max: 5
+
+# Allow describe class without checking if it's defined
+RSpec/DescribeClass:
+  Enabled: false
+
+# Documentation is good but not required
+Style/Documentation:
+  Enabled: false
+
+# Allow empty lines around blocks
+Layout/EmptyLinesAroundBlockBody:
+  Enabled: false
+
+# Allow empty lines in classes
+Layout/EmptyLinesAroundClassBody:
+  Enabled: false
+
+# Allow empty lines in modules
+Layout/EmptyLinesAroundModuleBody:
+  Enabled: false
+
+# Rails specific configurations
+Rails:
+  Enabled: true
+
+# Allow Date.today, Time.now etc in most cases
+Rails/Date:
+  Enabled: false
+
+Rails/TimeZone:
+  Enabled: false
+
+# Allow has_and_belongs_to_many
+Rails/HasAndBelongsToMany:
+  Enabled: false
+

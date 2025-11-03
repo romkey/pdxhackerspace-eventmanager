@@ -3,15 +3,15 @@ require 'rails_helper'
 RSpec.describe User, type: :model do
   describe 'validations' do
     subject { build(:user) }
-    
-    it { should validate_presence_of(:email) }
-    it { should validate_uniqueness_of(:email).case_insensitive }
+
+    it { is_expected.to validate_presence_of(:email) }
+    it { is_expected.to validate_uniqueness_of(:email).case_insensitive }
   end
 
   describe 'associations' do
-    it { should have_many(:events).dependent(:destroy) }
-    it { should have_many(:event_hosts).dependent(:destroy) }
-    it { should have_many(:hosted_events).through(:event_hosts) }
+    it { is_expected.to have_many(:events).dependent(:destroy) }
+    it { is_expected.to have_many(:event_hosts).dependent(:destroy) }
+    it { is_expected.to have_many(:hosted_events).through(:event_hosts) }
   end
 
   describe 'devise modules' do
@@ -72,9 +72,9 @@ RSpec.describe User, type: :model do
 
     context 'when user does not exist' do
       it 'creates a new user' do
-        expect {
+        expect do
           User.from_omniauth(auth)
-        }.to change(User, :count).by(1)
+        end.to change(User, :count).by(1)
       end
 
       it 'sets the provider and uid' do
@@ -93,9 +93,9 @@ RSpec.describe User, type: :model do
       let!(:existing_user) { create(:user, :with_oauth, email: 'oauth_user@example.com', uid: '12345') }
 
       it 'does not create a new user' do
-        expect {
+        expect do
           User.from_omniauth(auth)
-        }.not_to change(User, :count)
+        end.not_to change(User, :count)
       end
 
       it 'returns the existing user' do
@@ -132,4 +132,3 @@ RSpec.describe User, type: :model do
     end
   end
 end
-

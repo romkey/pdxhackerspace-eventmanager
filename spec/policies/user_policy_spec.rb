@@ -91,4 +91,3 @@ RSpec.describe UserPolicy, type: :policy do
     end
   end
 end
-

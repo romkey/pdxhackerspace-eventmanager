@@ -61,4 +61,3 @@ RSpec.describe SiteConfigPolicy, type: :policy do
     end
   end
 end
-

@@ -8,7 +8,7 @@ RSpec.describe "Smoke Tests", type: :feature do
     end
 
     it "shows upcoming events" do
-      event = create(:event, visibility: 'public', title: 'Test Event')
+      create(:event, visibility: 'public', title: 'Test Event')
       visit root_path
       expect(page).to have_content('Test Event')
     end
@@ -22,17 +22,17 @@ RSpec.describe "Smoke Tests", type: :feature do
 
   describe "Event Listing" do
     it "shows all public events" do
-      public_event = create(:event, visibility: 'public', title: 'Public Event')
-      private_event = create(:event, :private, title: 'Private Event')
-      
+      create(:event, visibility: 'public', title: 'Public Event')
+      create(:event, :private, title: 'Private Event')
+
       visit events_path
       expect(page).to have_content('Public Event')
       expect(page).not_to have_content('Private Event')
     end
 
     it "shows event details" do
-      event = create(:event, visibility: 'public', title: 'Test Event', description: 'Test Description')
-      
+      create(:event, visibility: 'public', title: 'Test Event', description: 'Test Description')
+
       visit events_path
       expect(page).to have_content('Test Event')
       expect(page).to have_content('Test Description')
@@ -74,7 +74,7 @@ RSpec.describe "Smoke Tests", type: :feature do
     it "shows upcoming occurrences" do
       event = create(:event, visibility: 'public', title: 'Calendar Event')
       occurrence = event.occurrences.first
-      
+
       visit calendar_path
       expect(page).to have_content('Calendar Event')
       expect(page).to have_content(occurrence.occurs_at.day.to_s)
@@ -82,7 +82,7 @@ RSpec.describe "Smoke Tests", type: :feature do
 
     it "groups occurrences by month" do
       event = create(:event, visibility: 'public')
-      
+
       visit calendar_path
       expect(page).to have_content(event.start_time.strftime('%B %Y'))
     end
@@ -123,7 +123,7 @@ RSpec.describe "Smoke Tests", type: :feature do
 
     it "shows the new event form" do
       visit new_event_path
-      
+
       expect(page).to have_field('Title')
       expect(page).to have_field('Description')
       expect(page).to have_button('Create Event')
@@ -131,9 +131,9 @@ RSpec.describe "Smoke Tests", type: :feature do
 
     it "shows validation errors for invalid event" do
       visit new_event_path
-      
+
       click_button 'Create Event'
-      
+
       expect(page).to have_content("can't be blank")
     end
   end
@@ -148,26 +148,26 @@ RSpec.describe "Smoke Tests", type: :feature do
 
     it "shows edit form for own event" do
       visit edit_event_path(event)
-      
+
       expect(page).to have_field('Title', with: 'My Event')
       expect(page).to have_button('Update Event')
     end
 
     it "shows postpone button" do
       visit event_path(event)
-      
+
       expect(page).to have_button('Postpone')
     end
 
     it "shows cancel button" do
       visit event_path(event)
-      
+
       expect(page).to have_button('Cancel Event')
     end
 
     it "shows delete button" do
       visit event_path(event)
-      
+
       expect(page).to have_button('Delete')
     end
   end
@@ -186,7 +186,7 @@ RSpec.describe "Smoke Tests", type: :feature do
     it "prevents users from editing others' events" do
       sign_in user
       visit edit_event_path(private_event)
-      
+
       expect(current_path).not_to eq(edit_event_path(private_event))
       expect(page).to have_content('not authorized')
     end
@@ -194,21 +194,21 @@ RSpec.describe "Smoke Tests", type: :feature do
     it "allows admins to edit any event" do
       sign_in admin
       visit edit_event_path(private_event)
-      
+
       expect(page).to have_field('Title')
     end
 
     it "shows private events to hosts" do
       sign_in other_user
       visit event_path(private_event)
-      
+
       expect(page).to have_content(private_event.title)
     end
 
     it "hides private events from non-hosts" do
       sign_in user
       visit event_path(private_event)
-      
+
       expect(page).to have_content('not authorized')
     end
   end
@@ -218,7 +218,7 @@ RSpec.describe "Smoke Tests", type: :feature do
 
     it "provides events JSON feed" do
       visit events_path(format: :json)
-      
+
       json = JSON.parse(page.body)
       expect(json).to have_key('events')
       expect(json['events'].first['title']).to eq('API Event')
@@ -226,9 +226,9 @@ RSpec.describe "Smoke Tests", type: :feature do
 
     it "provides calendar JSON feed" do
       create(:event_occurrence, event: public_event, occurs_at: 1.week.from_now)
-      
+
       visit calendar_path(format: :json)
-      
+
       json = JSON.parse(page.body)
       expect(json).to have_key('occurrences')
       expect(json['occurrences']).not_to be_empty
@@ -236,7 +236,7 @@ RSpec.describe "Smoke Tests", type: :feature do
 
     it "does not expose email addresses in JSON" do
       visit events_path(format: :json)
-      
+
       expect(page.body).not_to include('@example.com')
     end
   end
@@ -245,13 +245,12 @@ RSpec.describe "Smoke Tests", type: :feature do
     it "renders on different viewports" do
       visit root_path
       expect(page).to have_content('EventManager')
-      
+
       visit events_path
       expect(page).to have_content('All Events')
-      
+
       visit calendar_path
       expect(page).to have_content('Event Calendar')
     end
   end
 end
-

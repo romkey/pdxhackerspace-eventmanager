@@ -17,4 +17,3 @@ class SiteConfigPolicy < ApplicationPolicy
     end
   end
 end
-

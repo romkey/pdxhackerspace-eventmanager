@@ -122,9 +122,9 @@ RSpec.describe "Events", type: :request do
       end
 
       it "does not create an event" do
-        expect {
+        expect do
           post events_path, params: event_params
-        }.not_to change(Event, :count)
+        end.not_to change(Event, :count)
       end
     end
 
@@ -133,9 +133,9 @@ RSpec.describe "Events", type: :request do
 
       context "with valid params" do
         it "creates a new event" do
-          expect {
+          expect do
             post events_path, params: event_params
-          }.to change(Event, :count).by(1)
+          end.to change(Event, :count).by(1)
         end
 
         it "creates occurrences for the event" do
@@ -162,9 +162,9 @@ RSpec.describe "Events", type: :request do
         end
 
         it "does not create an event" do
-          expect {
+          expect do
             post events_path, params: invalid_params
-          }.not_to change(Event, :count)
+          end.not_to change(Event, :count)
         end
 
         it "renders the new template" do
@@ -265,9 +265,9 @@ RSpec.describe "Events", type: :request do
       before { sign_in user }
 
       it "deletes the event" do
-        expect {
+        expect do
           delete event_path(event)
-        }.to change(Event, :count).by(-1)
+        end.to change(Event, :count).by(-1)
       end
 
       it "redirects to events index" do
@@ -280,9 +280,9 @@ RSpec.describe "Events", type: :request do
       before { sign_in other_user }
 
       it "does not delete the event" do
-        expect {
+        expect do
           delete event_path(event)
-        }.not_to change(Event, :count)
+        end.not_to change(Event, :count)
       end
     end
 
@@ -290,9 +290,9 @@ RSpec.describe "Events", type: :request do
       before { sign_in admin }
 
       it "deletes the event" do
-        expect {
+        expect do
           delete event_path(event)
-        }.to change(Event, :count).by(-1)
+        end.to change(Event, :count).by(-1)
       end
     end
   end
@@ -407,4 +407,3 @@ RSpec.describe "Events", type: :request do
     end
   end
 end
-

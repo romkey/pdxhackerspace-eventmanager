@@ -3,24 +3,24 @@ require 'rails_helper'
 RSpec.describe Event, type: :model do
   describe 'validations' do
     subject { build(:event) }
-    
-    it { should validate_presence_of(:title) }
-    it { should validate_presence_of(:start_time) }
-    it { should validate_numericality_of(:duration).is_greater_than(0) }
-    it { should validate_inclusion_of(:recurrence_type).in_array(%w[once weekly monthly custom]) }
-    it { should validate_inclusion_of(:status).in_array(%w[active postponed cancelled]) }
-    it { should validate_inclusion_of(:visibility).in_array(%w[public members private]) }
-    it { should validate_inclusion_of(:open_to).in_array(%w[public members private]) }
+
+    it { is_expected.to validate_presence_of(:title) }
+    it { is_expected.to validate_presence_of(:start_time) }
+    it { is_expected.to validate_numericality_of(:duration).is_greater_than(0) }
+    it { is_expected.to validate_inclusion_of(:recurrence_type).in_array(%w[once weekly monthly custom]) }
+    it { is_expected.to validate_inclusion_of(:status).in_array(%w[active postponed cancelled]) }
+    it { is_expected.to validate_inclusion_of(:visibility).in_array(%w[public members private]) }
+    it { is_expected.to validate_inclusion_of(:open_to).in_array(%w[public members private]) }
   end
 
   describe 'associations' do
-    it { should belong_to(:user) }
-    it { should have_many(:event_hosts).dependent(:destroy) }
-    it { should have_many(:hosts).through(:event_hosts) }
-    it { should have_many(:event_occurrences).dependent(:destroy) }
-    it { should have_many(:occurrences).dependent(:destroy) }
-    it { should have_many(:event_journals).dependent(:destroy) }
-    it { should have_one_attached(:banner_image) }
+    it { is_expected.to belong_to(:user) }
+    it { is_expected.to have_many(:event_hosts).dependent(:destroy) }
+    it { is_expected.to have_many(:hosts).through(:event_hosts) }
+    it { is_expected.to have_many(:event_occurrences).dependent(:destroy) }
+    it { is_expected.to have_many(:occurrences).dependent(:destroy) }
+    it { is_expected.to have_many(:event_journals).dependent(:destroy) }
+    it { is_expected.to have_one_attached(:banner_image) }
   end
 
   describe 'scopes' do
@@ -259,16 +259,16 @@ RSpec.describe Event, type: :model do
     let(:new_host) { create(:user) }
 
     it 'adds user as host' do
-      expect {
+      expect do
         event.add_host(new_host)
-      }.to change { event.hosts.count }.by(1)
+      end.to change { event.hosts.count }.by(1)
     end
 
     it 'does not add duplicate hosts' do
       event.add_host(new_host)
-      expect {
+      expect do
         event.add_host(new_host)
-      }.not_to change { event.hosts.count }
+      end.not_to(change { event.hosts.count })
     end
   end
 
@@ -282,9 +282,9 @@ RSpec.describe Event, type: :model do
     end
 
     it 'removes non-creator host' do
-      expect {
+      expect do
         event.remove_host(additional_host)
-      }.to change { event.hosts.count }.by(-1)
+      end.to change { event.hosts.count }.by(-1)
     end
 
     it 'prevents removing creator when they are the only host' do
@@ -439,4 +439,3 @@ RSpec.describe Event, type: :model do
     end
   end
 end
-

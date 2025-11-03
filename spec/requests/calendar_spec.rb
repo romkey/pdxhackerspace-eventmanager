@@ -43,6 +43,7 @@ RSpec.describe "Calendar", type: :request do
 
     context "as an admin" do
       let(:admin) { create(:user, :admin) }
+
       before { sign_in admin }
 
       it "shows all event occurrences" do
@@ -65,4 +66,3 @@ RSpec.describe "Calendar", type: :request do
     end
   end
 end
-

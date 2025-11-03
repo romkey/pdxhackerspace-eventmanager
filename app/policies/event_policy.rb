@@ -6,13 +6,13 @@ class EventPolicy < ApplicationPolicy
   def show?
     # Public events - anyone can view
     return true if record.public?
-    
+
     # Members events - signed in users can view
     return true if record.members_only? && user.present?
-    
+
     # Private events - only owner and admin can view
     return true if record.private? && user.present? && (user.admin? || user == record.user)
-    
+
     false
   end
 
@@ -58,4 +58,3 @@ class EventPolicy < ApplicationPolicy
     end
   end
 end
-

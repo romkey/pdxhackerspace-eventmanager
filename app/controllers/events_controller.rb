@@ -1,11 +1,11 @@
 class EventsController < ApplicationController
-  before_action :authenticate_user!, except: [:index, :show, :ical]
-  before_action :set_event, only: [:show, :edit, :update, :destroy, :postpone, :cancel, :reactivate]
-  before_action :authorize_event, only: [:edit, :update, :destroy, :postpone, :cancel, :reactivate]
+  before_action :authenticate_user!, except: %i[index show ical]
+  before_action :set_event, only: %i[show edit update destroy postpone cancel reactivate]
+  before_action :authorize_event, only: %i[edit update destroy postpone cancel reactivate]
 
   def index
     @events = policy_scope(Event).includes(:user, :hosts).order(start_time: :asc)
-    
+
     respond_to do |format|
       format.html
       format.json do
@@ -14,7 +14,7 @@ class EventsController < ApplicationController
                              .active
                              .includes(:hosts, :occurrences, banner_image_attachment: :blob)
                              .order(start_time: :asc)
-        
+
         events_data = public_events.map do |event|
           {
             id: event.id,
@@ -42,7 +42,7 @@ class EventsController < ApplicationController
             end
           }
         end
-        
+
         render json: {
           events: events_data,
           generated_at: Time.now.iso8601,
@@ -60,6 +60,8 @@ class EventsController < ApplicationController
     @event = current_user.events.build
     authorize @event
   end
+
+  def edit; end
 
   def create
     @event = current_user.events.build(event_params)
@@ -80,12 +82,9 @@ class EventsController < ApplicationController
     end
   end
 
-  def edit
-  end
-
   def update
     @event.current_user_for_journal = current_user
-    
+
     # Handle banner image removal
     if params[:event][:remove_banner_image] == '1'
       EventJournal.log_event_change(
@@ -96,7 +95,7 @@ class EventsController < ApplicationController
       )
       @event.banner_image.purge
     end
-    
+
     # Rebuild schedule if recurrence changed
     if params[:event][:recurrence_type].present? && @event.recurring?
       recurrence_params = build_recurrence_params
@@ -146,23 +145,23 @@ class EventsController < ApplicationController
 
   def ical
     @event = Event.find_by!(ical_token: params[:token])
-    
+
     calendar = Icalendar::Calendar.new
-    
+
     # Use actual EventOccurrence records (includes status, customizations)
     @event.event_occurrences.upcoming.limit(50).each do |occurrence|
       calendar.event do |e|
         e.dtstart = Icalendar::Values::DateTime.new(occurrence.occurs_at)
         e.dtend = Icalendar::Values::DateTime.new(occurrence.occurs_at + occurrence.duration.minutes)
         e.summary = @event.title
-        e.description = occurrence.description  # Uses custom or default
-        e.status = occurrence.status.upcase  # Per-occurrence status
-        
+        e.description = occurrence.description # Uses custom or default
+        e.status = occurrence.status.upcase # Per-occurrence status
+
         # Add cancellation reason if present
         if occurrence.cancellation_reason.present?
           e.description += "\n\n#{occurrence.status.titleize}: #{occurrence.cancellation_reason}"
         end
-        
+
         # Add postponed info if applicable
         if occurrence.status == 'postponed' && occurrence.postponed_until
           e.description += "\n\nRescheduled to: #{occurrence.postponed_until.strftime('%B %d, %Y at %I:%M %p')}"
@@ -171,7 +170,7 @@ class EventsController < ApplicationController
     end
 
     calendar.publish
-    
+
     respond_to do |format|
       format.ics { render plain: calendar.to_ical, content_type: 'text/calendar' }
     end
@@ -188,8 +187,8 @@ class EventsController < ApplicationController
   end
 
   def event_params
-    params.require(:event).permit(:title, :description, :start_time, :duration, 
-                                  :recurrence_type, :status, :visibility, :open_to, 
+    params.require(:event).permit(:title, :description, :start_time, :duration,
+                                  :recurrence_type, :status, :visibility, :open_to,
                                   :more_info_url, :max_occurrences, :banner_image, :remove_banner_image)
   end
 

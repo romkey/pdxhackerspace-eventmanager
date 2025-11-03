@@ -6,7 +6,7 @@ module OmniAuth
       option :name, 'authentik'
 
       option :client_options, {
-        site: ENV['AUTHENTIK_SITE_URL'],
+        site: ENV.fetch('AUTHENTIK_SITE_URL', nil),
         authorize_url: '/application/o/authorize/',
         token_url: '/application/o/token/'
       }
@@ -27,4 +27,3 @@ module OmniAuth
     end
   end
 end
-
