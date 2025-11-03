@@ -31,7 +31,8 @@ module EventManager
     # config.time_zone = "Central Time (US & Canada)"
 
     # Rails 7.1+ way to autoload lib directory
-    config.autoload_lib(ignore: %w[assets tasks])
+    # Ignore omniauth since directory name doesn't match module name (omniauth vs OmniAuth)
+    config.autoload_lib(ignore: %w[assets tasks omniauth])
 
     # Don't generate system test files.
     config.generators.system_tests = nil
