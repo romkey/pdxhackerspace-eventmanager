@@ -217,7 +217,8 @@ RSpec.describe "Smoke Tests", type: :feature do
     let!(:public_event) { create(:event, visibility: 'public', title: 'API Event') }
 
     it "provides events JSON feed" do
-      visit events_path(format: :json)
+      page.driver.header('Accept', 'application/json')
+      visit events_path
 
       json = JSON.parse(page.body)
       expect(json).to have_key('events')
@@ -227,7 +228,8 @@ RSpec.describe "Smoke Tests", type: :feature do
     it "provides calendar JSON feed" do
       create(:event_occurrence, event: public_event, occurs_at: 1.week.from_now)
 
-      visit calendar_path(format: :json)
+      page.driver.header('Accept', 'application/json')
+      visit calendar_path
 
       json = JSON.parse(page.body)
       expect(json).to have_key('occurrences')
@@ -235,7 +237,8 @@ RSpec.describe "Smoke Tests", type: :feature do
     end
 
     it "does not expose email addresses in JSON" do
-      visit events_path(format: :json)
+      page.driver.header('Accept', 'application/json')
+      visit events_path
 
       expect(page.body).not_to include('@example.com')
     end
