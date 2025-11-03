@@ -29,7 +29,7 @@ module EventManager
     # in config/environments, which are processed later.
     #
     # config.time_zone = "Central Time (US & Canada)"
-    
+
     # Rails 7.1+ way to autoload lib directory
     config.autoload_lib(ignore: %w[assets tasks])
 
