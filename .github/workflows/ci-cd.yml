@@ -100,7 +100,12 @@ jobs:
           RAILS_ENV: test
 
       - name: Run tests
-        run: bundle exec rspec --format progress
+        run: |
+          echo "Starting RSpec test suite..."
+          bundle exec rspec --format documentation --force-color
+        env:
+          # Disable Spring to avoid hanging
+          DISABLE_SPRING: 1
 
       - name: Upload coverage reports (optional)
         if: always()
