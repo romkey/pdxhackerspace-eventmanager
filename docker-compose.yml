@@ -6,13 +6,19 @@ version: '3.8'
 
 services:
   db:
+    image: postgres:14-alpine
     restart: always
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
     environment:
+      POSTGRES_USER: ${DATABASE_USER}
       POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
-    # In production, consider using an external database service
+      POSTGRES_DB: ${DATABASE_NAME}
+    # In production, consider using an external managed database service
     # and removing this service entirely
 
   web:
+    image: ghcr.io/romkey/pdxhackerspace-eventmanager:latest
     restart: always
     command: bash -c "rm -f tmp/pids/server.pid && bundle exec puma -C config/puma.rb"
     environment:
@@ -29,4 +35,10 @@ services:
       # Only mount persistent storage
       - ./storage:/app/storage
       - ./log:/app/log
+    ports:
+      - "3000:3000"
+    depends_on:
+      - db
 
+volumes:
+  postgres_data:

@@ -53,8 +53,8 @@ git push origin v1.0.0
 ### 3. Use the Image
 Once the workflow completes, the image will be available at:
 ```
-ghcr.io/YOUR_USERNAME/eventmanager:v1.0.0
-ghcr.io/YOUR_USERNAME/eventmanager:latest
+ghcr.io/romkey/pdxhackerspace-eventmanager:v1.0.0
+ghcr.io/romkey/pdxhackerspace-eventmanager:latest
 ```
 
 ## Using Pre-built Images in Production
@@ -65,9 +65,9 @@ The production `docker-compose.yml` file should use pre-built images:
 
 ```yaml
 web:
-  image: ghcr.io/YOUR_USERNAME/eventmanager:latest
+  image: ghcr.io/romkey/pdxhackerspace-eventmanager:latest
   # Or pin to specific version:
-  # image: ghcr.io/YOUR_USERNAME/eventmanager:v1.0.0
+  # image: ghcr.io/romkey/pdxhackerspace-eventmanager:v1.0.0
 ```
 
 ### Deploy Updates
@@ -88,7 +88,7 @@ docker compose logs -f web
 If something goes wrong:
 ```bash
 # Update docker-compose.yml to previous version
-# image: ghcr.io/YOUR_USERNAME/eventmanager:v1.0.0
+# image: ghcr.io/romkey/pdxhackerspace-eventmanager:v1.0.0
 
 # Pull and restart
 docker compose pull
@@ -140,7 +140,7 @@ docker build -t eventmanager:test .
 If you get authentication errors when pulling:
 ```bash
 # Log in to GitHub Container Registry
-echo $GITHUB_TOKEN | docker login ghcr.io -u YOUR_USERNAME --password-stdin
+echo $GITHUB_TOKEN | docker login ghcr.io -u romkey --password-stdin
 
 # Or create a Personal Access Token with read:packages scope
 ```
