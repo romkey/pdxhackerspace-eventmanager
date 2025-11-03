@@ -72,6 +72,13 @@ group :development, :test do
   gem "rspec-rails", "~> 6.0"
   gem "factory_bot_rails"
   gem "faker"
+  
+  # Code quality and security
+  gem "rubocop", require: false
+  gem "rubocop-rails", require: false
+  gem "rubocop-rspec", require: false
+  gem "brakeman", require: false
+  gem "bundler-audit", require: false
 end
 
 group :test do
