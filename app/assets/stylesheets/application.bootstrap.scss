@@ -69,12 +69,37 @@
   }
 
   // Links
-  a {
+  a:not(.nav-link):not(.navbar-brand):not(.btn):not(.dropdown-item) {
     color: #6ea8fe;
   }
 
-  a:hover {
+  a:not(.nav-link):not(.navbar-brand):not(.btn):not(.dropdown-item):hover {
     color: #9ec5fe;
+  }
+
+  a:not(.nav-link):not(.navbar-brand):not(.btn):not(.dropdown-item):visited {
+    color: #b197fc;
+  }
+
+  // Card title links should maintain readability and look consistent
+  .card-title a,
+  .card-title a:visited {
+    color: #dee2e6 !important;
+  }
+
+  .card-title a:hover {
+    color: #9ec5fe !important;
+  }
+
+  // Ensure navbar links stay visible
+  .navbar .nav-link,
+  .navbar .navbar-brand {
+    color: rgba(255, 255, 255, 0.9) !important;
+  }
+
+  .navbar .nav-link:hover,
+  .navbar .navbar-brand:hover {
+    color: #fff !important;
   }
 
   // Definition lists

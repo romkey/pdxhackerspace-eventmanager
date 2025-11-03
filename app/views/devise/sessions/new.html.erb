@@ -4,6 +4,19 @@
       <div class="card-body p-4">
         <h2 class="card-title text-center mb-4">Sign In</h2>
 
+        <% if authentik_configured? %>
+          <div class="d-grid mb-4">
+            <%= button_to "Sign in with Authentik", user_authentik_omniauth_authorize_path, 
+                method: :post, 
+                class: "btn btn-primary btn-lg",
+                data: { turbo: false } %>
+          </div>
+
+          <div class="text-center mb-3">
+            <small class="text-muted">or use your local account</small>
+          </div>
+        <% end %>
+
         <%= form_for(resource, as: resource_name, url: session_path(resource_name), html: { class: "needs-validation" }) do |f| %>
           <div class="mb-3">
             <%= f.label :email, class: "form-label" %>
@@ -23,16 +36,8 @@
           <% end %>
 
           <div class="d-grid mb-3">
-            <%= f.submit "Sign In", class: "btn btn-primary btn-lg" %>
-          </div>
-        <% end %>
-
-        <% if devise_mapping.omniauthable? %>
-          <div class="d-grid mb-3">
-            <%= button_to "Sign in with Authentik", user_authentik_omniauth_authorize_path, 
-                method: :post, 
-                class: "btn btn-outline-secondary",
-                data: { turbo: false } %>
+            <% submit_class = authentik_configured? ? "btn btn-outline-primary" : "btn btn-primary btn-lg" %>
+            <%= f.submit "Sign In", class: submit_class %>
           </div>
         <% end %>
 

@@ -48,4 +48,7 @@ Rails.application.routes.draw do
       post :make_admin
     end
   end
+
+  # Site configuration (admin only, singleton)
+  resource :site_config, only: [:edit, :update]
 end

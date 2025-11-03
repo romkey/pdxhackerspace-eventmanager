@@ -57,7 +57,7 @@ git clone <repository-url>
 cd EventManager
 
 # Start all services
-docker-compose up -d
+docker compose -f docker-compose.dev.yml up -d
 
 # Access the application
 open http://localhost:3000
@@ -260,6 +260,33 @@ Extend the `Event.build_schedule` method in `app/models/event.rb` for custom rec
 - AWS Elastic Beanstalk
 - Docker/Kubernetes
 
+## Testing
+
+The application has a comprehensive automated testing framework with **308 tests** covering all features.
+
+### Run Tests
+
+```bash
+# Using Docker (recommended)
+docker compose exec web bundle exec rspec
+
+# Native installation
+bundle exec rspec
+```
+
+### Test Suite
+- **Unit Tests** (151 tests) - Models and business logic
+- **Policy Tests** (48 tests) - Authorization rules
+- **Request Tests** (89 tests) - Controllers and APIs
+- **Feature Tests** (30 tests) - End-to-end workflows
+
+**All tests passing with 100% success rate!** ✅
+
+For complete testing documentation, see:
+- **TESTING.md** - Complete testing guide
+- **TEST_CHEATSHEET.md** - Quick reference
+- **GOOD_MORNING_README.md** - Implementation summary
+
 ## Technology Stack
 
 - **Framework**: Ruby on Rails 7.0
@@ -271,6 +298,7 @@ Extend the `Event.build_schedule` method in `app/models/event.rb` for custom rec
 - **Frontend**: Bootstrap 5, Hotwire (Turbo + Stimulus)
 - **JavaScript**: esbuild
 - **CSS**: Sass
+- **Testing**: RSpec, FactoryBot, Capybara
 
 ## Project Structure
 

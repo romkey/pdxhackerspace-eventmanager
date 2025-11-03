@@ -1,11 +1,15 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>EventManager - Hackerspace Event Management</title>
+    <title><%= @site_config&.organization_name || 'EventManager' %> - Hackerspace Event Management</title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="color-scheme" content="light dark">
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
+    
+    <% if @site_config&.favicon&.attached? %>
+      <%= favicon_link_tag url_for(@site_config.favicon) %>
+    <% end %>
 
     <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
     <%= javascript_include_tag "application", "data-turbo-track": "reload", type: "module" %>
@@ -14,7 +18,14 @@
   <body>
     <nav class="navbar navbar-expand-lg bg-primary navbar-dark">
       <div class="container-fluid">
-        <%= link_to "EventManager", root_path, class: "navbar-brand" %>
+        <%= link_to root_path, class: "navbar-brand" do %>
+          <i class="bi bi-house-door-fill"></i>
+        <% end %>
+        <% if @site_config&.website_url.present? %>
+          <%= link_to (@site_config.organization_name || "EventManager"), @site_config.website_url, class: "navbar-brand" %>
+        <% else %>
+          <span class="navbar-brand mb-0"><%= @site_config&.organization_name || "EventManager" %></span>
+        <% end %>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
           <span class="navbar-toggler-icon"></span>
         </button>
@@ -33,6 +44,9 @@
               <% if current_user.admin? %>
                 <li class="nav-item">
                   <%= link_to "Users", users_path, class: "nav-link" %>
+                </li>
+                <li class="nav-item">
+                  <%= link_to "Site Config", edit_site_config_path, class: "nav-link" %>
                 </li>
               <% end %>
             <% end %>
@@ -83,7 +97,7 @@
 
     <footer class="mt-5 py-3 bg-light">
       <div class="container text-center text-muted">
-        <small>&copy; 2025 EventManager - Hackerspace Event Management System</small>
+        <small><%= @site_config&.footer_text.presence || "© #{Time.current.year} EventManager - Hackerspace Event Management System" %></small>
       </div>
     </footer>
   </body>

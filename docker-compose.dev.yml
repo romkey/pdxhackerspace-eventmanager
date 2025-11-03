@@ -1,0 +1,54 @@
+version: '3.8'
+
+# Development configuration
+# Usage: docker compose -f docker-compose.dev.yml up -d
+# For production, use the default docker-compose.yml file
+
+services:
+  db:
+    image: postgres:14-alpine
+    container_name: eventmanager_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: eventmanager
+      POSTGRES_PASSWORD: eventmanager_password
+      POSTGRES_DB: EventManager_development
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U eventmanager"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  web:
+    build: .
+    container_name: eventmanager_web
+    command: bash -c "rm -f tmp/pids/server.pid && bundle exec rails s -b '0.0.0.0'"
+    volumes:
+      - .:/app  # Mounts entire app including storage/ for Active Storage uploads
+      - bundle_cache:/usr/local/bundle
+      - node_modules:/app/node_modules
+    ports:
+      - "3000:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_HOST: db
+      DATABASE_USER: eventmanager
+      DATABASE_PASSWORD: eventmanager_password
+      DATABASE_NAME: EventManager_development
+      RAILS_ENV: development
+      AUTHENTIK_CLIENT_ID: ${AUTHENTIK_CLIENT_ID:-}
+      AUTHENTIK_CLIENT_SECRET: ${AUTHENTIK_CLIENT_SECRET:-}
+      AUTHENTIK_SITE_URL: ${AUTHENTIK_SITE_URL:-http://localhost:9000}
+    stdin_open: true
+    tty: true
+
+volumes:
+  postgres_data:
+  bundle_cache:
+  node_modules:
+

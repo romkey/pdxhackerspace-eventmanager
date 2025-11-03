@@ -1,5 +1,6 @@
 class HomeController < ApplicationController
   def index
+    @site_config = SiteConfig.current
     @upcoming_events = policy_scope(Event)
                         .includes(:user, :hosts)
                         .active

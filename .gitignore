@@ -34,3 +34,14 @@
 !/app/assets/builds/.keep
 
 /node_modules
+
+# Environment variables and secrets
+.env
+.env.*
+.env~
+
+# Editor backup files
+*~
+*.swp
+*.swo
+.DS_Store

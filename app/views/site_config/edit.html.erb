@@ -1,0 +1,155 @@
+<div class="row">
+  <div class="col-lg-8 mx-auto">
+    <h1 class="mb-4">
+      <i class="bi bi-gear"></i> Site Configuration
+    </h1>
+
+    <div class="alert alert-info">
+      <i class="bi bi-info-circle"></i> <strong>Note:</strong> These settings control the site-wide appearance and information. Changes apply immediately across the entire site.
+    </div>
+
+    <div class="card">
+      <div class="card-body">
+        <%= form_with(model: @site_config, url: site_config_path, method: :patch, local: true) do |f| %>
+          <% if @site_config.errors.any? %>
+            <div class="alert alert-danger">
+              <h4><%= pluralize(@site_config.errors.count, "error") %> prohibited this configuration from being saved:</h4>
+              <ul>
+                <% @site_config.errors.full_messages.each do |message| %>
+                  <li><%= message %></li>
+                <% end %>
+              </ul>
+            </div>
+          <% end %>
+
+          <h5 class="border-bottom pb-2 mb-3">Organization Information</h5>
+
+          <div class="mb-3">
+            <%= f.label :organization_name, "Organization Name", class: "form-label" %>
+            <%= f.text_field :organization_name, class: "form-control", required: true, placeholder: "My Awesome Hackerspace" %>
+            <small class="form-text text-muted">
+              This appears in the navigation bar and page titles
+            </small>
+          </div>
+
+          <div class="mb-3">
+            <%= f.label :website_url, "Organization Website", class: "form-label" %>
+            <%= f.url_field :website_url, class: "form-control", placeholder: "https://example.org" %>
+            <small class="form-text text-muted">
+              <i class="bi bi-link-45deg"></i> If set, clicking the organization name will link to this URL
+            </small>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <%= f.label :contact_email, "Contact Email", class: "form-label" %>
+              <%= f.email_field :contact_email, class: "form-control", placeholder: "info@hackerspace.org" %>
+              <small class="form-text text-muted">
+                <i class="bi bi-envelope"></i> Public contact email
+              </small>
+            </div>
+
+            <div class="col-md-6 mb-3">
+              <%= f.label :contact_phone, "Contact Phone", class: "form-label" %>
+              <%= f.text_field :contact_phone, class: "form-control", placeholder: "(555) 123-4567" %>
+              <small class="form-text text-muted">
+                <i class="bi bi-telephone"></i> Public contact phone
+              </small>
+            </div>
+          </div>
+
+          <h5 class="border-bottom pb-2 mb-3 mt-4">Branding</h5>
+
+          <div class="mb-3">
+            <%= f.label :favicon, "Favicon", class: "form-label" %>
+            <%= f.file_field :favicon, class: "form-control", accept: "image/x-icon,image/png,image/svg+xml" %>
+            <small class="form-text text-muted">
+              <i class="bi bi-image"></i> Upload a favicon (.ico, .png, or .svg file, recommended 32x32 or 64x64 pixels)
+            </small>
+            <% if @site_config.favicon.attached? %>
+              <div class="mt-2">
+                <%= image_tag @site_config.favicon, class: "img-thumbnail", style: "max-width: 64px; max-height: 64px;" %>
+                <div class="form-check mt-2">
+                  <%= f.check_box :remove_favicon, class: "form-check-input" %>
+                  <%= f.label :remove_favicon, "Remove current favicon", class: "form-check-label" %>
+                </div>
+              </div>
+            <% end %>
+          </div>
+
+          <div class="mb-3">
+            <%= f.label :banner_image, "Site Banner", class: "form-label" %>
+            <%= f.file_field :banner_image, class: "form-control", accept: "image/*" %>
+            <small class="form-text text-muted">
+              <i class="bi bi-image"></i> Upload a banner image for the homepage (JPG, PNG, GIF, recommended 1200x400 pixels)
+            </small>
+            <% if @site_config.banner_image.attached? %>
+              <div class="mt-2">
+                <%= image_tag @site_config.banner_image, class: "img-thumbnail", style: "max-width: 400px;" %>
+                <div class="form-check mt-2">
+                  <%= f.check_box :remove_banner_image, class: "form-check-input" %>
+                  <%= f.label :remove_banner_image, "Remove current banner", class: "form-check-label" %>
+                </div>
+              </div>
+            <% end %>
+          </div>
+
+          <h5 class="border-bottom pb-2 mb-3 mt-4">Footer</h5>
+
+          <div class="mb-3">
+            <%= f.label :footer_text, "Footer Text", class: "form-label" %>
+            <%= f.text_area :footer_text, class: "form-control", rows: 3, placeholder: "© 2025 My Hackerspace - All Rights Reserved" %>
+            <small class="form-text text-muted">
+              This appears at the bottom of every page. Leave blank for default.
+            </small>
+          </div>
+
+          <div class="mt-4">
+            <%= f.submit "Save Configuration", class: "btn btn-primary" %>
+            <%= link_to "Cancel", root_path, class: "btn btn-secondary" %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+
+    <div class="card mt-4">
+      <div class="card-body">
+        <h5 class="card-title">Preview</h5>
+        <p class="text-muted">This is how your configuration will appear:</p>
+        
+        <div class="border rounded p-3 bg-light">
+          <% if @site_config.banner_image.attached? %>
+            <div class="mb-3">
+              <%= image_tag @site_config.banner_image, class: "img-fluid rounded", style: "max-height: 200px;" %>
+            </div>
+          <% end %>
+          
+          <h4>
+            <%= @site_config.organization_name || 'EventManager' %>
+            <% if @site_config.website_url.present? %>
+              <small class="text-muted">→ <i class="bi bi-link-45deg"></i> <%= @site_config.website_url %></small>
+            <% end %>
+          </h4>
+          
+          <% if @site_config.contact_email.present? || @site_config.contact_phone.present? %>
+            <p class="mb-1">
+              <% if @site_config.contact_email.present? %>
+                <i class="bi bi-envelope"></i> <%= @site_config.contact_email %>
+              <% end %>
+              <% if @site_config.contact_phone.present? %>
+                <br><i class="bi bi-telephone"></i> <%= @site_config.contact_phone %>
+              <% end %>
+            </p>
+          <% end %>
+          
+          <hr>
+          
+          <footer class="text-center text-muted">
+            <small><%= @site_config.footer_text.presence || "© #{Time.current.year} EventManager - Hackerspace Event Management System" %></small>
+          </footer>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+

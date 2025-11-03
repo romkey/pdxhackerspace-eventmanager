@@ -1,30 +1,38 @@
+# Create site configuration
+puts "Creating site configuration..."
+site_config = SiteConfig.first_or_create!(
+  organization_name: "My Awesome Hackerspace"
+) do |config|
+  config.contact_email = "info@myhackerspace.org"
+  config.contact_phone = "(555) 123-4567"
+  config.footer_text = "© #{Time.current.year} My Awesome Hackerspace - Building the Future Together"
+end
+puts "  ✓ Site configuration #{site_config.previously_new_record? ? 'created' : 'exists'}"
+
 # Create admin user
-admin = User.create!(
-  email: 'admin@example.com',
-  password: 'password123',
-  password_confirmation: 'password123',
-  name: 'Admin User',
-  role: 'admin'
-)
+admin = User.find_or_create_by!(email: 'admin@example.com') do |user|
+  user.password = 'password123'
+  user.password_confirmation = 'password123'
+  user.name = 'Admin User'
+  user.role = 'admin'
+end
 
 puts "Created admin user: #{admin.email}"
 
 # Create regular users
-user1 = User.create!(
-  email: 'user1@example.com',
-  password: 'password123',
-  password_confirmation: 'password123',
-  name: 'John Doe',
-  role: 'user'
-)
+user1 = User.find_or_create_by!(email: 'user1@example.com') do |user|
+  user.password = 'password123'
+  user.password_confirmation = 'password123'
+  user.name = 'John Doe'
+  user.role = 'user'
+end
 
-user2 = User.create!(
-  email: 'user2@example.com',
-  password: 'password123',
-  password_confirmation: 'password123',
-  name: 'Jane Smith',
-  role: 'user'
-)
+user2 = User.find_or_create_by!(email: 'user2@example.com') do |user|
+  user.password = 'password123'
+  user.password_confirmation = 'password123'
+  user.name = 'Jane Smith'
+  user.role = 'user'
+end
 
 puts "Created #{User.count} users"
 

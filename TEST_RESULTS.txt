@@ -1,0 +1,535 @@
+
+Smoke Tests
+  Homepage
+    loads successfully
+    shows upcoming events
+    has navigation links
+  Event Listing
+    shows all public events
+    shows event details
+  Event Details
+    shows event information
+    shows hosts
+    shows upcoming occurrences
+    shows iCal feed link
+  Calendar View
+    loads successfully
+    shows upcoming occurrences
+    groups occurrences by month
+  User Authentication
+    shows sign in page
+    shows sign up page
+    authentication is required for event creation
+  Event Creation (Authenticated)
+    shows the new event form
+    shows validation errors for invalid event
+  Event Management (Authenticated)
+    shows edit form for own event
+    shows postpone button
+    shows cancel button
+    shows delete button
+  Access Control
+    prevents non-authenticated users from creating events
+    prevents users from editing others' events
+    allows admins to edit any event
+    shows private events to hosts
+    hides private events from non-hosts
+  JSON API Endpoints
+    provides events JSON feed
+    provides calendar JSON feed
+    does not expose email addresses in JSON
+  Responsive Design
+    renders on different viewports
+
+EventHost
+  validations
+    validates uniqueness of user_id scoped to event_id
+  associations
+    is expected to belong to event required: true
+    is expected to belong to user required: true
+  unique host constraint
+    prevents duplicate host assignments
+    allows same user to host different events
+    allows different users to host same event
+  factory
+    creates a valid event host
+
+EventJournal
+  validations
+    is expected to validate that :action cannot be empty/falsy
+  associations
+    is expected to belong to event required: true
+    is expected to belong to user required: true
+    is expected to belong to occurrence optional: true
+  scopes
+    .recent_first
+      orders entries by created_at descending
+  .log_event_change
+    creates a journal entry
+    sets the correct attributes
+  .log_occurrence_change
+    creates a journal entry
+    sets the correct attributes
+  #summary
+    for event creation
+      returns appropriate message
+    for event update
+      includes changed fields
+    for event cancellation
+      returns appropriate message
+    for event postponement
+      returns appropriate message
+    for event reactivation
+      returns appropriate message
+    for host addition
+      includes added host email
+    for host removal
+      includes removed host email
+    for banner addition
+      includes banner details
+    for banner removal
+      returns appropriate message
+    for occurrence changes
+      includes occurrence identifier
+  #formatted_changes
+    titleizes change keys
+    returns empty hash when no changes
+    returns empty hash when change_data is nil
+  factory
+    creates a valid journal entry
+    creates a valid journal for occurrence
+    creates a valid created journal
+    creates a valid host_added journal
+
+EventOccurrence
+  validations
+    is expected to validate that :occurs_at cannot be empty/falsy
+    is expected to validate that :status is either ‹"active"›, ‹"postponed"›, or ‹"cancelled"›
+  associations
+    is expected to belong to event required: true
+    is expected to have a has_one_attached called banner_image
+  scopes
+    .active
+      returns only active occurrences
+    .postponed
+      returns only postponed occurrences
+    .cancelled
+      returns only cancelled occurrences
+    .upcoming
+      returns only future occurrences
+      orders by occurs_at ascending
+    .past
+      returns only past occurrences
+      orders by occurs_at descending
+  #description
+    when occurrence has custom description
+      returns the custom description
+    when occurrence has no custom description
+      returns the event description
+    when custom description is blank
+      returns the event description
+  #duration
+    when occurrence has duration override
+      returns the override duration
+    when occurrence has no duration override
+      returns the event duration
+  #banner
+    when occurrence has its own banner
+      returns the occurrence banner
+    when occurrence has no banner but event does
+      returns the event banner
+    when neither occurrence nor event has banner
+      returns the event banner_image (not attached)
+  #postpone!
+    changes status to postponed
+    sets postponed_until date
+    sets cancellation_reason when provided
+    returns true on success
+  #cancel!
+    changes status to cancelled
+    sets cancellation_reason when provided
+    returns true on success
+  #reactivate!
+    changes status to active
+    clears postponed_until
+    clears cancellation_reason
+    returns true on success
+  #name
+    returns event title with date
+  factory
+    creates a valid occurrence
+    creates a valid occurrence with custom description
+    creates a valid occurrence with duration override
+    creates a valid postponed occurrence
+    creates a valid cancelled occurrence
+
+Event
+  validations
+    is expected to validate that :title cannot be empty/falsy
+    is expected to validate that :start_time cannot be empty/falsy
+    is expected to validate that :duration looks like a number greater than 0
+    is expected to validate that :recurrence_type is either ‹"once"›, ‹"weekly"›, ‹"monthly"›, or ‹"custom"›
+    is expected to validate that :status is either ‹"active"›, ‹"postponed"›, or ‹"cancelled"›
+    is expected to validate that :visibility is either ‹"public"›, ‹"members"›, or ‹"private"›
+    is expected to validate that :open_to is either ‹"public"›, ‹"members"›, or ‹"private"›
+  associations
+    is expected to belong to user required: true
+    is expected to have many event_hosts dependent => destroy
+    is expected to have many hosts through event_hosts
+    is expected to have many event_occurrences dependent => destroy
+    is expected to have many occurrences dependent => destroy
+    is expected to have many event_journals dependent => destroy
+    is expected to have a has_one_attached called banner_image
+  scopes
+    .active
+      returns only active events
+    .postponed
+      returns only postponed events
+    .cancelled
+      returns only cancelled events
+    .public_events
+      returns only public events
+    .members_events
+      returns only members events
+    .private_events
+      returns only private events
+  callbacks
+    before_create
+      generates an ical_token
+      generates a unique ical_token
+    after_create
+      adds creator as host
+      generates initial occurrences
+  #recurring?
+    when event is once
+      returns false
+    when event is weekly
+      returns true
+    when event is monthly
+      returns true
+  visibility helpers
+    #public?
+      returns true for public events
+      returns false for non-public events
+    #members_only?
+      returns true for members events
+      returns false for non-members events
+    #private?
+      returns true for private events
+      returns false for non-private events
+  #postpone!
+    changes status to postponed
+    sets postponed_until date
+    sets cancellation_reason when provided
+  #cancel!
+    changes status to cancelled
+    sets cancellation_reason when provided
+  #reactivate!
+    changes status to active
+    clears postponed_until
+    clears cancellation_reason
+  #hosted_by?
+    when user is a host
+      returns true
+    when user is an admin
+      returns true
+    when user is neither host nor admin
+      returns false
+    when user is nil
+      returns false
+  #add_host
+    adds user as host
+    does not add duplicate hosts
+  #remove_host
+    removes non-creator host
+    prevents removing creator when they are the only host
+    allows removing creator when there are other hosts
+  #creator
+    returns the user who created the event
+  #generate_occurrences
+    for a one-time event
+      creates one occurrence
+      creates occurrence at event start_time
+    for a recurring event
+      creates multiple occurrences
+  #upcoming_occurrences
+    returns only future occurrences
+    limits results to max_occurrences
+  .build_schedule
+    for weekly recurrence
+      creates a weekly schedule
+      uses specified days
+    for monthly recurrence
+      creates a monthly schedule with day of month
+      creates a monthly schedule with day of month
+  factory
+    creates a valid event
+    creates a valid weekly event
+    creates a valid members only event
+    creates a valid postponed event
+  more_info_url validation
+    accepts valid URLs
+    accepts http URLs
+    accepts blank URLs
+    rejects invalid URLs
+
+User
+  validations
+    is expected to validate that :email cannot be empty/falsy
+    is expected to validate that :email is case-insensitively unique
+  associations
+    is expected to have many events dependent => destroy
+    is expected to have many event_hosts dependent => destroy
+    is expected to have many hosted_events through event_hosts
+  devise modules
+    includes database_authenticatable
+    includes registerable
+    includes recoverable
+    includes rememberable
+    includes validatable
+    includes omniauthable
+  #admin?
+    when user is an admin
+      returns true
+    when user is not an admin
+      returns false
+  .from_omniauth
+    when user does not exist
+      creates a new user
+      sets the provider and uid
+      sets the name from auth info
+    when user already exists
+      does not create a new user
+      returns the existing user
+  default role
+    sets role to user by default
+  factory
+    creates a valid user
+    creates a valid admin user
+    creates a valid oauth user
+
+EventPolicy
+  permissions
+    for a guest user
+      with a public event
+        allows viewing
+        denies creating
+        denies management actions
+      with a members-only event
+        denies viewing
+      with a private event
+        denies viewing
+    for a regular user (not creator or host)
+      with a public event
+        allows viewing and creating
+        denies management actions
+      with a members-only event
+        allows viewing
+      with a private event
+        denies viewing
+    for the event creator
+      allows all actions
+      with a private event
+        allows viewing and editing own private event
+    for an event host (not creator)
+      allows management but not deletion
+      denies deletion
+    for an admin user
+      allows all actions
+      with a private event
+        allows viewing and editing any private event
+  Scope
+    for a guest
+      returns only public events
+    for a regular user
+      returns public and members events
+    for an admin
+      returns all events
+    for a user who hosts a private event
+      includes their hosted private event
+
+UserPolicy
+  for a guest user
+    denies all actions
+  for a regular user
+    denies admin actions
+    allows viewing and editing own profile
+    denies editing other profiles
+    denies destroying users
+  for an admin user
+    allows all actions
+    allows destroying other users
+    prevents admins from destroying themselves
+  Scope
+    for an admin
+      returns all users
+    for a regular user
+      returns no users
+    for a guest
+      returns no users
+
+Calendar
+  GET /calendar
+    as a guest
+      returns success
+      shows public event occurrences only
+      displays occurrences
+    as a logged-in user
+      shows public and members event occurrences
+    as an admin
+      shows all event occurrences
+    with no upcoming events
+      shows a message about no events
+
+EventOccurrences
+  GET /event_occurrences/:id
+    as a guest with public event
+      shows the occurrence
+    as a logged-in user
+      shows the occurrence
+  GET /event_occurrences/:id/edit
+    as a guest
+      redirects to sign in
+    as the event host
+      shows the edit form
+    as a different user
+      redirects with unauthorized message
+    as an admin
+      shows the edit form
+  PATCH /event_occurrences/:id
+    as the event host
+      updates the occurrence
+      redirects to the occurrence
+    as a different user
+      does not update the occurrence
+  DELETE /event_occurrences/:id
+    as the event host
+      deletes the occurrence
+      does not delete the event
+      redirects to the event
+    as a different user
+      does not delete the occurrence
+  POST /event_occurrences/:id/postpone
+    as the event host
+      postpones the occurrence
+      sets the postponed_until date
+      sets the reason
+      does not affect other occurrences
+  POST /event_occurrences/:id/cancel
+    as the event host
+      cancels the occurrence
+      sets the reason
+  POST /event_occurrences/:id/reactivate
+    as the event host
+      reactivates the occurrence
+      clears the cancellation_reason
+
+Events
+  GET /events
+    as a guest
+      shows public events only
+    as a logged-in user
+      shows public and members events
+    as an admin
+      shows all events
+  GET /events/:id
+    as a guest
+      with a public event
+        shows the event
+      with a private event
+        redirects with unauthorized message
+    as a logged-in user
+      shows the event
+  GET /events/new
+    as a guest
+      redirects to sign in
+    as a logged-in user
+      shows the new event form
+  POST /events
+    as a guest
+      redirects to sign in
+      does not create an event
+    as a logged-in user
+      with valid params
+        creates a new event
+        creates occurrences for the event
+        adds the creator as a host
+        redirects to the event
+      with invalid params
+        does not create an event
+        renders the new template
+  GET /events/:id/edit
+    as a guest
+      redirects to sign in
+    as the event creator
+      shows the edit form
+    as a different user
+      redirects with unauthorized message
+    as an event host (not creator)
+      shows the edit form
+    as an admin
+      shows the edit form
+  PATCH /events/:id
+    as the event creator
+      updates the event
+      redirects to the event
+    as a different user
+      does not update the event
+  DELETE /events/:id
+    as the event creator
+      deletes the event
+      redirects to events index
+    as a different user
+      does not delete the event
+    as an admin
+      deletes the event
+  POST /events/:id/postpone
+    as the event creator
+      postpones the event
+      sets the postponed_until date
+      sets the reason
+      redirects to the event
+    as a different user
+      does not postpone the event
+  POST /events/:id/cancel
+    as the event creator
+      cancels the event
+      sets the reason
+  POST /events/:id/reactivate
+    as the event creator
+      reactivates the event
+      clears the cancellation_reason
+  GET /events/:token/ical
+    returns an ical feed
+    includes event information
+    does not require authentication
+
+JSON API
+  GET /events.json
+    returns JSON format
+    returns only public and active events
+    includes event metadata
+    includes event details
+    includes hosts as simple array of names
+    includes upcoming occurrences
+    includes banner URLs when present
+    sets banner_url to null when no banner
+    does not require authentication
+  GET /calendar.json
+    returns JSON format
+    returns only public event occurrences
+    does not include grouped_by_month
+    includes occurrence metadata
+    includes occurrence details
+    includes event information for each occurrence
+    includes hosts as simple array without emails
+    sorts occurrences by date (earliest first)
+    includes postponed occurrence details
+    includes cancelled occurrence details
+    includes banner URLs
+    indicates when occurrence has custom banner
+    does not require authentication
+
+Finished in 3.87 seconds (files took 0.91044 seconds to load)
+308 examples, 0 failures
+

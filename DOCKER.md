@@ -7,12 +7,17 @@ This guide will help you run EventManager using Docker and Docker Compose.
 - Docker Engine 20.10+
 - Docker Compose 2.0+
 
-## Quick Start
+## Compose Files
+
+- **docker-compose.dev.yml** - Development environment (local builds, volume mounts)
+- **docker-compose.yml** - Production environment (pre-built images from registry, default file)
+
+## Quick Start - Development
 
 ### 1. Build and Start Services
 
 ```bash
-docker-compose up -d
+docker compose -f docker-compose.dev.yml up -d
 ```
 
 This will:
@@ -45,66 +50,68 @@ docker-compose logs -f db
 
 ## Common Commands
 
+**Note:** Use `-f docker-compose.dev.yml` for development. Production uses `docker-compose.yml` (the default file).
+
 ### Start Services
 
 ```bash
-docker-compose up -d
+docker compose -f docker-compose.dev.yml up -d
 ```
 
 ### Stop Services
 
 ```bash
-docker-compose down
+docker compose -f docker-compose.dev.yml down
 ```
 
 ### Stop Services and Remove Volumes (Complete Reset)
 
 ```bash
-docker-compose down -v
+docker compose -f docker-compose.dev.yml down -v
 ```
 
 ### Rebuild After Code Changes
 
 ```bash
-docker-compose build
-docker-compose up -d
+docker compose -f docker-compose.dev.yml build
+docker compose -f docker-compose.dev.yml up -d
 ```
 
 ### Run Rails Console
 
 ```bash
-docker-compose exec web rails console
+docker compose -f docker-compose.dev.yml exec web rails console
 ```
 
 ### Run Database Migrations
 
 ```bash
-docker-compose exec web rails db:migrate
+docker compose -f docker-compose.dev.yml exec web rails db:migrate
 ```
 
 ### Reset Database
 
 ```bash
-docker-compose exec web rails db:reset
-docker-compose exec web rails db:seed
+docker compose -f docker-compose.dev.yml exec web rails db:reset
+docker compose -f docker-compose.dev.yml exec web rails db:seed
 ```
 
-### Run Tests (if you add them)
+### Run Tests
 
 ```bash
-docker-compose exec web rails test
+docker compose -f docker-compose.dev.yml exec web bundle exec rspec
 ```
 
 ### Access Rails Shell
 
 ```bash
-docker-compose exec web bash
+docker compose -f docker-compose.dev.yml exec web bash
 ```
 
 ### View Running Containers
 
 ```bash
-docker-compose ps
+docker compose -f docker-compose.dev.yml ps
 ```
 
 ## Configuration
@@ -128,7 +135,7 @@ DATABASE_NAME=EventManager_development
 
 ### Port Conflicts
 
-If port 3000 is already in use, edit `docker-compose.yml`:
+If port 3000 is already in use, edit `docker-compose.dev.yml`:
 
 ```yaml
 services:
@@ -211,46 +218,46 @@ docker-compose logs db
 
 Restart services:
 ```bash
-docker-compose down
-docker-compose up -d
+docker compose -f docker-compose.dev.yml down
+docker compose -f docker-compose.dev.yml up -d
 ```
 
 ### "Bundle install" Errors
 
 Rebuild the container:
 ```bash
-docker-compose down
-docker-compose build --no-cache
-docker-compose up -d
+docker compose -f docker-compose.dev.yml down
+docker compose -f docker-compose.dev.yml build --no-cache
+docker compose -f docker-compose.dev.yml up -d
 ```
 
 ### Asset Compilation Errors
 
 Rebuild with fresh assets:
 ```bash
-docker-compose exec web yarn build
-docker-compose exec web yarn build:css
-docker-compose restart web
+docker compose -f docker-compose.dev.yml exec web yarn build
+docker compose -f docker-compose.dev.yml exec web yarn build:css
+docker compose -f docker-compose.dev.yml restart web
 ```
 
 ### Container Won't Start
 
 Check logs:
 ```bash
-docker-compose logs web
+docker compose -f docker-compose.dev.yml logs web
 ```
 
 Remove and recreate:
 ```bash
-docker-compose down
-docker-compose up -d
+docker compose -f docker-compose.dev.yml down
+docker compose -f docker-compose.dev.yml up -d
 ```
 
 ### Database Not Seeding
 
 Manually seed:
 ```bash
-docker-compose exec web rails db:seed
+docker compose -f docker-compose.dev.yml exec web rails db:seed
 ```
 
 ### File Permission Issues (Linux)
@@ -261,7 +268,7 @@ If you encounter permission errors on Linux:
 sudo chown -R $USER:$USER .
 
 # Or run with your user ID
-docker-compose run --user $(id -u):$(id -g) web bash
+docker compose -f docker-compose.dev.yml run --user $(id -u):$(id -g) web bash
 ```
 
 ## Development Workflow
@@ -275,42 +282,50 @@ Code changes are automatically reflected due to volume mounting. Just refresh yo
 1. Add gem to `Gemfile`
 2. Rebuild container:
    ```bash
-   docker-compose build web
-   docker-compose up -d
+   docker compose -f docker-compose.dev.yml build web
+   docker compose -f docker-compose.dev.yml up -d
    ```
 
 ### Running Migrations
 
 After creating a migration:
 ```bash
-docker-compose exec web rails db:migrate
+docker compose -f docker-compose.dev.yml exec web rails db:migrate
 ```
 
 ### Installing Node Packages
 
 ```bash
-docker-compose exec web yarn add <package-name>
+docker compose -f docker-compose.dev.yml exec web yarn add <package-name>
 ```
 
 ## Production Deployment
 
-For production, consider:
+Use the default compose file which pulls pre-built images from GitHub Container Registry:
 
-1. **Multi-stage Docker builds** for smaller images
-2. **Environment-specific compose files**: 
-   - `docker-compose.yml` (base)
-   - `docker-compose.prod.yml` (production overrides)
-3. **External database** instead of containerized PostgreSQL
-4. **Container orchestration**: Kubernetes, Docker Swarm, or managed services
-5. **Secrets management**: Use Docker secrets or external vaults
-6. **Health checks and monitoring**
-7. **Reverse proxy**: nginx or Traefik
-8. **SSL certificates**: Let's Encrypt
-
-Example production command:
 ```bash
-docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+# Pull latest image
+docker compose pull
+
+# Start services
+docker compose up -d
+
+# View logs
+docker compose logs -f web
 ```
+
+Production considerations:
+
+1. **Pre-built images** - Images are built by GitHub Actions and pushed to registry
+2. **Environment variables** - Set production secrets in `.env` file
+3. **External database** - Consider managed PostgreSQL for production
+4. **Container orchestration** - Kubernetes, Docker Swarm, or managed services
+5. **Secrets management** - Use Docker secrets or external vaults
+6. **Health checks and monitoring** - Already configured in docker-compose.yml
+7. **Reverse proxy** - nginx or Traefik for SSL termination
+8. **SSL certificates** - Let's Encrypt with automatic renewal
+
+See **GITHUB_ACTIONS.md** for details on automated image builds and deployments.
 
 ## Useful Resources
 
@@ -324,7 +339,7 @@ docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 ### Remove Everything (Containers, Networks, Volumes)
 
 ```bash
-docker-compose down -v
+docker compose -f docker-compose.dev.yml down -v
 docker volume prune
 docker image prune
 ```
@@ -332,7 +347,7 @@ docker image prune
 ### Remove Just EventManager Containers
 
 ```bash
-docker-compose down
+docker compose -f docker-compose.dev.yml down
 docker rmi eventmanager-web
 ```
 
@@ -340,7 +355,7 @@ docker rmi eventmanager-web
 
 For issues related to Docker setup, check the logs first:
 ```bash
-docker-compose logs -f
+docker compose -f docker-compose.dev.yml logs -f
 ```
 
 For application issues, see the main README.md.

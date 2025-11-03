@@ -25,13 +25,13 @@
                   <%= image_tag occurrence.banner, class: "img-thumbnail", style: "max-width: 100px; max-height: 100px; object-fit: cover;" %>
                 </div>
               <% end %>
-              <div class="<%= occurrence.banner.attached? ? 'col-md-2' : 'col-md-2' %>">
+              <div class="<%= occurrence.banner.attached? ? 'col-md-2' : 'col-md-2 offset-md-2' %>">
                 <div class="text-center">
                   <div class="display-6"><%= occurrence.occurs_at.day %></div>
                   <div class="text-muted"><%= occurrence.occurs_at.strftime('%a') %></div>
                 </div>
               </div>
-              <div class="<%= occurrence.banner.attached? ? 'col-md-5' : 'col-md-7' %>">
+              <div class="col-md-5">
                 <h5 class="mb-1">
                   <%= link_to occurrence.event.title, event_path(occurrence.event), class: "text-decoration-none" %>
                   <% if occurrence.status != 'active' %>
