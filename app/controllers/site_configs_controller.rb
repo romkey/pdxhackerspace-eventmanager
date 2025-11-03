@@ -16,7 +16,11 @@ class SiteConfigsController < ApplicationController
     params[:site_config].delete(:remove_favicon)
     params[:site_config].delete(:remove_banner_image)
 
-    if @site_config.update(site_config_params)
+    # Only update if there are params remaining after removing flags
+    if params[:site_config].present? && @site_config.update(site_config_params)
+      redirect_to edit_site_config_path, notice: 'Site configuration was successfully updated.'
+    elsif params[:site_config].blank?
+      # Just removed attachments, no other updates
       redirect_to edit_site_config_path, notice: 'Site configuration was successfully updated.'
     else
       render :edit, status: :unprocessable_entity
