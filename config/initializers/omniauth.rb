@@ -1,4 +1,4 @@
-require Rails.root.join("lib/omniauth/strategies/authentik")
+# Authentik strategy will be autoloaded from lib/omniauth/strategies/authentik.rb
 
 Rails.application.config.middleware.use OmniAuth::Builder do
   provider :authentik,
