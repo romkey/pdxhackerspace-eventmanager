@@ -52,6 +52,15 @@ RSpec.configure do |config|
   config.include Devise::Test::ControllerHelpers, type: :controller
   config.include Devise::Test::IntegrationHelpers, type: :feature
 
+  # Rails 7.1: Disable CSRF protection in tests to avoid 403 errors on POST requests
+  config.before(:each, type: :request) do
+    ActionController::Base.allow_forgery_protection = false
+  end
+
+  config.after(:each, type: :request) do
+    ActionController::Base.allow_forgery_protection = true
+  end
+
   # Include Pundit test helpers
   config.include Pundit::RSpec::Matchers
 
