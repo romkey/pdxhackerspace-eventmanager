@@ -1,4 +1,7 @@
-# Authentik strategy will be autoloaded from lib/omniauth/strategies/authentik.rb
+# Explicitly require the Authentik strategy before using it
+# Rails 7.1 autoloader expects directory names to match module names (case-sensitive)
+# Since we have lib/omniauth (lowercase) but OmniAuth module (capital A), we require explicitly
+require_relative '../../lib/omniauth/strategies/authentik'
 
 Rails.application.config.middleware.use OmniAuth::Builder do
   provider :authentik,
