@@ -73,18 +73,18 @@ RSpec.describe User, type: :model do
     context 'when user does not exist' do
       it 'creates a new user' do
         expect do
-          User.from_omniauth(auth)
-        end.to change(User, :count).by(1)
+          described_class.from_omniauth(auth)
+        end.to change(described_class, :count).by(1)
       end
 
       it 'sets the provider and uid' do
-        user = User.from_omniauth(auth)
+        user = described_class.from_omniauth(auth)
         expect(user.provider).to eq('authentik')
         expect(user.uid).to eq('12345')
       end
 
       it 'sets the name from auth info' do
-        user = User.from_omniauth(auth)
+        user = described_class.from_omniauth(auth)
         expect(user.name).to eq('OAuth User')
       end
     end
@@ -94,12 +94,12 @@ RSpec.describe User, type: :model do
 
       it 'does not create a new user' do
         expect do
-          User.from_omniauth(auth)
-        end.not_to change(User, :count)
+          described_class.from_omniauth(auth)
+        end.not_to change(described_class, :count)
       end
 
       it 'returns the existing user' do
-        user = User.from_omniauth(auth)
+        user = described_class.from_omniauth(auth)
         expect(user.id).to eq(existing_user.id)
       end
     end

@@ -22,7 +22,7 @@ RSpec.describe "JSON API", type: :request do
       get events_path(format: :json)
       json = JSON.parse(response.body)
 
-      event_titles = json['events'].map { |e| e['title'] }
+      event_titles = json['events'].pluck('title')
       expect(event_titles).to include('Public Event')
       expect(event_titles).not_to include('Members Event', 'Private Event', 'Cancelled Event')
     end

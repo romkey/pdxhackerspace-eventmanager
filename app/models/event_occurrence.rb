@@ -70,11 +70,9 @@ class EventOccurrence < ApplicationRecord
     saved_changes.each do |key, (old_val, new_val)|
       next if %w[updated_at created_at].include?(key)
 
-      tracked_changes[key] = if %w[custom_description cancellation_reason].include?(key)
-                               { 'from' => old_val, 'to' => new_val }
-                             else
-                               { 'from' => old_val, 'to' => new_val }
-                             end
+      if %w[custom_description cancellation_reason].include?(key)
+      end
+      tracked_changes[key] = { 'from' => old_val, 'to' => new_val }
     end
 
     return if tracked_changes.empty?

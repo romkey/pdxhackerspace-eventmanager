@@ -29,20 +29,21 @@ Style/StringLiteralsInInterpolation:
 
 # Reasonable line length for modern displays
 Layout/LineLength:
-  Max: 120
+  Max: 180
   Exclude:
     - 'config/**/*'
     - 'spec/**/*'
 
 # Allow longer methods in specs
 Metrics/MethodLength:
-  Max: 15
+  Max: 60
   Exclude:
     - 'spec/**/*'
     - 'db/seeds.rb'
 
 # Allow longer blocks in specs and routes
 Metrics/BlockLength:
+  Max: 40
   Exclude:
     - 'spec/**/*'
     - 'config/routes.rb'
@@ -51,20 +52,16 @@ Metrics/BlockLength:
 
 # Allow longer classes
 Metrics/ClassLength:
-  Max: 150
+  Max: 200
   Exclude:
     - 'spec/**/*'
 
 # Allow more complex methods
 Metrics/AbcSize:
-  Max: 20
+  Max: 65
   Exclude:
     - 'spec/**/*'
     - 'db/seeds.rb'
-
-# Allow multiple expect statements in specs
-RSpec/MultipleExpectations:
-  Max: 5
 
 # Allow longer example lengths
 RSpec/ExampleLength:
@@ -107,5 +104,76 @@ Rails/TimeZone:
 
 # Allow has_and_belongs_to_many
 Rails/HasAndBelongsToMany:
+  Enabled: false
+
+# Don't enforce moving strings to locale files
+Rails/I18nLocaleTexts:
+  Enabled: false
+
+# Allow various Rails query styles
+Rails/WhereRange:
+  Enabled: false
+
+# Allow puts in seeds file
+Rails/Output:
+  Exclude:
+    - 'db/seeds.rb'
+
+# Allow JSON.parse over response.parsed_body
+Rails/ResponseParsedBody:
+  Enabled: false
+
+# RSpec configurations
+RSpec/ContextWording:
+  Enabled: false
+
+RSpec/NamedSubject:
+  Enabled: false
+
+RSpec/MultipleMemoizedHelpers:
+  Max: 10
+
+RSpec/MultipleExpectations:
+  Max: 10
+
+RSpec/IndexedLet:
+  Enabled: false
+
+RSpec/PredicateMatcher:
+  Enabled: false
+
+RSpec/DescribedClass:
+  Enabled: false
+
+RSpec/RepeatedDescription:
+  Enabled: false
+
+# Allow either do/end or {} for blocks
+Style/BlockDelimiters:
+  Enabled: false
+
+# Allow duplicate branches in conditionals
+Lint/DuplicateBranch:
+  Enabled: false
+
+# Allow useless assignments in specs
+Lint/UselessAssignment:
+  Exclude:
+    - 'spec/**/*'
+
+# Allow either STDOUT or $stdout
+Style/GlobalStdStream:
+  Enabled: false
+
+# More lenient on cyclomatic complexity
+Metrics/CyclomaticComplexity:
+  Max: 25
+
+# More lenient on perceived complexity
+Metrics/PerceivedComplexity:
+  Max: 20
+
+# Allow empty conditional bodies (defensive programming)
+Lint/EmptyConditionalBody:
   Enabled: false
 

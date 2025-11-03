@@ -28,37 +28,37 @@ RSpec.describe SiteConfig, type: :model do
 
   describe '.instance' do
     it 'creates a site config if none exists' do
-      expect(SiteConfig.count).to eq(0)
-      config = SiteConfig.instance
+      expect(described_class.count).to eq(0)
+      config = described_class.instance
       expect(config).to be_persisted
-      expect(SiteConfig.count).to eq(1)
+      expect(described_class.count).to eq(1)
     end
 
     it 'returns existing site config' do
       existing = create(:site_config)
-      config = SiteConfig.instance
+      config = described_class.instance
       expect(config.id).to eq(existing.id)
     end
 
     it 'creates with default organization name' do
-      config = SiteConfig.instance
+      config = described_class.instance
       expect(config.organization_name).to eq('EventManager')
     end
   end
 
   describe '.current' do
     it 'is an alias for .instance' do
-      config = SiteConfig.current
-      expect(config).to eq(SiteConfig.instance)
+      config = described_class.current
+      expect(config).to eq(described_class.instance)
     end
   end
 
   describe 'singleton pattern' do
     it 'maintains only one record' do
       create(:site_config)
-      SiteConfig.instance
+      described_class.instance
 
-      expect(SiteConfig.count).to eq(1)
+      expect(described_class.count).to eq(1)
     end
   end
 

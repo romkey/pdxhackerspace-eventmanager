@@ -23,47 +23,47 @@ RSpec.describe EventOccurrence, type: :model do
 
     describe '.active' do
       it 'returns only active occurrences' do
-        expect(EventOccurrence.active).to include(active_occ, future_occ)
-        expect(EventOccurrence.active).not_to include(postponed_occ, cancelled_occ)
+        expect(described_class.active).to include(active_occ, future_occ)
+        expect(described_class.active).not_to include(postponed_occ, cancelled_occ)
       end
     end
 
     describe '.postponed' do
       it 'returns only postponed occurrences' do
-        expect(EventOccurrence.postponed).to include(postponed_occ)
-        expect(EventOccurrence.postponed).not_to include(active_occ, cancelled_occ)
+        expect(described_class.postponed).to include(postponed_occ)
+        expect(described_class.postponed).not_to include(active_occ, cancelled_occ)
       end
     end
 
     describe '.cancelled' do
       it 'returns only cancelled occurrences' do
-        expect(EventOccurrence.cancelled).to include(cancelled_occ)
-        expect(EventOccurrence.cancelled).not_to include(active_occ, postponed_occ)
+        expect(described_class.cancelled).to include(cancelled_occ)
+        expect(described_class.cancelled).not_to include(active_occ, postponed_occ)
       end
     end
 
     describe '.upcoming' do
       it 'returns only future occurrences' do
-        expect(EventOccurrence.upcoming).to include(future_occ)
-        expect(EventOccurrence.upcoming).not_to include(past_occ)
+        expect(described_class.upcoming).to include(future_occ)
+        expect(described_class.upcoming).not_to include(past_occ)
       end
 
       it 'orders by occurs_at ascending' do
         create(:event_occurrence, event: event, occurs_at: 2.weeks.from_now)
-        upcoming = EventOccurrence.upcoming
+        upcoming = described_class.upcoming
         expect(upcoming.first.occurs_at).to be < upcoming.last.occurs_at
       end
     end
 
     describe '.past' do
       it 'returns only past occurrences' do
-        expect(EventOccurrence.past).to include(past_occ)
-        expect(EventOccurrence.past).not_to include(future_occ)
+        expect(described_class.past).to include(past_occ)
+        expect(described_class.past).not_to include(future_occ)
       end
 
       it 'orders by occurs_at descending' do
         create(:event_occurrence, event: event, occurs_at: 2.weeks.ago)
-        past = EventOccurrence.past
+        past = described_class.past
         expect(past.first.occurs_at).to be > past.last.occurs_at
       end
     end

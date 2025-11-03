@@ -158,14 +158,10 @@ class EventsController < ApplicationController
         e.status = occurrence.status.upcase # Per-occurrence status
 
         # Add cancellation reason if present
-        if occurrence.cancellation_reason.present?
-          e.description += "\n\n#{occurrence.status.titleize}: #{occurrence.cancellation_reason}"
-        end
+        e.description += "\n\n#{occurrence.status.titleize}: #{occurrence.cancellation_reason}" if occurrence.cancellation_reason.present?
 
         # Add postponed info if applicable
-        if occurrence.status == 'postponed' && occurrence.postponed_until
-          e.description += "\n\nRescheduled to: #{occurrence.postponed_until.strftime('%B %d, %Y at %I:%M %p')}"
-        end
+        e.description += "\n\nRescheduled to: #{occurrence.postponed_until.strftime('%B %d, %Y at %I:%M %p')}" if occurrence.status == 'postponed' && occurrence.postponed_until
       end
     end
 

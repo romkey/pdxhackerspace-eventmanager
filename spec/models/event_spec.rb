@@ -33,43 +33,43 @@ RSpec.describe Event, type: :model do
 
     describe '.active' do
       it 'returns only active events' do
-        expect(Event.active).to include(active_event)
-        expect(Event.active).not_to include(postponed_event, cancelled_event)
+        expect(described_class.active).to include(active_event)
+        expect(described_class.active).not_to include(postponed_event, cancelled_event)
       end
     end
 
     describe '.postponed' do
       it 'returns only postponed events' do
-        expect(Event.postponed).to include(postponed_event)
-        expect(Event.postponed).not_to include(active_event, cancelled_event)
+        expect(described_class.postponed).to include(postponed_event)
+        expect(described_class.postponed).not_to include(active_event, cancelled_event)
       end
     end
 
     describe '.cancelled' do
       it 'returns only cancelled events' do
-        expect(Event.cancelled).to include(cancelled_event)
-        expect(Event.cancelled).not_to include(active_event, postponed_event)
+        expect(described_class.cancelled).to include(cancelled_event)
+        expect(described_class.cancelled).not_to include(active_event, postponed_event)
       end
     end
 
     describe '.public_events' do
       it 'returns only public events' do
-        expect(Event.public_events).to include(public_event)
-        expect(Event.public_events).not_to include(members_event, private_event)
+        expect(described_class.public_events).to include(public_event)
+        expect(described_class.public_events).not_to include(members_event, private_event)
       end
     end
 
     describe '.members_events' do
       it 'returns only members events' do
-        expect(Event.members_events).to include(members_event)
-        expect(Event.members_events).not_to include(public_event, private_event)
+        expect(described_class.members_events).to include(members_event)
+        expect(described_class.members_events).not_to include(public_event, private_event)
       end
     end
 
     describe '.private_events' do
       it 'returns only private events' do
-        expect(Event.private_events).to include(private_event)
-        expect(Event.private_events).not_to include(public_event, members_event)
+        expect(described_class.private_events).to include(private_event)
+        expect(described_class.private_events).not_to include(public_event, members_event)
       end
     end
   end
@@ -359,12 +359,12 @@ RSpec.describe Event, type: :model do
       let(:start_time) { Time.zone.parse('2025-11-05 19:00') }
 
       it 'creates a weekly schedule' do
-        schedule = Event.build_schedule(start_time, 'weekly', { days: [start_time.wday] })
+        schedule = described_class.build_schedule(start_time, 'weekly', { days: [start_time.wday] })
         expect(schedule).to be_a(IceCube::Schedule)
       end
 
       it 'uses specified days' do
-        schedule = Event.build_schedule(start_time, 'weekly', { days: [1, 3, 5] }) # Mon, Wed, Fri
+        schedule = described_class.build_schedule(start_time, 'weekly', { days: [1, 3, 5] }) # Mon, Wed, Fri
         rule = schedule.rrules.first
         expect(rule).to be_a(IceCube::WeeklyRule)
       end
@@ -374,7 +374,7 @@ RSpec.describe Event, type: :model do
       let(:start_time) { Time.zone.parse('2025-11-05 19:00') }
 
       it 'creates a monthly schedule with day of month' do
-        schedule = Event.build_schedule(start_time, 'monthly', {})
+        schedule = described_class.build_schedule(start_time, 'monthly', {})
         expect(schedule).to be_a(IceCube::Schedule)
         rule = schedule.rrules.first
         expect(rule).to be_a(IceCube::MonthlyRule)
@@ -382,7 +382,7 @@ RSpec.describe Event, type: :model do
 
       it 'creates a monthly schedule with day of month' do
         # Test the default monthly behavior (day of month)
-        schedule = Event.build_schedule(start_time, 'monthly', {})
+        schedule = described_class.build_schedule(start_time, 'monthly', {})
         rule = schedule.rrules.first
         expect(rule).to be_a(IceCube::MonthlyRule)
       end

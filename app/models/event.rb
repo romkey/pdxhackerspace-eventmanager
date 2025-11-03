@@ -36,7 +36,7 @@ class Event < ApplicationRecord
 
   # Get occurrence dates for a date range (from IceCube schedule)
   def occurrence_dates(start_date, end_date)
-    return [] unless recurrence_rule.present?
+    return [] if recurrence_rule.blank?
 
     schedule = IceCube::Schedule.from_yaml(recurrence_rule)
     schedule.occurrences_between(start_date, end_date)
@@ -145,12 +145,11 @@ class Event < ApplicationRecord
         occurrence = recurrence_params[:occurrence].to_sym # :first, :second, :third, :fourth, :last
         day = recurrence_params[:day].to_sym # :monday, :tuesday, etc.
         rule = IceCube::Rule.monthly.day_of_week(day => [occurrence])
-        schedule.add_recurrence_rule(rule)
       else
         # Monthly on the same day of month
         rule = IceCube::Rule.monthly.day_of_month(start_time.day)
-        schedule.add_recurrence_rule(rule)
       end
+      schedule.add_recurrence_rule(rule)
     when 'custom'
       # For more complex recurrence patterns
       # Can be extended based on specific needs
@@ -208,11 +207,9 @@ class Event < ApplicationRecord
       next if %w[updated_at created_at ical_token].include?(key)
 
       # Store full text for text fields
-      tracked_changes[key] = if %w[title description more_info_url cancellation_reason].include?(key)
-                               { 'from' => old_val, 'to' => new_val }
-                             else
-                               { 'from' => old_val, 'to' => new_val }
-                             end
+      if %w[title description more_info_url cancellation_reason].include?(key)
+      end
+      tracked_changes[key] = { 'from' => old_val, 'to' => new_val }
     end
 
     return if tracked_changes.empty?

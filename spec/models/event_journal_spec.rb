@@ -18,7 +18,7 @@ RSpec.describe EventJournal, type: :model do
 
     describe '.recent_first' do
       it 'orders entries by created_at descending' do
-        entries = EventJournal.recent_first
+        entries = described_class.recent_first
         expect(entries.first).to eq(new_entry)
         expect(entries.last).to eq(old_entry)
       end
@@ -32,12 +32,12 @@ RSpec.describe EventJournal, type: :model do
 
     it 'creates a journal entry' do
       expect do
-        EventJournal.log_event_change(event, user, 'updated', changes)
-      end.to change(EventJournal, :count).by(1)
+        described_class.log_event_change(event, user, 'updated', changes)
+      end.to change(described_class, :count).by(1)
     end
 
     it 'sets the correct attributes' do
-      journal = EventJournal.log_event_change(event, user, 'updated', changes)
+      journal = described_class.log_event_change(event, user, 'updated', changes)
 
       expect(journal.event).to eq(event)
       expect(journal.user).to eq(user)
@@ -54,12 +54,12 @@ RSpec.describe EventJournal, type: :model do
 
     it 'creates a journal entry' do
       expect do
-        EventJournal.log_occurrence_change(occurrence, user, 'cancelled', changes)
-      end.to change(EventJournal, :count).by(1)
+        described_class.log_occurrence_change(occurrence, user, 'cancelled', changes)
+      end.to change(described_class, :count).by(1)
     end
 
     it 'sets the correct attributes' do
-      journal = EventJournal.log_occurrence_change(occurrence, user, 'cancelled', changes)
+      journal = described_class.log_occurrence_change(occurrence, user, 'cancelled', changes)
 
       expect(journal.event).to eq(occurrence.event)
       expect(journal.user).to eq(user)
