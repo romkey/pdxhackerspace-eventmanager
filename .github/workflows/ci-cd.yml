@@ -92,6 +92,13 @@ jobs:
           bundle exec rails db:create
           bundle exec rails db:schema:load
 
+      - name: Precompile assets
+        run: |
+          yarn build
+          yarn build:css
+        env:
+          RAILS_ENV: test
+
       - name: Run tests
         run: bundle exec rspec --format progress
 
