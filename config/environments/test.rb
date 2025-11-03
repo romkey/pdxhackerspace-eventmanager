@@ -10,7 +10,7 @@ Rails.application.configure do
 
   # Allow all hosts in test environment
   config.hosts.clear
-  
+
   # Turn false under Spring and add config.action_view.cache_template_loading = true.
   config.cache_classes = true
 
