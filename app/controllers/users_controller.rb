@@ -42,10 +42,11 @@ class UsersController < ApplicationController
   end
 
   def user_params
-    if current_user.admin?
-      params.require(:user).permit(:name, :email, :role)
-    else
-      params.require(:user).permit(:name, :email)
+    permitted = params.require(:user).permit(:name, :email)
+    # Only admins can change roles, and only to valid values
+    if current_user.admin? && params[:user][:role].present?
+      permitted[:role] = params[:user][:role] if %w[user admin].include?(params[:user][:role])
     end
+    permitted
   end
 end

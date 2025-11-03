@@ -46,7 +46,7 @@
         
         <% if @event.more_info_url.present? %>
           <div class="mt-3">
-            <%= link_to @event.more_info_url, target: "_blank", rel: "noopener noreferrer", class: "btn btn-outline-primary" do %>
+            <%= link_to sanitize(@event.more_info_url), target: "_blank", rel: "noopener noreferrer", class: "btn btn-outline-primary" do %>
               <i class="bi bi-box-arrow-up-right"></i> Learn More About This Event
             <% end %>
           </div>

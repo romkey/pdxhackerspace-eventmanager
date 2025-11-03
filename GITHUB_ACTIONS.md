@@ -146,7 +146,7 @@ echo $GITHUB_TOKEN | docker login ghcr.io -u romkey --password-stdin
 ```
 
 ### Tests Failing in CI but Pass Locally
-- Check Ruby version matches (3.1.2)
+- Check Ruby version matches (3.2.2)
 - Check PostgreSQL version (15)
 - Ensure all environment variables are set
 - Check that test database setup is correct

@@ -1,5 +1,5 @@
-# Use Ruby 3.1.2 as base image
-FROM ruby:3.1.2
+# Use Ruby 3.2.2 as base image
+FROM ruby:3.2.2
 
 # Install dependencies
 RUN apt-get update -qq && apt-get install -y \
