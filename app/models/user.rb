@@ -26,9 +26,7 @@ class User < ApplicationRecord
     Rails.logger.info "Name: #{auth.info.name}"
     Rails.logger.info "Info keys: #{auth.info.to_hash.keys.inspect}"
     Rails.logger.info "Extra keys: #{auth.extra&.to_hash&.keys.inspect}"
-    if auth.extra&.raw_info
-      Rails.logger.info "Raw info: #{auth.extra.raw_info.to_hash.inspect}"
-    end
+    Rails.logger.info "Raw info: #{auth.extra.raw_info.to_hash.inspect}" if auth.extra&.raw_info
     Rails.logger.info "=" * 80
 
     where(provider: auth.provider, uid: auth.uid).first_or_create do |user|
