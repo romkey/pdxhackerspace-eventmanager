@@ -1,6 +1,26 @@
 require 'rails_helper'
 
 RSpec.describe "Health", type: :request do
+  # Mock Redis and Sidekiq for all tests since they may not be available in CI
+  before do
+    # Mock successful Redis connection
+    redis_double = instance_double(Redis)
+    allow(redis_double).to receive(:ping).and_return('PONG')
+    allow(redis_double).to receive(:info).and_return({ 'connected_clients' => 5 })
+    allow(redis_double).to receive(:close)
+    allow(Redis).to receive(:new).and_return(redis_double)
+
+    # Mock successful Sidekiq stats
+    sidekiq_stats = instance_double(Sidekiq::Stats,
+                                    processed: 100,
+                                    failed: 2,
+                                    scheduled_size: 5,
+                                    retry_size: 1,
+                                    dead_size: 0,
+                                    queues: { 'default' => 3 })
+    allow(Sidekiq::Stats).to receive(:new).and_return(sidekiq_stats)
+  end
+
   describe "GET /health/liveness" do
     it "returns success status" do
       get '/health/liveness'
