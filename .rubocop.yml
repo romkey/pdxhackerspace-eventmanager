@@ -15,6 +15,7 @@ AllCops:
     - 'tmp/**/*'
     - 'log/**/*'
     - 'storage/**/*'
+    - 'config/sidekiq.yml'
 
 # Disable frozen string literal comment requirement
 Style/FrozenStringLiteralComment:

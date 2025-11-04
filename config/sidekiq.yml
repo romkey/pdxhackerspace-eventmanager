@@ -1,0 +1,15 @@
+---
+:concurrency: 5
+:timeout: 25
+:verbose: false
+:queues:
+  - default
+  - mailers
+
+# Sidekiq Scheduler configuration
+:schedule:
+  regenerate_event_occurrences:
+    cron: '0 2 * * *'  # Daily at 2 AM
+    class: RegenerateEventOccurrencesJob
+    description: "Regenerate event occurrences for recurring events"
+

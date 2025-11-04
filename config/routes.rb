@@ -1,3 +1,6 @@
+require 'sidekiq/web'
+require 'sidekiq-scheduler/web'
+
 Rails.application.routes.draw do
   get 'calendar/index'
   get 'event_occurrences/show'
@@ -11,6 +14,11 @@ Rails.application.routes.draw do
   devise_for :users, controllers: {
     omniauth_callbacks: 'omniauth_callbacks'
   }
+
+  # Sidekiq Web UI (admin only)
+  authenticate :user, ->(user) { user.admin? } do
+    mount Sidekiq::Web => '/sidekiq'
+  end
 
   # Root path
   root 'home#index'

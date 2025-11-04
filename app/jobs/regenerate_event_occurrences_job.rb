@@ -1,0 +1,23 @@
+class RegenerateEventOccurrencesJob < ApplicationJob
+  queue_as :default
+
+  def perform
+    Rails.logger.info "RegenerateEventOccurrencesJob: Starting occurrence regeneration"
+
+    regenerated_count = 0
+    Event.active.where.not(recurrence_type: 'once').find_each do |event|
+      # Count upcoming occurrences
+      upcoming_count = event.upcoming_occurrences.count
+      target_count = event.max_occurrences || 5
+
+      # Only regenerate if we're running low on future occurrences
+      if upcoming_count < target_count
+        Rails.logger.info "RegenerateEventOccurrencesJob: Regenerating #{event.title} (#{upcoming_count}/#{target_count})"
+        event.generate_occurrences(target_count)
+        regenerated_count += 1
+      end
+    end
+
+    Rails.logger.info "RegenerateEventOccurrencesJob: Completed. Regenerated #{regenerated_count} events"
+  end
+end
