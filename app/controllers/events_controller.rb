@@ -190,7 +190,7 @@ class EventsController < ApplicationController
   def event_params
     params.require(:event).permit(:title, :description, :start_time, :duration,
                                   :recurrence_type, :status, :visibility, :open_to,
-                                  :more_info_url, :max_occurrences, :banner_image, :remove_banner_image,
+                                  :more_info_url, :max_occurrences, :banner_image,
                                   :location_id)
   end
 
