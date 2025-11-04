@@ -5,8 +5,7 @@ RSpec.describe "Health", type: :request do
   before do
     # Mock successful Redis connection
     redis_double = instance_double(Redis)
-    allow(redis_double).to receive(:ping).and_return('PONG')
-    allow(redis_double).to receive(:info).and_return({ 'connected_clients' => 5 })
+    allow(redis_double).to receive_messages(ping: 'PONG', info: { 'connected_clients' => 5 })
     allow(redis_double).to receive(:close)
     allow(Redis).to receive(:new).and_return(redis_double)
 
