@@ -124,19 +124,18 @@
   <div id="monthly_options" class="mb-3" style="display: none;">
     <div class="row">
       <div class="col-md-6">
-        <label class="form-label">Occurrence:</label>
-        <%= select_tag :recurrence_occurrence,
-            options_for_select([
-              ['First', 'first'],
-              ['Second', 'second'],
-              ['Third', 'third'],
-              ['Fourth', 'fourth'],
-              ['Last', 'last']
-            ]),
-            class: "form-select" %>
+        <label class="form-label">Which week(s) of the month:</label>
+        <div class="d-flex flex-column gap-2">
+          <% [['First', 'first'], ['Second', 'second'], ['Third', 'third'], ['Fourth', 'fourth'], ['Last', 'last']].each do |label, value| %>
+            <div class="form-check">
+              <%= check_box_tag "recurrence_occurrences[]", value, false, id: "occurrence_#{value}", class: "form-check-input" %>
+              <%= label_tag "occurrence_#{value}", label, class: "form-check-label" %>
+            </div>
+          <% end %>
+        </div>
       </div>
       <div class="col-md-6">
-        <label class="form-label">Day:</label>
+        <label class="form-label">On which day:</label>
         <%= select_tag :recurrence_day,
             options_for_select([
               ['Monday', 'monday'],
@@ -148,6 +147,9 @@
               ['Sunday', 'sunday']
             ]),
             class: "form-select" %>
+        <small class="form-text text-muted">
+          Select one or more weeks above
+        </small>
       </div>
     </div>
   </div>

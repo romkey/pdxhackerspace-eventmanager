@@ -6,7 +6,7 @@ class EventsController < ApplicationController
   before_action :authorize_event, only: %i[edit update destroy postpone cancel reactivate]
 
   def index
-    @events = policy_scope(Event).includes(:user, :hosts).order(start_time: :asc)
+    @events = policy_scope(Event).includes(:user, :hosts).order(title: :asc)
 
     respond_to do |format|
       format.html
@@ -193,7 +193,7 @@ class EventsController < ApplicationController
   def build_recurrence_params
     {
       days: params[:recurrence_days]&.map(&:to_i),
-      occurrence: params[:recurrence_occurrence],
+      occurrences: params[:recurrence_occurrences], # Array of occurrences (e.g., ['first', 'third'])
       day: params[:recurrence_day]
     }.compact
   end
