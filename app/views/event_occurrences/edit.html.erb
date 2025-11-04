@@ -50,6 +50,16 @@
           </div>
 
           <div class="mb-3">
+            <%= f.label :location_id, "Location Override (Optional)", class: "form-label" %>
+            <%= f.collection_select :location_id, Location.alphabetical, :id, :name,
+                { prompt: @event.location ? "Default: #{@event.location.name}" : "No specific location", include_blank: true },
+                class: "form-select" %>
+            <small class="form-text text-muted">
+              <i class="bi bi-geo-alt"></i> Override the event's default location for this occurrence
+            </small>
+          </div>
+
+          <div class="mb-3">
             <%= f.label :banner_image, "Custom Banner Image (Optional)", class: "form-label" %>
             <%= f.file_field :banner_image, class: "form-control", accept: "image/*" %>
             <small class="form-text text-muted">

@@ -45,6 +45,8 @@ class CalendarController < ApplicationController
             description: occ.description,
             postponed_until: occ.postponed_until&.iso8601,
             cancellation_reason: occ.cancellation_reason,
+            location: occ.event_location ? { id: occ.event_location.id, name: occ.event_location.name } : nil,
+            has_custom_location: occ.location_id.present?,
             banner_url: occ.banner.attached? ? url_for(occ.banner) : nil,
             has_custom_banner: occ.banner_image.attached?,
             event: {
@@ -54,6 +56,7 @@ class CalendarController < ApplicationController
               more_info_url: occ.event.more_info_url,
               visibility: occ.event.visibility,
               open_to: occ.event.open_to,
+              location: occ.event.location ? { id: occ.event.location.id, name: occ.event.location.name } : nil,
               hosts: occ.event.hosts.map { |h| h.name || h.email }
             }
           }

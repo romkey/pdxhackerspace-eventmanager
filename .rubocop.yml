@@ -50,6 +50,7 @@ Metrics/BlockLength:
     - 'config/routes.rb'
     - 'config/environments/*.rb'
     - 'db/seeds.rb'
+    - 'app/controllers/*_controller.rb'  # API responses with nested data
 
 # Allow longer classes
 Metrics/ClassLength:
@@ -57,12 +58,14 @@ Metrics/ClassLength:
   Exclude:
     - 'spec/**/*'
 
-# Allow more complex methods
+# Allow more complex methods (including API controllers with nested JSON)
 Metrics/AbcSize:
   Max: 65
   Exclude:
     - 'spec/**/*'
     - 'db/seeds.rb'
+    - 'app/controllers/calendar_controller.rb'
+    - 'app/controllers/events_controller.rb'
 
 # Allow longer example lengths
 RSpec/ExampleLength:

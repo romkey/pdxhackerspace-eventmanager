@@ -82,6 +82,16 @@
           <dt class="col-sm-5">Duration:</dt>
           <dd class="col-sm-7"><%= @occurrence.duration %> minutes</dd>
 
+          <% if @occurrence.event_location.present? %>
+            <dt class="col-sm-5"><i class="bi bi-geo-alt-fill"></i> Location:</dt>
+            <dd class="col-sm-7">
+              <%= @occurrence.event_location.name %>
+              <% if @occurrence.location_id.present? %>
+                <small class="text-muted d-block">(Custom for this occurrence)</small>
+              <% end %>
+            </dd>
+          <% end %>
+
           <dt class="col-sm-5">Event:</dt>
           <dd class="col-sm-7"><%= link_to @event.title, event_path(@event) %></dd>
 

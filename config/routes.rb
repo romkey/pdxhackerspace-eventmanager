@@ -64,4 +64,7 @@ Rails.application.routes.draw do
 
   # Site configuration (admin only, singleton)
   resource :site_config, only: %i[edit update]
+
+  # Locations management (admin only)
+  resources :locations, except: %i[show]
 end

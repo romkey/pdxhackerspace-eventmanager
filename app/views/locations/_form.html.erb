@@ -1,0 +1,34 @@
+<%= form_with(model: location, class: "needs-validation") do |f| %>
+  <% if location.errors.any? %>
+    <div class="alert alert-danger">
+      <h4><%= pluralize(location.errors.count, "error") %> prohibited this location from being saved:</h4>
+      <ul>
+        <% location.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="mb-3">
+    <%= f.label :name, class: "form-label" %>
+    <%= f.text_field :name, class: "form-control", required: true, placeholder: "Main Space, Workshop, Meeting Room, etc." %>
+    <small class="form-text text-muted">
+      <i class="bi bi-geo-alt"></i> Short name for this location (e.g., "Main Space", "Workshop", "Conference Room")
+    </small>
+  </div>
+
+  <div class="mb-3">
+    <%= f.label :description, "Description (Optional)", class: "form-label" %>
+    <%= f.text_area :description, class: "form-control", rows: 3, placeholder: "Add details like address, room number, or directions..." %>
+    <small class="form-text text-muted">
+      Optional details about this location
+    </small>
+  </div>
+
+  <div class="mt-4">
+    <%= f.submit class: "btn btn-primary" %>
+    <%= link_to "Cancel", locations_path, class: "btn btn-secondary" %>
+  </div>
+<% end %>
+

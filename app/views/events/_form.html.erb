@@ -77,6 +77,16 @@
     </div>
   </div>
 
+  <div class="mb-3">
+    <%= f.label :location_id, "Location", class: "form-label" %>
+    <%= f.collection_select :location_id, Location.alphabetical, :id, :name,
+        { prompt: "No specific location", include_blank: true },
+        class: "form-select" %>
+    <small class="form-text text-muted">
+      <i class="bi bi-geo-alt"></i> Where this event typically happens
+    </small>
+  </div>
+
   <div class="row">
     <div class="col-md-6 mb-3">
       <%= f.label :visibility, "Event Visibility", class: "form-label" %>

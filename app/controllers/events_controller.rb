@@ -27,6 +27,7 @@ class EventsController < ApplicationController
             duration: event.duration,
             recurrence_type: event.recurrence_type,
             more_info_url: event.more_info_url,
+            location: event.location ? { id: event.location.id, name: event.location.name, description: event.location.description } : nil,
             hosts: event.hosts.map { |h| h.name || h.email },
             banner_url: event.banner_image.attached? ? url_for(event.banner_image) : nil,
             occurrences: event.occurrences.upcoming.limit(event.max_occurrences || 5).map do |occ|
@@ -38,6 +39,8 @@ class EventsController < ApplicationController
                 description: occ.description,
                 postponed_until: occ.postponed_until&.iso8601,
                 cancellation_reason: occ.cancellation_reason,
+                location: occ.event_location ? { id: occ.event_location.id, name: occ.event_location.name } : nil,
+                has_custom_location: occ.location_id.present?,
                 banner_url: occ.banner.attached? ? url_for(occ.banner) : nil,
                 has_custom_banner: occ.banner_image.attached?
               }
@@ -187,7 +190,8 @@ class EventsController < ApplicationController
   def event_params
     params.require(:event).permit(:title, :description, :start_time, :duration,
                                   :recurrence_type, :status, :visibility, :open_to,
-                                  :more_info_url, :max_occurrences, :banner_image, :remove_banner_image)
+                                  :more_info_url, :max_occurrences, :banner_image, :remove_banner_image,
+                                  :location_id)
   end
 
   def build_recurrence_params
