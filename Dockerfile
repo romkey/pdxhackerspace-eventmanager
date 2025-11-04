@@ -1,13 +1,14 @@
 # Use Ruby 3.2.2 as base image
 FROM ruby:3.2.2
 
-# Install dependencies
+# Install dependencies (including git for version info)
 RUN apt-get update -qq && apt-get install -y \
     postgresql-client \
     build-essential \
     libpq-dev \
     curl \
     gnupg \
+    git \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Node.js 20.x LTS from NodeSource
@@ -39,6 +40,9 @@ RUN yarn install
 
 # Copy the rest of the application
 COPY . .
+
+# Capture version from git tags (or commit SHA if no tags)
+RUN git describe --tags --always 2>/dev/null > VERSION || echo "unknown" > VERSION
 
 # Build CSS and JS first (required for cssbundling-rails and jsbundling-rails)
 RUN yarn build

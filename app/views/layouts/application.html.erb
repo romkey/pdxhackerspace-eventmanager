@@ -98,6 +98,15 @@
     <footer class="mt-5 py-3 bg-light">
       <div class="container text-center text-muted">
         <small><%= @site_config&.footer_text.presence || "© #{Time.current.year} EventManager - Hackerspace Event Management System" %></small>
+        <% if current_user&.admin? %>
+          <br>
+          <small class="text-muted">
+            <% version = File.read(Rails.root.join('VERSION')).strip rescue 'unknown' %>
+            <i class="bi bi-tag"></i> <%= version %> 
+            | 
+            <i class="bi bi-server"></i> <%= Rails.env.titleize %>
+          </small>
+        <% end %>
       </div>
     </footer>
   </body>
