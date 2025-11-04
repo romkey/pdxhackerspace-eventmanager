@@ -8,9 +8,10 @@ require "active_support/core_ext/integer/time"
 Rails.application.configure do
   # Settings specified here will take precedence over those in config/application.rb.
 
-  # Disable host authorization in test environment
-  config.hosts.clear
-  config.host_authorization = { exclude: ->(_request) { true } }
+  # Disable host authorization in test environment - allow all test hosts
+  config.hosts << "www.example.com" unless config.hosts.frozen?
+  config.hosts << "localhost"
+  config.hosts << "127.0.0.1"
 
   # Turn false under Spring and add config.action_view.cache_template_loading = true.
   config.cache_classes = true
