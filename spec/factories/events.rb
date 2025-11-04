@@ -49,7 +49,7 @@ FactoryBot.define do
     end
 
     trait :with_banner do
-      after(:build) do |event|
+      after(:create) do |event|
         event.banner_image.attach(
           io: StringIO.new("fake image content"),
           filename: "banner.jpg",

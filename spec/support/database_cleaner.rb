@@ -19,5 +19,13 @@ RSpec.configure do |config|
 
   config.after do
     DatabaseCleaner.clean
+  rescue ActiveRecord::StatementInvalid => e
+    # If transaction is in a failed state, rollback and retry
+    if e.cause.is_a?(PG::InFailedSqlTransaction)
+      ActiveRecord::Base.connection.rollback_db_transaction
+      DatabaseCleaner.clean
+    else
+      raise
+    end
   end
 end

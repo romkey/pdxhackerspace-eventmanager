@@ -28,7 +28,7 @@ FactoryBot.define do
     end
 
     trait :with_banner do
-      after(:build) do |occurrence|
+      after(:create) do |occurrence|
         occurrence.banner_image.attach(
           io: StringIO.new("fake image content"),
           filename: "occurrence_banner.jpg",
