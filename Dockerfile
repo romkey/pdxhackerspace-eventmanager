@@ -40,9 +40,9 @@ RUN yarn install
 # Copy the rest of the application
 COPY . .
 
-# Note: Asset precompilation is skipped for development
-# Assets will be compiled on-demand when the server starts
-# For production, you would want to precompile assets here
+# Precompile assets for production
+# This ensures CSS and JS are available when the container starts
+RUN SECRET_KEY_BASE=dummy RAILS_ENV=production bundle exec rake assets:precompile
 
 # Expose port 3000
 EXPOSE 3000
