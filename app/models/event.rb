@@ -142,9 +142,11 @@ class Event < ApplicationRecord
     when 'monthly'
       if recurrence_params[:occurrence] && recurrence_params[:day]
         # e.g., "first Tuesday", "third Monday"
-        occurrence = recurrence_params[:occurrence].to_sym # :first, :second, :third, :fourth, :last
+        # Convert occurrence string to integer for IceCube
+        occurrence_map = { 'first' => 1, 'second' => 2, 'third' => 3, 'fourth' => 4, 'last' => -1 }
+        occurrence_int = occurrence_map[recurrence_params[:occurrence].to_s]
         day = recurrence_params[:day].to_sym # :monday, :tuesday, etc.
-        rule = IceCube::Rule.monthly.day_of_week(day => [occurrence])
+        rule = IceCube::Rule.monthly.day_of_week(day => [occurrence_int])
       else
         # Monthly on the same day of month
         rule = IceCube::Rule.monthly.day_of_month(start_time.day)
