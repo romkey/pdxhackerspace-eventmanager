@@ -1,5 +1,6 @@
 class Event < ApplicationRecord
   belongs_to :user # Original creator
+  belongs_to :location, optional: true
   has_many :event_hosts, dependent: :destroy
   has_many :hosts, through: :event_hosts, source: :user
   has_many :event_occurrences, dependent: :destroy

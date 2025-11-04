@@ -23,6 +23,11 @@ Rails.application.routes.draw do
   # Root path
   root 'home#index'
 
+  # Health check endpoints (for monitoring and load balancers)
+  get '/health', to: 'health#health'
+  get '/health/liveness', to: 'health#liveness'
+  get '/health/readiness', to: 'health#readiness'
+
   # Events routes
   resources :events do
     member do

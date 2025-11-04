@@ -143,6 +143,18 @@ RSpec/IndexedLet:
 RSpec/PredicateMatcher:
   Enabled: false
 
+RSpec/MessageSpies:
+  Enabled: false
+
+RSpec/AnyInstance:
+  Enabled: false
+
+RSpec/VerifiedDoubles:
+  Enabled: false
+
+RSpec/RepeatedExample:
+  Enabled: false
+
 RSpec/DescribedClass:
   Enabled: false
 

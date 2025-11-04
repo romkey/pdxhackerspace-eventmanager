@@ -1,5 +1,6 @@
 class EventOccurrence < ApplicationRecord
   belongs_to :event
+  belongs_to :location, optional: true
   has_one_attached :banner_image
 
   validates :occurs_at, presence: true
@@ -29,6 +30,11 @@ class EventOccurrence < ApplicationRecord
   # Get the banner image (own or inherited from event)
   def banner
     banner_image.attached? ? banner_image : event.banner_image
+  end
+
+  # Get the location (own or inherited from event)
+  def event_location
+    location || event.location
   end
 
   # Mark occurrence as postponed
