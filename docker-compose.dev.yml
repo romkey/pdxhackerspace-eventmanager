@@ -66,7 +66,7 @@ services:
   sidekiq:
     build: .
     container_name: eventmanager_sidekiq
-    command: bundle exec sidekiq -C config/sidekiq.yml
+    command: bundle exec sidekiq -C /app/config/sidekiq.yml
     volumes:
       - .:/app
       - bundle_cache:/usr/local/bundle

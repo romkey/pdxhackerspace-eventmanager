@@ -53,7 +53,7 @@ services:
   sidekiq:
     image: ghcr.io/romkey/pdxhackerspace-eventmanager:latest
     restart: always
-    command: bundle exec sidekiq -C config/sidekiq.yml
+    command: bundle exec sidekiq -C /app/config/sidekiq.yml
     environment:
       RAILS_ENV: production
       RAILS_LOG_TO_STDOUT: "true"
