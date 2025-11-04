@@ -40,6 +40,10 @@ RUN yarn install
 # Copy the rest of the application
 COPY . .
 
+# Build CSS and JS first (required for cssbundling-rails and jsbundling-rails)
+RUN yarn build
+RUN yarn build:css
+
 # Precompile assets for production
 # This ensures CSS and JS are available when the container starts
 RUN SECRET_KEY_BASE=dummy RAILS_ENV=production bundle exec rake assets:precompile
