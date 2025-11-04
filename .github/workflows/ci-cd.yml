@@ -154,6 +154,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history and tags for version generation
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
