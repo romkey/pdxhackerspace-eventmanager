@@ -18,13 +18,13 @@
   <body>
     <nav class="navbar navbar-expand-lg bg-primary navbar-dark">
       <div class="container-fluid">
-        <%= link_to root_path, class: "navbar-brand" do %>
-          <i class="bi bi-house-door-fill"></i>
-        <% end %>
         <% if @site_config&.website_url.present? %>
           <%= link_to (@site_config.organization_name || "EventManager"), @site_config.website_url, class: "navbar-brand" %>
         <% else %>
           <span class="navbar-brand mb-0"><%= @site_config&.organization_name || "EventManager" %></span>
+        <% end %>
+        <%= link_to root_path, class: "navbar-brand" do %>
+          <i class="bi bi-house-door-fill"></i>
         <% end %>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
           <span class="navbar-toggler-icon"></span>
