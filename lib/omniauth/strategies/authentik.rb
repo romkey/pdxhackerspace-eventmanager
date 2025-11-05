@@ -24,16 +24,47 @@ module OmniAuth
 
       def raw_info
         @raw_info ||= begin
-          # Get userinfo from endpoint
-          userinfo = access_token.get('/application/o/userinfo/').parsed
+          # DEBUG: Log the access token
+          Rails.logger.info "=" * 80
+          Rails.logger.info "AUTHENTIK ACCESS TOKEN:"
+          Rails.logger.info "Token: #{access_token.token}"
+          Rails.logger.info "Params keys: #{access_token.params.keys.inspect}"
+          Rails.logger.info "Params (full):"
+          Rails.logger.info JSON.pretty_generate(access_token.params)
+          Rails.logger.info "=" * 80
+
+          # Always fetch and dump userinfo
+          Rails.logger.info "FETCHING /userinfo/ endpoint..."
+          userinfo_response = access_token.get('/application/o/userinfo/')
+          userinfo = userinfo_response.parsed
+
+          Rails.logger.info "=" * 80
+          Rails.logger.info "/USERINFO/ RESPONSE:"
+          Rails.logger.info JSON.pretty_generate(userinfo)
+          Rails.logger.info "=" * 80
 
           # Also decode the JWT ID token to get additional claims
           if access_token.params['id_token']
+            Rails.logger.info "DECODING JWT ID TOKEN..."
             # Decode without verification (already verified by Authentik)
             jwt_payload = JWT.decode(access_token.params['id_token'], nil, false).first
+
+            Rails.logger.info "=" * 80
+            Rails.logger.info "JWT ID TOKEN PAYLOAD (decoded):"
+            Rails.logger.info JSON.pretty_generate(jwt_payload)
+            Rails.logger.info "=" * 80
+
             # Merge JWT claims into userinfo (JWT claims take precedence)
-            userinfo.merge(jwt_payload)
+            merged = userinfo.merge(jwt_payload)
+
+            Rails.logger.info "=" * 80
+            Rails.logger.info "MERGED RESULT (userinfo + JWT):"
+            Rails.logger.info JSON.pretty_generate(merged)
+            Rails.logger.info "=" * 80
+
+            merged
           else
+            Rails.logger.warn "NO ID TOKEN FOUND IN ACCESS TOKEN PARAMS!"
             userinfo
           end
         end
