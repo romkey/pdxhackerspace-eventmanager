@@ -106,6 +106,14 @@ jobs:
           ruby-version: '3.2.2'
           bundler-cache: true
 
+      - name: Cache Node modules
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-yarn-${{ hashFiles('yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-yarn-
+
       - name: Install dependencies
         run: |
           bundle install --jobs 4 --retry 3
@@ -126,7 +134,7 @@ jobs:
       - name: Run tests
         run: |
           echo "Starting RSpec test suite..."
-          bundle exec rspec --format documentation --force-color
+          bundle exec rspec --parallel --format documentation --force-color
         env:
           # Disable Spring to avoid hanging
           DISABLE_SPRING: 1
