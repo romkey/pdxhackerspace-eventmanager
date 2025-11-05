@@ -103,6 +103,14 @@
     <footer class="mt-5 py-3 bg-light">
       <div class="container text-center text-muted">
         <small><%= @site_config&.footer_text.presence || "© #{Time.current.year} EventManager - Hackerspace Event Management System" %></small>
+        <br>
+        <small>
+          <i class="bi bi-calendar-plus"></i> <%= link_to "Calendar Feed (.ics)", calendar_ical_path(format: :ics), class: "text-decoration-none" %>
+          |
+          <i class="bi bi-filetype-json"></i> <%= link_to "Events (JSON)", events_path(format: :json), class: "text-decoration-none" %>
+          |
+          <i class="bi bi-filetype-json"></i> <%= link_to "Calendar (JSON)", calendar_path(format: :json), class: "text-decoration-none" %>
+        </small>
         <% if current_user&.admin? %>
           <br>
           <small class="text-muted">
