@@ -157,6 +157,13 @@ jobs:
         with:
           fetch-depth: 0  # Fetch all history and tags for version generation
 
+      - name: Generate VERSION file
+        run: |
+          # Create VERSION file from git tags (will be copied into Docker image)
+          git describe --tags --always > VERSION
+          echo "Generated VERSION file:"
+          cat VERSION
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 

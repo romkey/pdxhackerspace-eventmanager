@@ -41,8 +41,11 @@ RUN yarn install
 # Copy the rest of the application
 COPY . .
 
-# Capture version from git tags (or commit SHA if no tags)
-RUN git describe --tags --always 2>/dev/null > VERSION || echo "unknown" > VERSION
+# VERSION file should be created by CI/CD before build
+# If it doesn't exist (local builds), create it from git or use 'dev'
+RUN if [ ! -f VERSION ]; then \
+      git describe --tags --always 2>/dev/null > VERSION || echo "dev-local" > VERSION; \
+    fi
 
 # Build CSS and JS first (required for cssbundling-rails and jsbundling-rails)
 RUN yarn build
