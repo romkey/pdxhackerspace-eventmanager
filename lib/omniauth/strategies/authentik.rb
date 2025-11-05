@@ -1,4 +1,5 @@
 require 'omniauth-oauth2'
+require 'jwt'
 
 module OmniAuth
   module Strategies
@@ -22,7 +23,20 @@ module OmniAuth
       end
 
       def raw_info
-        @raw_info ||= access_token.get('/application/o/userinfo/').parsed
+        @raw_info ||= begin
+          # Get userinfo from endpoint
+          userinfo = access_token.get('/application/o/userinfo/').parsed
+
+          # Also decode the JWT ID token to get additional claims
+          if access_token.params['id_token']
+            # Decode without verification (already verified by Authentik)
+            jwt_payload = JWT.decode(access_token.params['id_token'], nil, false).first
+            # Merge JWT claims into userinfo (JWT claims take precedence)
+            userinfo.merge(jwt_payload)
+          else
+            userinfo
+          end
+        end
       end
     end
   end
