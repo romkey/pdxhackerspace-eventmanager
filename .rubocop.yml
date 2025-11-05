@@ -66,6 +66,7 @@ Metrics/AbcSize:
     - 'db/seeds.rb'
     - 'app/controllers/calendar_controller.rb'
     - 'app/controllers/events_controller.rb'
+    - 'app/models/user.rb'  # from_omniauth has extensive debug logging
 
 # Allow longer example lengths
 RSpec/ExampleLength:
