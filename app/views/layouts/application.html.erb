@@ -16,6 +16,12 @@
   </head>
 
   <body>
+    <% if @site_config&.banner_image&.attached? %>
+      <div class="w-100">
+        <%= image_tag @site_config.banner_image, class: "img-fluid w-100", alt: "#{@site_config&.organization_name} Banner", style: "max-height: 300px; object-fit: cover;" %>
+      </div>
+    <% end %>
+
     <nav class="navbar navbar-expand-lg bg-primary navbar-dark">
       <div class="container-fluid">
         <% if @site_config&.website_url.present? %>

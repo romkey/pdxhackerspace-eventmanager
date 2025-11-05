@@ -1,9 +1,3 @@
-<% if @site_config.banner_image.attached? %>
-  <div class="mb-4">
-    <%= image_tag @site_config.banner_image, class: "img-fluid rounded w-100", alt: "#{@site_config.organization_name} Banner", style: "max-height: 400px; object-fit: cover;" %>
-  </div>
-<% end %>
-
 <div class="jumbotron bg-light p-5 rounded">
   <h1 class="display-4">Welcome to EventManager</h1>
   <p class="lead">Manage and discover events at our hackerspace</p>
