@@ -66,6 +66,18 @@ RSpec.describe User, type: :model do
         info: {
           email: 'oauth_user@example.com',
           name: 'OAuth User'
+        },
+        credentials: {
+          token: 'mock_access_token',
+          expires_at: Time.now.to_i + 3600
+        },
+        extra: {
+          raw_info: {
+            sub: '12345',
+            email: 'oauth_user@example.com',
+            name: 'OAuth User',
+            event_manager_admin: false
+          }
         }
       )
     end
