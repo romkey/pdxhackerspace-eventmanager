@@ -45,10 +45,6 @@
         </p>
       <% end %>
       <p class="mb-0">
-        <span class="badge bg-<%= event.public? ? 'success' : (event.members_only? ? 'info' : 'warning') %>">
-          <i class="bi bi-<%= event.public? ? 'globe' : (event.members_only? ? 'people' : 'lock') %>"></i>
-          <%= event.visibility.titleize %>
-        </span>
         <% 
           open_to_text = case event.open_to
           when 'public' then 'Open to All'

@@ -59,10 +59,6 @@
                   <p class="mb-1"><strong>Reason:</strong> <%= occurrence.cancellation_reason %></p>
                 <% end %>
                 <p class="mb-0">
-                  <span class="badge bg-<%= occurrence.event.public? ? 'success' : (occurrence.event.members_only? ? 'info' : 'warning') %>">
-                    <i class="bi bi-<%= occurrence.event.public? ? 'globe' : (occurrence.event.members_only? ? 'people' : 'lock') %>"></i>
-                    <%= occurrence.event.visibility.titleize %>
-                  </span>
                   <span class="badge bg-secondary">
                     <i class="bi bi-<%= occurrence.event.open_to == 'public' ? 'door-open' : (occurrence.event.open_to == 'members' ? 'people-fill' : 'envelope') %>"></i>
                     <%= occurrence.event.open_to == 'public' ? 'Open to All' : (occurrence.event.open_to == 'members' ? 'Members Only' : 'By Invitation') %>
