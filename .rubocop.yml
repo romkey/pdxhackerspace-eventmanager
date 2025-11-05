@@ -67,6 +67,7 @@ Metrics/AbcSize:
     - 'app/controllers/calendar_controller.rb'
     - 'app/controllers/events_controller.rb'
     - 'app/models/user.rb'  # from_omniauth has extensive debug logging
+    - 'lib/omniauth/strategies/authentik.rb'  # raw_info has extensive debug logging
 
 # Allow longer example lengths
 RSpec/ExampleLength:
