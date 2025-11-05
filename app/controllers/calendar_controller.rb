@@ -70,4 +70,52 @@ class CalendarController < ApplicationController
       end
     end
   end
+
+  def ical
+    # Get all public event occurrences (next 6 months)
+    six_months_from_now = 6.months.from_now
+    @occurrences = EventOccurrence
+                   .joins(:event)
+                   .where(events: { visibility: 'public', status: 'active' })
+                   .where('event_occurrences.occurs_at >= ?', Time.current)
+                   .where('event_occurrences.occurs_at <= ?', six_months_from_now)
+                   .where(event_occurrences: { status: 'active' })
+                   .includes(event: [:location, :hosts, :user])
+                   .order(:occurs_at)
+                   .limit(500)
+
+    calendar = Icalendar::Calendar.new
+    calendar.prodid = "-//#{@site_config&.organization_name || 'EventManager'}//Calendar//EN"
+
+    @occurrences.each do |occurrence|
+      calendar.event do |e|
+        e.dtstart = Icalendar::Values::DateTime.new(occurrence.occurs_at)
+        e.dtend = Icalendar::Values::DateTime.new(occurrence.occurs_at + occurrence.duration.minutes)
+        e.summary = occurrence.event.title
+        e.description = occurrence.description
+        e.url = event_url(occurrence.event)
+
+        # Add location if present
+        if occurrence.event_location
+          e.location = occurrence.event_location.name
+        end
+
+        # Add organizer/hosts
+        if occurrence.event.hosts.any?
+          host_names = occurrence.event.hosts.map { |h| h.name || h.email }.join(', ')
+          e.organizer = "Hosts: #{host_names}"
+        end
+
+        # Unique identifier for this occurrence
+        e.uid = "occurrence-#{occurrence.id}@#{request.host}"
+        e.dtstamp = Icalendar::Values::DateTime.new(occurrence.updated_at)
+      end
+    end
+
+    calendar.publish
+
+    respond_to do |format|
+      format.ics { render plain: calendar.to_ical, content_type: 'text/calendar' }
+    end
+  end
 end
