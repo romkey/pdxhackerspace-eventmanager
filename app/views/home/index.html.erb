@@ -15,7 +15,7 @@
       <%= button_to "Sign In with Authentik", user_authentik_omniauth_authorize_path, method: :post, class: "btn btn-secondary btn-lg", data: { turbo: false } %>
     <% end %>
     <%= link_to "Sign Up", new_user_registration_path, class: "btn btn-outline-primary btn-lg" %>
-  <% else %>
+  <% elsif current_user.admin? %>
     <%= link_to "Create New Event", new_event_path, class: "btn btn-success btn-lg" %>
   <% end %>
 </div>
@@ -26,34 +26,7 @@
     <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
       <% @upcoming_events.each do |event| %>
         <div class="col">
-          <div class="card h-100">
-            <div class="card-body">
-              <div class="d-flex justify-content-between align-items-start mb-2">
-                <h5 class="card-title mb-0">
-                  <%= link_to event.title, event_path(event), class: "text-decoration-none text-body" %>
-                </h5>
-                <span class="badge bg-<%= event.public? ? 'success' : (event.members_only? ? 'info' : 'warning') %>">
-                  <i class="bi bi-<%= event.public? ? 'globe' : (event.members_only? ? 'people' : 'lock') %>"></i>
-                </span>
-              </div>
-              <p class="card-text"><%= truncate(event.description, length: 100) %></p>
-              <p class="text-muted mb-2">
-                <small><i class="bi bi-calendar"></i> <%= event.start_time.strftime('%B %d, %Y at %I:%M %p') %></small><br>
-                <small><i class="bi bi-clock"></i> <%= event.duration %> minutes</small><br>
-                <% 
-                  open_to_text = case event.open_to
-                  when 'public' then 'Open to everyone'
-                  when 'members' then 'Members only'
-                  when 'private' then 'By invitation'
-                  end
-                %>
-                <small><i class="bi bi-<%= event.open_to == 'public' ? 'door-open' : (event.open_to == 'members' ? 'people-fill' : 'envelope') %>"></i> <%= open_to_text %></small>
-              </p>
-            </div>
-            <div class="card-footer">
-              <%= link_to "View Details", event_path(event), class: "btn btn-sm btn-primary" %>
-            </div>
-          </div>
+          <%= render 'events/event_card', event: event %>
         </div>
       <% end %>
     </div>

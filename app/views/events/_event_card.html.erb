@@ -1,0 +1,79 @@
+<div class="card h-100 <%= 'border-warning' if event.status == 'postponed' %> <%= 'border-danger' if event.status == 'cancelled' %>">
+  <% if event.banner_image.attached? %>
+    <%= link_to event_path(event) do %>
+      <%= image_tag event.banner_image, class: "card-img-top", style: "max-height: 200px; object-fit: cover; cursor: pointer;", alt: event.title %>
+    <% end %>
+  <% end %>
+  <div class="card-body">
+    <div class="d-flex justify-content-between align-items-start mb-2">
+      <h5 class="card-title">
+        <%= link_to event.title, event_path(event), class: "text-decoration-none text-body" %>
+      </h5>
+      <% if event.status != 'active' %>
+        <span class="badge bg-<%= event.status == 'postponed' ? 'warning' : 'danger' %>">
+          <%= event.status.titleize %>
+        </span>
+      <% end %>
+    </div>
+    
+    <% if event.status != 'active' && event.cancellation_reason.present? %>
+      <div class="alert alert-<%= event.status == 'postponed' ? 'warning' : 'danger' %> py-2 small mb-2">
+        <strong>Reason:</strong> <%= truncate(event.cancellation_reason, length: 80) %>
+      </div>
+    <% end %>
+    
+    <p class="card-text"><%= truncate(event.description, length: 120) %></p>
+    
+    <div class="text-muted small">
+      <p class="mb-1">
+        <i class="bi bi-calendar"></i> <%= event.start_time.strftime('%B %d, %Y at %I:%M %p') %>
+      </p>
+      <p class="mb-1">
+        <i class="bi bi-clock"></i> <%= event.duration %> minutes
+      </p>
+      <p class="mb-1">
+        <i class="bi bi-person"></i> 
+        <% if event.hosts.count > 1 %>
+          <%= event.hosts.map { |h| h.name || h.email }.join(', ') %>
+        <% else %>
+          <%= event.user.name || event.user.email %>
+        <% end %>
+      </p>
+      <% if event.recurring? %>
+        <p class="mb-1">
+          <i class="bi bi-arrow-repeat"></i> <%= event.recurrence_type.titleize %>
+        </p>
+      <% end %>
+      <p class="mb-0">
+        <span class="badge bg-<%= event.public? ? 'success' : (event.members_only? ? 'info' : 'warning') %>">
+          <i class="bi bi-<%= event.public? ? 'globe' : (event.members_only? ? 'people' : 'lock') %>"></i>
+          <%= event.visibility.titleize %>
+        </span>
+        <% 
+          open_to_text = case event.open_to
+          when 'public' then 'Open to All'
+          when 'members' then 'Members Only'
+          when 'private' then 'By Invitation'
+          end
+        %>
+        <span class="badge bg-secondary">
+          <i class="bi bi-<%= event.open_to == 'public' ? 'door-open' : (event.open_to == 'members' ? 'people-fill' : 'envelope') %>"></i>
+          <%= open_to_text %>
+        </span>
+      </p>
+    </div>
+  </div>
+  
+  <div class="card-footer d-flex justify-content-between align-items-center">
+    <div>
+      <%= link_to "View Details", event_path(event), class: "btn btn-sm btn-primary" %>
+      <% if event.more_info_url.present? %>
+        <%= link_to event.more_info_url, target: "_blank", rel: "noopener", class: "btn btn-sm btn-outline-info", title: "Learn More" do %>
+          <i class="bi bi-link-45deg"></i>
+        <% end %>
+      <% end %>
+    </div>
+    <%= link_to "iCal Feed", event_ical_path(event.ical_token, format: :ics), class: "btn btn-sm btn-outline-secondary" %>
+  </div>
+</div>
+
