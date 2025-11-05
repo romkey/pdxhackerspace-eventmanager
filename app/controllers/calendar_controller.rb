@@ -96,9 +96,7 @@ class CalendarController < ApplicationController
         e.url = event_url(occurrence.event)
 
         # Add location if present
-        if occurrence.event_location
-          e.location = occurrence.event_location.name
-        end
+        e.location = occurrence.event_location.name if occurrence.event_location
 
         # Add organizer/hosts
         if occurrence.event.hosts.any?
