@@ -2,9 +2,6 @@
   <h1><i class="bi bi-calendar3"></i> Event Calendar</h1>
   <div>
     <%= link_to "Events View", events_path, class: "btn btn-outline-secondary" %>
-    <% if user_signed_in? %>
-      <%= link_to "Create New Event", new_event_path, class: "btn btn-primary" %>
-    <% end %>
   </div>
 </div>
 
