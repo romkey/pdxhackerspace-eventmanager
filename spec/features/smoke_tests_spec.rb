@@ -99,12 +99,8 @@ RSpec.describe "Smoke Tests", type: :feature do
       expect(page).to have_field('Password')
     end
 
-    it "shows sign up page" do
-      visit new_user_registration_path
-      # Page title is "Sign Up" - verify case-insensitively
-      expect(page).to have_css('h2', text: /Sign Up/i)
-      expect(page).to have_field('Email')
-      expect(page).to have_field('Password')
+    it "sign up is disabled (users created via Authentik OAuth only)" do
+      skip "Sign up disabled - users created via Authentik OAuth only"
     end
 
     it "authentication is required for event creation" do
