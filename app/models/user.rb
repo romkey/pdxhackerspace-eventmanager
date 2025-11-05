@@ -17,24 +17,31 @@ class User < ApplicationRecord
   end
 
   def self.from_omniauth(auth)
-    # DEBUG: Log what Authentik sends to check for event_manager_admin claim
-    Rails.logger.info "=" * 80
-    Rails.logger.info "AUTHENTIK AUTH DATA:"
-    Rails.logger.info "Provider: #{auth.provider}"
-    Rails.logger.info "UID: #{auth.uid}"
-    Rails.logger.info "Email: #{auth.info.email}"
-    Rails.logger.info "Name: #{auth.info.name}"
-    Rails.logger.info "Info keys: #{auth.info.to_hash.keys.inspect}"
-    Rails.logger.info "Extra keys: #{auth.extra&.to_hash&.keys.inspect}"
-    Rails.logger.info "Raw info: #{auth.extra.raw_info.to_hash.inspect}" if auth.extra&.raw_info
-    Rails.logger.info "Looking for 'event_manager_admin' claim in raw_info"
-    Rails.logger.info "event_manager_admin value: #{auth.extra&.raw_info&.event_manager_admin.inspect}"
-    Rails.logger.info "=" * 80
+    # Find or create user
+    user = where(provider: auth.provider, uid: auth.uid).first_or_initialize
 
-    where(provider: auth.provider, uid: auth.uid).first_or_create do |user|
-      user.email = auth.info.email
-      user.name = auth.info.name
-      user.password = Devise.friendly_token[0, 20]
-    end
+    # Update user info on each login
+    user.email = auth.info.email
+    user.name = auth.info.name
+
+    # Set role based on Authentik claim
+    user.role = determine_role_from_auth(auth)
+
+    # Set password for new users
+    user.password = Devise.friendly_token[0, 20] if user.new_record?
+
+    user.save!
+    user
+  end
+
+  def self.determine_role_from_auth(auth)
+    # Check if Authentik sends the event_manager_admin claim
+    is_admin = auth.extra&.raw_info&.event_manager_admin
+
+    # Log for debugging
+    Rails.logger.info "Authentik role check for #{auth.info.email}: event_manager_admin=#{is_admin.inspect}"
+
+    # Return admin if claim is true, otherwise user
+    is_admin == true ? 'admin' : 'user'
   end
 end

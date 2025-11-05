@@ -175,7 +175,9 @@ class Event < ApplicationRecord
 
   def add_creator_as_host
     # Automatically add the creator as the first host
-    hosts << user unless hosted_by?(user)
+    return if user.nil? || hosted_by?(user)
+
+    EventHost.create!(event: self, user: user)
   end
 
   def generate_initial_occurrences

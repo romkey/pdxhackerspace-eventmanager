@@ -1,7 +1,7 @@
 require 'rails_helper'
 
 RSpec.describe EventPolicy, type: :policy do
-  let(:creator) { create(:user) }
+  let(:creator) { create(:user, role: 'admin') }
   let(:event) { create(:event, user: creator, visibility: 'public') }
 
   describe 'permissions' do
@@ -55,14 +55,13 @@ RSpec.describe EventPolicy, type: :policy do
       let(:policy) { described_class.new(user, event) }
 
       context 'with a public event' do
-        it 'allows viewing and creating' do
+        it 'allows viewing but not creating' do
           expect(policy.show?).to be true
           expect(policy.index?).to be true
 
           new_event = build(:event)
           new_policy = described_class.new(user, new_event)
-          expect(new_policy.create?).to be true
-          expect(new_policy.new?).to be true
+          expect(new_policy.create?).to be false
         end
 
         it 'denies management actions' do

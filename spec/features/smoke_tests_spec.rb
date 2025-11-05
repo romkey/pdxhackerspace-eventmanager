@@ -114,11 +114,11 @@ RSpec.describe "Smoke Tests", type: :feature do
     end
   end
 
-  describe "Event Creation (Authenticated)" do
-    let(:user) { create(:user) }
+  describe "Event Creation (Admin Only)" do
+    let(:admin) { create(:user, role: 'admin') }
 
     before do
-      sign_in user
+      sign_in admin
     end
 
     it "shows the new event form" do
