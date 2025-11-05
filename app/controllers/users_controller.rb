@@ -43,16 +43,16 @@ class UsersController < ApplicationController
 
   def user_params
     permitted = params.require(:user).permit(:name, :email)
-    
+
     # Only admins can change roles, and only to valid values
     if current_user.admin?
       role_valid = %w[user admin].include?(params[:user][:role])
       permitted[:role] = params[:user][:role] if params[:user][:role].present? && role_valid
-      
+
       # Only admins can set can_create_events flag
       permitted[:can_create_events] = params[:user][:can_create_events] if params[:user].key?(:can_create_events)
     end
-    
+
     permitted
   end
 end
