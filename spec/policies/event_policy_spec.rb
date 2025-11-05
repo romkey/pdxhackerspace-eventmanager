@@ -139,6 +139,30 @@ RSpec.describe EventPolicy, type: :policy do
       end
     end
 
+    context 'for a user with can_create_events permission' do
+      let(:event_creator_user) { create(:user, :can_create_events) }
+      let(:policy) { described_class.new(event_creator_user, event) }
+
+      it 'allows viewing and creating but not editing others events' do
+        expect(policy.show?).to be true
+        expect(policy.index?).to be true
+
+        new_event = build(:event)
+        new_policy = described_class.new(event_creator_user, new_event)
+        expect(new_policy.create?).to be true
+        expect(new_policy.new?).to be true
+      end
+
+      it 'denies management of others events' do
+        expect(policy.edit?).to be false
+        expect(policy.update?).to be false
+        expect(policy.destroy?).to be false
+        expect(policy.postpone?).to be false
+        expect(policy.cancel?).to be false
+        expect(policy.reactivate?).to be false
+      end
+    end
+
     context 'for an admin user' do
       let(:admin) { create(:user, :admin) }
       let(:policy) { described_class.new(admin, event) }

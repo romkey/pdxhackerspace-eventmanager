@@ -43,7 +43,7 @@
             <li class="nav-item">
               <%= link_to "Calendar", calendar_path, class: "nav-link" %>
             </li>
-            <% if user_signed_in? && current_user.admin? %>
+            <% if can_create_events? %>
               <li class="nav-item">
                 <%= link_to "New Event", new_event_path, class: "nav-link" %>
               </li>

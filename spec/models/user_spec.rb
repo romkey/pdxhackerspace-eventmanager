@@ -58,6 +58,24 @@ RSpec.describe User, type: :model do
     end
   end
 
+  describe '#can_create_events?' do
+    context 'when user has can_create_events permission' do
+      let(:user) { create(:user, :can_create_events) }
+
+      it 'returns true' do
+        expect(user.can_create_events?).to be true
+      end
+    end
+
+    context 'when user does not have can_create_events permission' do
+      let(:user) { create(:user) }
+
+      it 'returns false' do
+        expect(user.can_create_events?).to be false
+      end
+    end
+  end
+
   describe '.from_omniauth' do
     let(:auth) do
       OmniAuth::AuthHash.new(

@@ -5,10 +5,15 @@ FactoryBot.define do
     password_confirmation { "password123" }
     sequence(:name) { |n| "User #{n}" }
     role { "user" }
+    can_create_events { false }
 
     trait :admin do
       role { "admin" }
       sequence(:name) { |n| "Admin #{n}" }
+    end
+
+    trait :can_create_events do
+      can_create_events { true }
     end
 
     trait :with_oauth do

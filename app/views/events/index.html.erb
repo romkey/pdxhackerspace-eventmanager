@@ -1,6 +1,6 @@
 <div class="d-flex justify-content-between align-items-center mb-4">
   <h1>All Events</h1>
-  <% if user_signed_in? && current_user.admin? %>
+  <% if can_create_events? %>
     <%= link_to "Create New Event", new_event_path, class: "btn btn-primary" %>
   <% end %>
 </div>
@@ -16,7 +16,7 @@
 <% else %>
   <div class="alert alert-info">
     <p class="mb-0">No events have been created yet.</p>
-    <% if user_signed_in? %>
+    <% if can_create_events? %>
       <%= link_to "Create the first event", new_event_path, class: "alert-link" %>
     <% end %>
   </div>
