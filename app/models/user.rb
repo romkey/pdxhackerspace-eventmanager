@@ -17,6 +17,33 @@ class User < ApplicationRecord
   end
 
   def self.from_omniauth(auth)
+    # FULL DEBUG: Complete JSON dump of everything Authentik sends
+    Rails.logger.info "=" * 100
+    Rails.logger.info "COMPLETE AUTHENTIK AUTH OBJECT - JSON DUMP:"
+    Rails.logger.info "=" * 100
+    Rails.logger.info "Provider: #{auth.provider}"
+    Rails.logger.info "UID: #{auth.uid}"
+    Rails.logger.info ""
+    Rails.logger.info "--- AUTH.INFO (full hash) ---"
+    Rails.logger.info JSON.pretty_generate(auth.info.to_hash)
+    Rails.logger.info ""
+    Rails.logger.info "--- AUTH.CREDENTIALS (full hash) ---"
+    Rails.logger.info JSON.pretty_generate(auth.credentials.to_hash)
+    Rails.logger.info ""
+    Rails.logger.info "--- AUTH.EXTRA (full hash) ---"
+    Rails.logger.info JSON.pretty_generate(auth.extra.to_hash) if auth.extra
+    Rails.logger.info ""
+    if auth.extra&.raw_info
+      Rails.logger.info "--- AUTH.EXTRA.RAW_INFO (full hash) ---"
+      Rails.logger.info JSON.pretty_generate(auth.extra.raw_info.to_hash)
+    else
+      Rails.logger.info "--- AUTH.EXTRA.RAW_INFO: NOT PRESENT ---"
+    end
+    Rails.logger.info ""
+    Rails.logger.info "--- COMPLETE AUTH OBJECT (to_json) ---"
+    Rails.logger.info auth.to_json
+    Rails.logger.info "=" * 100
+
     # Find or create user
     user = where(provider: auth.provider, uid: auth.uid).first_or_initialize
 
@@ -39,7 +66,7 @@ class User < ApplicationRecord
     is_admin = auth.extra&.raw_info&.event_manager_admin
 
     # Log for debugging
-    Rails.logger.info "Authentik role check for #{auth.info.email}: event_manager_admin=#{is_admin.inspect}"
+    Rails.logger.info ">>> Role determination: event_manager_admin claim = #{is_admin.inspect}"
 
     # Return admin if claim is true, otherwise user
     is_admin == true ? 'admin' : 'user'
