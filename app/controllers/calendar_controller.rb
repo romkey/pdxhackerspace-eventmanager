@@ -80,7 +80,7 @@ class CalendarController < ApplicationController
                    .where('event_occurrences.occurs_at >= ?', Time.current)
                    .where('event_occurrences.occurs_at <= ?', six_months_from_now)
                    .where(event_occurrences: { status: 'active' })
-                   .includes(event: [:location, :hosts, :user])
+                   .includes(event: %i[location hosts user])
                    .order(:occurs_at)
                    .limit(500)
 
