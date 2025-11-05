@@ -21,6 +21,12 @@ module OmniAuth
         }
       end
 
+      extra do
+        {
+          raw_info: raw_info
+        }
+      end
+
       def raw_info
         @raw_info ||= begin
           # Fetch userinfo - this is the source of truth
