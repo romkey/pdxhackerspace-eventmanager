@@ -133,8 +133,8 @@ jobs:
 
       - name: Run tests
         run: |
-          echo "Starting RSpec test suite..."
-          bundle exec rspec --format documentation --force-color
+          echo "Starting RSpec test suite (parallel execution)..."
+          bundle exec parallel_rspec spec/ -n 2 --verbose
         env:
           # Disable Spring to avoid hanging
           DISABLE_SPRING: 1

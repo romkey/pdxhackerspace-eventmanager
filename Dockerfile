@@ -1,9 +1,10 @@
-# Use Ruby 3.2.2 as base image
-FROM ruby:3.2.2
+# ========================================
+# Stage 1: Builder - Install dependencies and build assets
+# ========================================
+FROM ruby:3.2.2 AS builder
 
-# Install dependencies (including git for version info)
+# Install build dependencies
 RUN apt-get update -qq && apt-get install -y \
-    postgresql-client \
     build-essential \
     libpq-dev \
     curl \
@@ -11,34 +12,32 @@ RUN apt-get update -qq && apt-get install -y \
     git \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Node.js 20.x LTS from NodeSource
+# Install Node.js 20.x LTS
 RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
     apt-get install -y nodejs && \
     rm -rf /var/lib/apt/lists/*
 
-# Install Yarn (correct version, not cmdtest)
+# Install Yarn
 RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - && \
     echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list && \
     apt-get update && apt-get install -y yarn && \
     rm -rf /var/lib/apt/lists/*
 
-# Set working directory
 WORKDIR /app
 
-# Copy Gemfile and Gemfile.lock
+# Copy dependency files
 COPY Gemfile Gemfile.lock ./
+COPY package.json yarn.lock* ./
 
-# Install gems
-RUN bundle install
+# Install Ruby gems
+RUN bundle config set --local deployment 'true' && \
+    bundle config set --local without 'development test' && \
+    bundle install --jobs 4 --retry 3
 
-# Copy package.json and yarn.lock (if it exists)
-COPY package.json ./
-COPY yarn.lock* ./
+# Install Node modules
+RUN yarn install --frozen-lockfile --production=false
 
-# Install node modules
-RUN yarn install
-
-# Copy the rest of the application
+# Copy application code
 COPY . .
 
 # VERSION file should be created by CI/CD before build
@@ -47,13 +46,32 @@ RUN if [ ! -f VERSION ]; then \
       git describe --tags --always 2>/dev/null > VERSION || echo "dev-local" > VERSION; \
     fi
 
-# Build CSS and JS first (required for cssbundling-rails and jsbundling-rails)
-RUN yarn build
-RUN yarn build:css
+# Build CSS and JS
+RUN yarn build && yarn build:css
 
 # Precompile assets for production
-# This ensures CSS and JS are available when the container starts
 RUN SECRET_KEY_BASE=dummy RAILS_ENV=production bundle exec rake assets:precompile
+
+# ========================================
+# Stage 2: Runtime - Minimal production image
+# ========================================
+FROM ruby:3.2.2-slim AS runtime
+
+# Install only runtime dependencies
+RUN apt-get update -qq && apt-get install -y \
+    postgresql-client \
+    libpq-dev \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create app directory
+WORKDIR /app
+
+# Copy installed gems from builder
+COPY --from=builder /usr/local/bundle /usr/local/bundle
+
+# Copy application code and built assets
+COPY --from=builder /app /app
 
 # Expose port 3000
 EXPOSE 3000
@@ -66,4 +84,3 @@ ENTRYPOINT ["docker-entrypoint.sh"]
 
 # Start the server
 CMD ["rails", "server", "-b", "0.0.0.0"]
-

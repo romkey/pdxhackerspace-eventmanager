@@ -92,6 +92,7 @@ group :test do
   # Additional testing tools
   gem "capybara"
   gem "database_cleaner-active_record"
+  gem "parallel_tests"
   gem "selenium-webdriver"
   gem "shoulda-matchers", "~> 5.0"
   gem "simplecov", require: false
