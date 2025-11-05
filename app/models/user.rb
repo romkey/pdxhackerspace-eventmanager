@@ -17,7 +17,7 @@ class User < ApplicationRecord
   end
 
   def self.from_omniauth(auth)
-    # DEBUG: Log what Authentik sends to determine if groups are included
+    # DEBUG: Log what Authentik sends to check for event_manager_admin claim
     Rails.logger.info "=" * 80
     Rails.logger.info "AUTHENTIK AUTH DATA:"
     Rails.logger.info "Provider: #{auth.provider}"
@@ -27,6 +27,8 @@ class User < ApplicationRecord
     Rails.logger.info "Info keys: #{auth.info.to_hash.keys.inspect}"
     Rails.logger.info "Extra keys: #{auth.extra&.to_hash&.keys.inspect}"
     Rails.logger.info "Raw info: #{auth.extra.raw_info.to_hash.inspect}" if auth.extra&.raw_info
+    Rails.logger.info "Looking for 'event_manager_admin' claim in raw_info"
+    Rails.logger.info "event_manager_admin value: #{auth.extra&.raw_info&.event_manager_admin.inspect}"
     Rails.logger.info "=" * 80
 
     where(provider: auth.provider, uid: auth.uid).first_or_create do |user|
