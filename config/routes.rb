@@ -16,10 +16,10 @@ Rails.application.routes.draw do
   devise_for :users, controllers: {
     omniauth_callbacks: 'omniauth_callbacks'
   }, skip_helpers: [:registrations]
-  
+
   # Manually add only edit/update registration routes (no new/create)
   devise_scope :user do
-    resource :registration, only: [:edit, :update], controller: 'devise/registrations', as: :user_registration
+    resource :registration, only: %i[edit update], controller: 'devise/registrations', as: :user_registration
   end
 
   # Sidekiq Web UI (admin only)
