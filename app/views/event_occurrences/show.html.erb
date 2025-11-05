@@ -95,8 +95,10 @@
           <dt class="col-sm-5">Event:</dt>
           <dd class="col-sm-7"><%= link_to @event.title, event_path(@event) %></dd>
 
-          <dt class="col-sm-5">Hosts:</dt>
-          <dd class="col-sm-7"><%= @event.hosts.map { |h| h.name || h.email }.join(', ') %></dd>
+          <% if @event.hosts.any? %>
+            <dt class="col-sm-5">Hosts:</dt>
+            <dd class="col-sm-7"><%= @event.hosts.map { |h| h.name || h.email }.join(', ') %></dd>
+          <% end %>
 
           <dt class="col-sm-5">Status:</dt>
           <dd class="col-sm-7"><%= @occurrence.status.titleize %></dd>

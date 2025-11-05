@@ -98,9 +98,9 @@
           <dt class="col-sm-5">Creator:</dt>
           <dd class="col-sm-7"><%= @event.creator.name || @event.creator.email %></dd>
 
-          <dt class="col-sm-5">Hosts:</dt>
-          <dd class="col-sm-7">
-            <% if @event.hosts.any? %>
+          <% if @event.hosts.any? %>
+            <dt class="col-sm-5">Hosts:</dt>
+            <dd class="col-sm-7">
               <% @event.hosts.each do |host| %>
                 <div class="d-flex justify-content-between align-items-center mb-1">
                   <span>
@@ -119,21 +119,32 @@
                   <% end %>
                 </div>
               <% end %>
-            <% else %>
-              <em class="text-muted">No hosts</em>
-            <% end %>
-          </dd>
+            </dd>
+          <% end %>
 
           <dt class="col-sm-5">Recurrence:</dt>
           <dd class="col-sm-7"><%= @event.recurrence_type.titleize %></dd>
 
-          <dt class="col-sm-5">Visibility:</dt>
-          <dd class="col-sm-7">
-            <span class="badge bg-<%= @event.public? ? 'success' : (@event.members_only? ? 'info' : 'warning') %>">
-              <i class="bi bi-<%= @event.public? ? 'globe' : (@event.members_only? ? 'people' : 'lock') %>"></i>
-              <%= @event.visibility.titleize %>
-            </span>
-          </dd>
+          <% if @event.location.present? %>
+            <dt class="col-sm-5"><i class="bi bi-geo-alt-fill"></i> Location:</dt>
+            <dd class="col-sm-7">
+              <%= @event.location.name %>
+              <% if @event.location.description.present? %>
+                <br>
+                <small class="text-muted"><%= @event.location.description %></small>
+              <% end %>
+            </dd>
+          <% end %>
+
+          <% if user_signed_in? && (current_user.admin? || @event.hosted_by?(current_user)) %>
+            <dt class="col-sm-5">Visibility:</dt>
+            <dd class="col-sm-7">
+              <span class="badge bg-<%= @event.public? ? 'success' : (@event.members_only? ? 'info' : 'warning') %>">
+                <i class="bi bi-<%= @event.public? ? 'globe' : (@event.members_only? ? 'people' : 'lock') %>"></i>
+                <%= @event.visibility.titleize %>
+              </span>
+            </dd>
+          <% end %>
 
           <dt class="col-sm-5">Open To:</dt>
           <dd class="col-sm-7">
