@@ -1,28 +1,55 @@
 class CalendarController < ApplicationController
   def index
-    # Get all upcoming occurrences for events the user can see
-    @occurrences = if current_user
-                     # Signed in users see occurrences based on event visibility
-                     EventOccurrence
-                       .joins(:event)
-                       .where(event: policy_scope(Event))
-                       .upcoming
-                       .includes(event: [:hosts, :user,
-                                         { banner_image_attachment: :blob }], banner_image_attachment: :blob)
-                       .limit(50)
-                   else
-                     # Public users only see public event occurrences
-                     EventOccurrence
-                       .joins(:event)
-                       .where(events: { visibility: 'public' })
-                       .upcoming
-                       .includes(event: [:hosts, :user,
-                                         { banner_image_attachment: :blob }], banner_image_attachment: :blob)
-                       .limit(50)
-                   end
+    @view = params[:view] || 'calendar' # Default to calendar view
+    @current_month = params[:month] ? Date.parse(params[:month]) : Date.current.beginning_of_month
 
-    # Group by month for display
-    @occurrences_by_month = @occurrences.group_by { |occ| occ.occurs_at.beginning_of_month }
+    # Get occurrences based on view type
+    if @view == 'calendar'
+      # For calendar view, get occurrences for the current month
+      month_start = @current_month.beginning_of_month
+      month_end = @current_month.end_of_month
+
+      @occurrences = if current_user
+                       EventOccurrence
+                         .joins(:event)
+                         .where(event: policy_scope(Event))
+                         .where('event_occurrences.occurs_at >= ? AND event_occurrences.occurs_at <= ?',
+                                month_start, month_end)
+                         .includes(event: %i[hosts user], banner_image_attachment: :blob)
+                         .order(:occurs_at)
+                     else
+                       EventOccurrence
+                         .joins(:event)
+                         .where(events: { visibility: 'public' })
+                         .where('event_occurrences.occurs_at >= ? AND event_occurrences.occurs_at <= ?',
+                                month_start, month_end)
+                         .includes(event: %i[hosts user], banner_image_attachment: :blob)
+                         .order(:occurs_at)
+                     end
+
+      # Group by date for calendar view
+      @occurrences_by_date = @occurrences.group_by { |occ| occ.occurs_at.to_date }
+    else
+      # For list view, get upcoming occurrences
+      @occurrences = if current_user
+                       EventOccurrence
+                         .joins(:event)
+                         .where(event: policy_scope(Event))
+                         .upcoming
+                         .includes(event: %i[hosts user], banner_image_attachment: :blob)
+                         .limit(50)
+                     else
+                       EventOccurrence
+                         .joins(:event)
+                         .where(events: { visibility: 'public' })
+                         .upcoming
+                         .includes(event: %i[hosts user], banner_image_attachment: :blob)
+                         .limit(50)
+                     end
+
+      # Group by month for list view
+      @occurrences_by_month = @occurrences.group_by { |occ| occ.occurs_at.beginning_of_month }
+    end
 
     respond_to do |format|
       format.html

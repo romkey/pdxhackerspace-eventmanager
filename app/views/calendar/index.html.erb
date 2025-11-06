@@ -8,12 +8,29 @@
   </div>
 </div>
 
-<p class="lead">
-  Showing <%= @occurrences.count %> upcoming event occurrences
-  <small class="text-muted">· <%= link_to "Subscribe to calendar feed", calendar_ical_path(format: :ics), class: "text-decoration-none" %></small>
-</p>
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <p class="lead mb-0">
+    <% if @view == 'calendar' %>
+      <%= @current_month.strftime('%B %Y') %>
+    <% else %>
+      Showing <%= @occurrences.count %> upcoming event occurrences
+    <% end %>
+    <small class="text-muted">· <%= link_to "Subscribe to calendar feed", calendar_ical_path(format: :ics), class: "text-decoration-none" %></small>
+  </p>
+  
+  <div class="btn-group" role="group" aria-label="View selector">
+    <%= link_to calendar_path(view: 'calendar'), class: "btn btn-sm #{@view == 'calendar' ? 'btn-primary' : 'btn-outline-primary'}" do %>
+      <i class="bi bi-calendar3"></i> Calendar
+    <% end %>
+    <%= link_to calendar_path(view: 'list'), class: "btn btn-sm #{@view == 'list' ? 'btn-primary' : 'btn-outline-primary'}" do %>
+      <i class="bi bi-list-ul"></i> List
+    <% end %>
+  </div>
+</div>
 
-<% if @occurrences_by_month.any? %>
+<% if @view == 'calendar' %>
+  <%= render 'calendar_grid' %>
+<% elsif @occurrences_by_month.any? %>
   <% @occurrences_by_month.sort.each do |month, occurrences| %>
     <div class="card mb-4">
       <div class="card-header bg-primary text-white">
