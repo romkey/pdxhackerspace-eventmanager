@@ -81,7 +81,28 @@ class EventsController < ApplicationController
     end
 
     if @event.save
-      redirect_to @event, notice: 'Event was successfully created.'
+      # Check for scheduling conflicts
+      conflicts = @event.check_conflicts
+      
+      if conflicts.any?
+        # Build conflict warning message
+        conflict_messages = conflicts.map do |conflict|
+          event = conflict[:event]
+          occ = conflict[:occurrence]
+          location_text = event.location ? " at #{event.location.name}" : ""
+          
+          view_context.link_to(
+            "#{event.title} (#{occ.occurs_at.strftime('%B %d at %I:%M %p')}#{location_text})",
+            view_context.event_path(event),
+            class: 'text-white text-decoration-underline'
+          )
+        end.join('<br>').html_safe
+        
+        flash[:conflict] = "Event created successfully, but scheduling conflicts detected with:<br>#{conflict_messages}".html_safe
+        redirect_to @event
+      else
+        redirect_to @event, notice: 'Event was successfully created.'
+      end
     else
       render :new, status: :unprocessable_entity
     end

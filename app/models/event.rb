@@ -123,6 +123,57 @@ class Event < ApplicationRecord
     occurrences.upcoming.active.limit(limit)
   end
 
+  # Check for conflicts with other events
+  def check_conflicts(limit = 5)
+    return [] if persisted? && occurrences.empty?
+
+    # Get the first few occurrences to check
+    times_to_check = if persisted?
+                       occurrences.limit(limit).pluck(:occurs_at)
+                     else
+                       # For new events, calculate potential occurrences
+                       if recurrence_type == 'once'
+                         [start_time]
+                       elsif recurrence_rule.present?
+                         schedule = IceCube::Schedule.from_yaml(recurrence_rule)
+                         schedule.occurrences_between(start_time, 1.year.from_now).first(limit)
+                       else
+                         [start_time]
+                       end
+                     end
+
+    return [] if times_to_check.empty?
+
+    # Find overlapping occurrences from other events
+    conflicting_occurrences = EventOccurrence
+                              .joins(:event)
+                              .where(events: { status: 'active' })
+
+    conflicting_occurrences = conflicting_occurrences.where.not(event_id: id) if persisted?
+
+    conflicts = []
+    times_to_check.each do |occurrence_time|
+      # Check for events that overlap (within 15 minutes before or after)
+      range_start = occurrence_time - 15.minutes
+      range_end = occurrence_time + duration.minutes + 15.minutes
+
+      overlapping = conflicting_occurrences
+                    .where('event_occurrences.occurs_at >= ? AND event_occurrences.occurs_at <= ?', range_start, range_end)
+                    .includes(event: :location)
+                    .limit(3) # Limit to 3 conflicts per time slot
+
+      overlapping.each do |occ|
+        conflicts << {
+          event: occ.event,
+          occurrence: occ,
+          overlap_time: occurrence_time
+        }
+      end
+    end
+
+    conflicts.uniq { |c| c[:event].id }.first(5) # Return up to 5 unique conflicting events
+  end
+
   # Regenerate occurrences (useful after recurrence rule changes)
   def regenerate_future_occurrences!
     # Delete future occurrences that haven't been modified
