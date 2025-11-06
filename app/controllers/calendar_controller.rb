@@ -15,6 +15,7 @@ class CalendarController < ApplicationController
                          .where(event: policy_scope(Event))
                          .where('event_occurrences.occurs_at >= ? AND event_occurrences.occurs_at <= ?',
                                 month_start, month_end)
+                         .where(event_occurrences: { status: %w[active postponed] })
                          .includes(event: %i[hosts user], banner_image_attachment: :blob)
                          .order(:occurs_at)
                      else
@@ -23,6 +24,7 @@ class CalendarController < ApplicationController
                          .where(events: { visibility: 'public' })
                          .where('event_occurrences.occurs_at >= ? AND event_occurrences.occurs_at <= ?',
                                 month_start, month_end)
+                         .where(event_occurrences: { status: %w[active postponed] })
                          .includes(event: %i[hosts user], banner_image_attachment: :blob)
                          .order(:occurs_at)
                      end
