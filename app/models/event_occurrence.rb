@@ -41,7 +41,20 @@ class EventOccurrence < ApplicationRecord
   def postpone!(until_date, reason = nil, user = nil)
     self.current_user_for_journal = user if user
     result = update(status: 'postponed', postponed_until: until_date, cancellation_reason: reason)
-    log_status_change('postponed', reason, user) if result && user
+
+    if result
+      # Create new occurrence at the postponed date/time
+      new_occurrence = event.occurrences.create!(
+        occurs_at: until_date,
+        status: 'active'
+      )
+
+      # Log both the postponement and new occurrence creation
+      log_status_change('postponed', reason, user) if user
+
+      Rails.logger.info "Created new occurrence ##{new_occurrence.id} at #{until_date} for postponed occurrence ##{id}"
+    end
+
     result
   end
 

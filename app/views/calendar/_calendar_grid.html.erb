@@ -28,10 +28,22 @@
         <% if @occurrences_by_date[date].present? %>
           <div class="calendar-events">
             <% @occurrences_by_date[date].each do |occurrence| %>
+              <% 
+                badge_class = case occurrence.status
+                when 'postponed' then 'bg-warning text-dark'
+                when 'cancelled' then 'bg-danger text-white'
+                else 'bg-primary text-white'
+                end
+              %>
               <%= link_to event_occurrence_path(occurrence), class: "calendar-event-item text-decoration-none" do %>
-                <div class="calendar-event-badge bg-primary text-white">
+                <div class="calendar-event-badge <%= badge_class %>">
                   <div class="event-time"><%= occurrence.occurs_at.strftime('%I:%M %p') %></div>
-                  <div class="event-title"><%= truncate(occurrence.event.title, length: 30) %></div>
+                  <div class="event-title">
+                    <%= truncate(occurrence.event.title, length: 30) %>
+                    <% if occurrence.status != 'active' %>
+                      <span class="badge badge-sm bg-dark"><%= occurrence.status.first.upcase %></span>
+                    <% end %>
+                  </div>
                 </div>
               <% end %>
             <% end %>
