@@ -197,10 +197,12 @@
 <% end %>
 
 <script>
-  document.addEventListener('DOMContentLoaded', function() {
+  function initRecurrenceOptions() {
     const recurrenceSelect = document.getElementById('recurrence_type_select');
     const weeklyOptions = document.getElementById('weekly_options');
     const monthlyOptions = document.getElementById('monthly_options');
+
+    if (!recurrenceSelect) return; // Guard in case form not present
 
     function updateRecurrenceOptions() {
       const value = recurrenceSelect.value;
@@ -210,7 +212,12 @@
     }
 
     recurrenceSelect.addEventListener('change', updateRecurrenceOptions);
-    updateRecurrenceOptions();
-  });
+    updateRecurrenceOptions(); // Run immediately to show correct state
+  }
+
+  // Support both Turbo and regular page loads
+  document.addEventListener('DOMContentLoaded', initRecurrenceOptions);
+  document.addEventListener('turbo:load', initRecurrenceOptions);
+  document.addEventListener('turbo:render', initRecurrenceOptions);
 </script>
 
