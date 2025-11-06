@@ -128,6 +128,16 @@
     </div>
   </div>
 
+  <div class="mb-3">
+    <div class="form-check">
+      <%= f.check_box :requires_mask, class: "form-check-input" %>
+      <%= f.label :requires_mask, "Masks Required", class: "form-check-label" %>
+      <div class="form-text">
+        <i class="bi bi-shield-fill-check"></i> Check this if masks are required for safety at this event
+      </div>
+    </div>
+  </div>
+
   <div id="weekly_options" class="mb-3" style="display: none;">
     <label class="form-label">Repeat on days:</label>
     <div class="d-flex flex-wrap gap-2">

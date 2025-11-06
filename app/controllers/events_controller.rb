@@ -215,7 +215,7 @@ class EventsController < ApplicationController
     params.require(:event).permit(:title, :description, :start_time, :duration,
                                   :recurrence_type, :status, :visibility, :open_to,
                                   :more_info_url, :max_occurrences, :banner_image,
-                                  :location_id)
+                                  :location_id, :requires_mask)
   end
 
   def build_recurrence_params

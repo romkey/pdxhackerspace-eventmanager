@@ -56,6 +56,11 @@
           <i class="bi bi-<%= event.open_to == 'public' ? 'door-open' : (event.open_to == 'members' ? 'people-fill' : 'envelope') %>"></i>
           <%= open_to_text %>
         </span>
+        <% if event.requires_mask %>
+          <span class="badge bg-info">
+            <i class="bi bi-shield-fill-check"></i> Masks Required
+          </span>
+        <% end %>
       </p>
     </div>
   </div>

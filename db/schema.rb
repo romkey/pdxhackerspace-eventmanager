@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_11_05_170000) do
+ActiveRecord::Schema[7.1].define(version: 2025_11_06_010000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -104,6 +104,7 @@ ActiveRecord::Schema[7.1].define(version: 2025_11_05_170000) do
     t.string "more_info_url"
     t.integer "max_occurrences", default: 5, null: false
     t.bigint "location_id"
+    t.boolean "requires_mask", default: false, null: false
     t.index ["ical_token"], name: "index_events_on_ical_token", unique: true
     t.index ["location_id"], name: "index_events_on_location_id"
     t.index ["open_to"], name: "index_events_on_open_to"

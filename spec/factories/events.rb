@@ -10,6 +10,7 @@ FactoryBot.define do
     visibility { "public" }
     open_to { "public" }
     max_occurrences { 5 }
+    requires_mask { false }
 
     trait :weekly do
       recurrence_type { "weekly" }

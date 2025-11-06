@@ -152,6 +152,15 @@
 
           <dt class="col-sm-5">Status:</dt>
           <dd class="col-sm-7"><%= @event.status.titleize %></dd>
+
+          <% if @event.requires_mask %>
+            <dt class="col-sm-5">Safety:</dt>
+            <dd class="col-sm-7">
+              <span class="badge bg-info">
+                <i class="bi bi-shield-fill-check"></i> Masks Required
+              </span>
+            </dd>
+          <% end %>
         </dl>
       </div>
     </div>
