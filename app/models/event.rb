@@ -234,9 +234,9 @@ class Event < ApplicationRecord
   end
 
   def regenerate_occurrences_if_needed
-    # Regenerate if recurrence settings changed
-    return unless saved_change_to_recurrence_rule? || saved_change_to_start_time? || saved_change_to_max_occurrences?
-
+    # Always regenerate occurrences on update to ensure consistency
+    # This handles changes to title, description, location, and other fields
+    # that should be reflected in all future occurrences
     regenerate_future_occurrences!
   end
 
