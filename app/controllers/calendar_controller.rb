@@ -15,7 +15,7 @@ class CalendarController < ApplicationController
                          .where(event: policy_scope(Event))
                          .where('event_occurrences.occurs_at >= ? AND event_occurrences.occurs_at <= ?',
                                 month_start, month_end)
-                         .where(event_occurrences: { status: %w[active postponed] })
+                         .where(event_occurrences: { status: %w[active postponed cancelled] })
                          .includes(event: %i[hosts user], banner_image_attachment: :blob)
                          .order(:occurs_at)
                      else
@@ -24,7 +24,7 @@ class CalendarController < ApplicationController
                          .where(events: { visibility: 'public' })
                          .where('event_occurrences.occurs_at >= ? AND event_occurrences.occurs_at <= ?',
                                 month_start, month_end)
-                         .where(event_occurrences: { status: %w[active postponed] })
+                         .where(event_occurrences: { status: %w[active postponed cancelled] })
                          .includes(event: %i[hosts user], banner_image_attachment: :blob)
                          .order(:occurs_at)
                      end
@@ -37,12 +37,13 @@ class CalendarController < ApplicationController
         Rails.logger.info "  - Occurrence ##{occ.id}: #{occ.event.title} at #{occ.occurs_at} (status: #{occ.status})"
       end
     else
-      # For list view, get upcoming occurrences + postponed ones (even if original date passed)
+      # For list view, get upcoming occurrences + postponed/cancelled ones (even if original date passed)
       @occurrences = if current_user
                        EventOccurrence
                          .joins(:event)
                          .where(event: policy_scope(Event))
-                         .where('event_occurrences.occurs_at >= ? OR event_occurrences.status = ?', Time.now, 'postponed')
+                         .where('event_occurrences.occurs_at >= ? OR event_occurrences.status IN (?)',
+                                Time.now, %w[postponed cancelled])
                          .includes(event: %i[hosts user], banner_image_attachment: :blob)
                          .order(:occurs_at)
                          .limit(50)
@@ -50,7 +51,8 @@ class CalendarController < ApplicationController
                        EventOccurrence
                          .joins(:event)
                          .where(events: { visibility: 'public' })
-                         .where('event_occurrences.occurs_at >= ? OR event_occurrences.status = ?', Time.now, 'postponed')
+                         .where('event_occurrences.occurs_at >= ? OR event_occurrences.status IN (?)',
+                                Time.now, %w[postponed cancelled])
                          .includes(event: %i[hosts user], banner_image_attachment: :blob)
                          .order(:occurs_at)
                          .limit(50)
