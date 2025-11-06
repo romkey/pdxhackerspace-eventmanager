@@ -1,0 +1,24 @@
+#!/bin/bash
+# Script to run RuboCop locally using Docker with cached gem installation
+# Much faster than building the full Dockerfile
+
+set -e
+
+IMAGE_NAME="eventmanager-rubocop:latest"
+
+# Check if image exists, if not build it (only once)
+if ! docker images | grep -q "eventmanager-rubocop"; then
+  echo "📦 Building RuboCop Docker image (one-time setup)..."
+  docker build -t $IMAGE_NAME -f- . <<'DOCKERFILE'
+FROM ruby:3.2.2
+WORKDIR /app
+COPY Gemfile Gemfile.lock ./
+RUN bundle install --jobs 4 --retry 3
+DOCKERFILE
+  echo "✅ Image built and cached!"
+fi
+
+echo "🔍 Running RuboCop..."
+docker run --rm -v "$(pwd):/app" -w /app $IMAGE_NAME bundle exec rubocop --parallel
+
+echo "✅ RuboCop passed!"
