@@ -113,7 +113,7 @@
         <small><%= @site_config&.footer_text.presence || "© #{Time.current.year} EventManager - Hackerspace Event Management System" %></small>
         <br>
         <small>
-          <i class="bi bi-calendar-plus"></i> <%= link_to "Calendar Feed (.ics)", calendar_ical_path(format: :ics), class: "text-decoration-none" %>
+          <i class="bi bi-calendar-plus"></i> <%= link_to "Calendar Feed (.ics)", calendar_ical_path, class: "text-decoration-none" %>
           |
           <i class="bi bi-filetype-json"></i> <%= link_to "Events (JSON)", events_path(format: :json), class: "text-decoration-none" %>
           |
