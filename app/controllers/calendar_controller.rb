@@ -31,6 +31,11 @@ class CalendarController < ApplicationController
 
       # Group by date for calendar view
       @occurrences_by_date = @occurrences.group_by { |occ| occ.occurs_at.to_date }
+
+      Rails.logger.info "Calendar view for #{@current_month.strftime('%B %Y')}: Found #{@occurrences.count} occurrences"
+      @occurrences.each do |occ|
+        Rails.logger.info "  - Occurrence ##{occ.id}: #{occ.event.title} at #{occ.occurs_at} (status: #{occ.status})"
+      end
     else
       # For list view, get upcoming occurrences + postponed ones (even if original date passed)
       @occurrences = if current_user

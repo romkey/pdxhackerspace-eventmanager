@@ -40,19 +40,35 @@ class EventOccurrence < ApplicationRecord
   # Mark occurrence as postponed
   def postpone!(until_date, reason = nil, user = nil)
     self.current_user_for_journal = user if user
+
+    Rails.logger.info "Postponing occurrence ##{id} from #{occurs_at} to #{until_date}"
+
     result = update(status: 'postponed', postponed_until: until_date, cancellation_reason: reason)
 
     if result
+      Rails.logger.info "Successfully marked occurrence ##{id} as postponed"
+
       # Create new occurrence at the postponed date/time
-      new_occurrence = event.occurrences.create!(
-        occurs_at: until_date,
-        status: 'active'
-      )
+      begin
+        new_occurrence = event.occurrences.create!(
+          occurs_at: until_date,
+          status: 'active'
+        )
 
-      # Log both the postponement and new occurrence creation
-      log_status_change('postponed', reason, user) if user
+        Rails.logger.info "✓ Created new active occurrence ##{new_occurrence.id} at #{until_date} for event ##{event.id}"
+        Rails.logger.info "  - New occurrence status: #{new_occurrence.status}"
+        Rails.logger.info "  - New occurrence occurs_at: #{new_occurrence.occurs_at}"
+        Rails.logger.info "  - Event now has #{event.occurrences.count} total occurrences"
 
-      Rails.logger.info "Created new occurrence ##{new_occurrence.id} at #{until_date} for postponed occurrence ##{id}"
+        # Log both the postponement and new occurrence creation
+        log_status_change('postponed', reason, user) if user
+      rescue StandardError => e
+        Rails.logger.error "✗ Failed to create new occurrence: #{e.message}"
+        Rails.logger.error e.backtrace.join("\n")
+        raise
+      end
+    else
+      Rails.logger.error "Failed to mark occurrence ##{id} as postponed: #{errors.full_messages.join(', ')}"
     end
 
     result
