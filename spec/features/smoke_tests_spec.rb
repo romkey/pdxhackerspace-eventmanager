@@ -46,7 +46,11 @@ RSpec.describe "Smoke Tests", type: :feature do
       visit event_path(event)
       expect(page).to have_content('Detailed Event')
       expect(page).to have_content(event.description)
-      expect(page).to have_content("#{event.duration} minutes")
+
+      # Check for time range display (start time to end time)
+      start_time_str = event.start_time.strftime('%I:%M %p')
+      end_time_str = (event.start_time + event.duration.minutes).strftime('%I:%M %p')
+      expect(page).to have_content("#{start_time_str} to #{end_time_str}")
     end
 
     it "shows hosts" do
