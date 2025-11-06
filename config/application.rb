@@ -28,7 +28,10 @@ module EventManager
     # These settings can be overridden in specific environments using the files
     # in config/environments, which are processed later.
     #
-    # config.time_zone = "Central Time (US & Canada)"
+    # Set the application timezone to Pacific Time (Portland, OR)
+    config.time_zone = "Pacific Time (US & Canada)"
+    # Database stores times in UTC (recommended)
+    config.active_record.default_timezone = :utc
 
     # Rails 7.1+ way to autoload lib directory
     # Ignore omniauth since directory name doesn't match module name (omniauth vs OmniAuth)

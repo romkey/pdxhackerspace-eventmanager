@@ -41,6 +41,7 @@ services:
     command: bash -c "rm -f tmp/pids/server.pid && bundle exec puma -C config/puma.rb"
     environment:
       RAILS_ENV: production
+      TZ: America/Los_Angeles
       RAILS_LOG_TO_STDOUT: "true"
       RAILS_SERVE_STATIC_FILES: "true"
       SECRET_KEY_BASE: ${SECRET_KEY_BASE}
@@ -72,6 +73,7 @@ services:
     command: bundle exec sidekiq -C /app/config/sidekiq.yml
     environment:
       RAILS_ENV: production
+      TZ: America/Los_Angeles
       RAILS_LOG_TO_STDOUT: "true"
       SECRET_KEY_BASE: ${SECRET_KEY_BASE}
       DATABASE_URL: postgres://${DATABASE_USER}:${DATABASE_PASSWORD}@${DATABASE_HOST}/${DATABASE_NAME}
