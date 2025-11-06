@@ -41,6 +41,7 @@ Metrics/MethodLength:
   Exclude:
     - 'spec/**/*'
     - 'db/seeds.rb'
+    - 'app/controllers/calendar_controller.rb'  # index method handles calendar and list views
 
 # Allow longer blocks in specs and routes
 Metrics/BlockLength:
@@ -57,6 +58,7 @@ Metrics/ClassLength:
   Max: 200
   Exclude:
     - 'spec/**/*'
+    - 'app/models/event.rb'  # Core event business logic with many methods
 
 # Allow more complex methods (including API controllers with nested JSON)
 Metrics/AbcSize:

@@ -130,16 +130,13 @@ class Event < ApplicationRecord
     # Get the first few occurrences to check
     times_to_check = if persisted?
                        occurrences.limit(limit).pluck(:occurs_at)
+                     elsif recurrence_type == 'once'
+                       [start_time]
+                     elsif recurrence_rule.present?
+                       schedule = IceCube::Schedule.from_yaml(recurrence_rule)
+                       schedule.occurrences_between(start_time, 1.year.from_now).first(limit)
                      else
-                       # For new events, calculate potential occurrences
-                       if recurrence_type == 'once'
-                         [start_time]
-                       elsif recurrence_rule.present?
-                         schedule = IceCube::Schedule.from_yaml(recurrence_rule)
-                         schedule.occurrences_between(start_time, 1.year.from_now).first(limit)
-                       else
-                         [start_time]
-                       end
+                       [start_time]
                      end
 
     return [] if times_to_check.empty?
