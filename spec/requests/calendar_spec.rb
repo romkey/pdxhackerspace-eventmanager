@@ -60,7 +60,7 @@ RSpec.describe "Calendar", type: :request do
       end
 
       it "shows a message about no events" do
-        get calendar_path
+        get calendar_path(view: 'list')
         expect(response.body).to include("No upcoming event occurrences")
       end
     end
