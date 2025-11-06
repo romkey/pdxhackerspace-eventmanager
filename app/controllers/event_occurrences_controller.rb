@@ -40,9 +40,9 @@ class EventOccurrencesController < ApplicationController
   def postpone
     postponed_until = params[:postponed_until] ? Time.parse(params[:postponed_until]) : 1.week.from_now
     if @occurrence.postpone!(postponed_until, params[:reason], current_user)
-      redirect_to @occurrence, notice: 'Occurrence was postponed.'
+      redirect_back fallback_location: @occurrence.event, notice: 'Occurrence was postponed. A new occurrence has been created at the rescheduled date.'
     else
-      redirect_to @occurrence, alert: 'Failed to postpone occurrence.'
+      redirect_back fallback_location: @occurrence, alert: 'Failed to postpone occurrence.'
     end
   end
 
