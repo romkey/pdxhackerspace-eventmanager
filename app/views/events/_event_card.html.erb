@@ -25,12 +25,24 @@
     <p class="card-text"><%= truncate(event.description, length: 120) %></p>
     
     <div class="text-muted small">
-      <p class="mb-1">
-        <i class="bi bi-calendar"></i> <%= event.start_time.strftime('%B %d, %Y') %>
-      </p>
-      <p class="mb-1">
-        <i class="bi bi-clock"></i> <%= event.start_time.strftime('%I:%M %p') %> to <%= (event.start_time + event.duration.minutes).strftime('%I:%M %p') %>
-      </p>
+      <% if event.status == 'postponed' && event.postponed_until %>
+        <p class="mb-1">
+          <i class="bi bi-calendar-x"></i> <span class="text-decoration-line-through"><%= event.start_time.strftime('%B %d, %Y') %></span>
+        </p>
+        <p class="mb-1 text-warning fw-bold">
+          <i class="bi bi-calendar-check"></i> <%= event.postponed_until.strftime('%B %d, %Y') %> (Rescheduled)
+        </p>
+        <p class="mb-1">
+          <i class="bi bi-clock"></i> <%= event.postponed_until.strftime('%I:%M %p') %> to <%= (event.postponed_until + event.duration.minutes).strftime('%I:%M %p') %>
+        </p>
+      <% else %>
+        <p class="mb-1">
+          <i class="bi bi-calendar"></i> <%= event.start_time.strftime('%B %d, %Y') %>
+        </p>
+        <p class="mb-1">
+          <i class="bi bi-clock"></i> <%= event.start_time.strftime('%I:%M %p') %> to <%= (event.start_time + event.duration.minutes).strftime('%I:%M %p') %>
+        </p>
+      <% end %>
       <p class="mb-1">
         <i class="bi bi-person"></i> 
         <% if event.hosts.count > 1 %>
