@@ -28,8 +28,10 @@ module EventManager
     # These settings can be overridden in specific environments using the files
     # in config/environments, which are processed later.
     #
-    # Set the application timezone to Pacific Time (Portland, OR)
-    config.time_zone = "Pacific Time (US & Canada)"
+    # Set the application timezone from TZ environment variable
+    # Falls back to Pacific Time (Portland, OR) if not set
+    # Accepts both TZ database names (America/Los_Angeles) and Rails names (Pacific Time (US & Canada))
+    config.time_zone = ENV.fetch('TZ', 'America/Los_Angeles')
     # Database stores times in UTC (recommended)
     config.active_record.default_timezone = :utc
 
