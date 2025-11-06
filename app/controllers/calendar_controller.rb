@@ -32,20 +32,22 @@ class CalendarController < ApplicationController
       # Group by date for calendar view
       @occurrences_by_date = @occurrences.group_by { |occ| occ.occurs_at.to_date }
     else
-      # For list view, get upcoming occurrences
+      # For list view, get upcoming occurrences + postponed ones (even if original date passed)
       @occurrences = if current_user
                        EventOccurrence
                          .joins(:event)
                          .where(event: policy_scope(Event))
-                         .upcoming
+                         .where('event_occurrences.occurs_at >= ? OR event_occurrences.status = ?', Time.now, 'postponed')
                          .includes(event: %i[hosts user], banner_image_attachment: :blob)
+                         .order(:occurs_at)
                          .limit(50)
                      else
                        EventOccurrence
                          .joins(:event)
                          .where(events: { visibility: 'public' })
-                         .upcoming
+                         .where('event_occurrences.occurs_at >= ? OR event_occurrences.status = ?', Time.now, 'postponed')
                          .includes(event: %i[hosts user], banner_image_attachment: :blob)
+                         .order(:occurs_at)
                          .limit(50)
                      end
 
