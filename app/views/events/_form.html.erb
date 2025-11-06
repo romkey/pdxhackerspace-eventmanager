@@ -17,6 +17,15 @@
 
   <div class="mb-3">
     <%= f.label :description, class: "form-label" %>
+    <div class="alert alert-info py-2 mb-2">
+      <small>
+        <i class="bi bi-info-circle"></i>
+        <strong>What to include in your description:</strong>
+        Who is invited, what the event is about, any signup or RSVP links, what to bring, 
+        skill level requirements, costs (if any), and other important details that help 
+        people understand if this event is for them.
+      </small>
+    </div>
     <%= f.text_area :description, class: "form-control", rows: 5, placeholder: "Describe your event..." %>
   </div>
 
