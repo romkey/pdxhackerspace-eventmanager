@@ -151,9 +151,16 @@
   </div>
 
   <div id="monthly_options" class="mb-3" style="display: none;">
+    <div class="alert alert-info py-2 mb-3">
+      <small>
+        <i class="bi bi-info-circle"></i>
+        <strong>Examples:</strong> Check "First" and "Third" with "Monday" for events on the 1st and 3rd Monday.
+        Check "Second" with "Sunday" for events on the 2nd Sunday of each month.
+      </small>
+    </div>
     <div class="row">
       <div class="col-md-6">
-        <label class="form-label">Which week(s) of the month:</label>
+        <label class="form-label">Which week(s) of the month: <small class="text-muted">(check one or more)</small></label>
         <div class="d-flex flex-column gap-2">
           <% [['First', 'first'], ['Second', 'second'], ['Third', 'third'], ['Fourth', 'fourth'], ['Last', 'last']].each do |label, value| %>
             <div class="form-check">
@@ -164,7 +171,7 @@
         </div>
       </div>
       <div class="col-md-6">
-        <label class="form-label">On which day:</label>
+        <label class="form-label">On which day of the week:</label>
         <%= select_tag :recurrence_day,
             options_for_select([
               ['Monday', 'monday'],
@@ -177,7 +184,7 @@
             ]),
             class: "form-select" %>
         <small class="form-text text-muted">
-          Select one or more weeks above
+          <i class="bi bi-calendar-week"></i> You can select multiple weeks above for complex schedules
         </small>
       </div>
     </div>
