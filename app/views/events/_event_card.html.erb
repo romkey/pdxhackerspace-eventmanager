@@ -26,10 +26,10 @@
     
     <div class="text-muted small">
       <p class="mb-1">
-        <i class="bi bi-calendar"></i> <%= event.start_time.strftime('%B %d, %Y at %I:%M %p') %>
+        <i class="bi bi-calendar"></i> <%= event.start_time.strftime('%B %d, %Y') %>
       </p>
       <p class="mb-1">
-        <i class="bi bi-clock"></i> <%= event.duration %> minutes
+        <i class="bi bi-clock"></i> <%= event.start_time.strftime('%I:%M %p') %> to <%= (event.start_time + event.duration.minutes).strftime('%I:%M %p') %>
       </p>
       <p class="mb-1">
         <i class="bi bi-person"></i> 

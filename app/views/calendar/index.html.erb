@@ -63,9 +63,7 @@
                   <% end %>
                 </h5>
                 <p class="mb-1 text-muted">
-                  <i class="bi bi-clock"></i> <%= occurrence.occurs_at.strftime('%I:%M %p') %> 
-                  · 
-                  <i class="bi bi-hourglass"></i> <%= occurrence.duration %> min
+                  <i class="bi bi-clock"></i> <%= occurrence.occurs_at.strftime('%I:%M %p') %> to <%= (occurrence.occurs_at + occurrence.duration.minutes).strftime('%I:%M %p') %>
                   ·
                   <i class="bi bi-person"></i> <%= occurrence.event.hosts.map { |h| h.name || h.email }.join(', ') %>
                 </p>

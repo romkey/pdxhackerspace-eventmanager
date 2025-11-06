@@ -89,11 +89,11 @@
       <div class="card-body">
         <h5 class="card-title">Event Details</h5>
         <dl class="row mb-0">
-          <dt class="col-sm-5">Start Time:</dt>
-          <dd class="col-sm-7"><%= @event.start_time.strftime('%B %d, %Y at %I:%M %p') %></dd>
+          <dt class="col-sm-5">Date:</dt>
+          <dd class="col-sm-7"><%= @event.start_time.strftime('%B %d, %Y') %></dd>
 
-          <dt class="col-sm-5">Duration:</dt>
-          <dd class="col-sm-7"><%= @event.duration %> minutes</dd>
+          <dt class="col-sm-5">Time:</dt>
+          <dd class="col-sm-7"><%= @event.start_time.strftime('%I:%M %p') %> to <%= (@event.start_time + @event.duration.minutes).strftime('%I:%M %p') %></dd>
 
           <dt class="col-sm-5">Creator:</dt>
           <dd class="col-sm-7"><%= @event.creator.name || @event.creator.email %></dd>

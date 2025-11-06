@@ -77,10 +77,7 @@
           <dd class="col-sm-7"><%= @occurrence.occurs_at.strftime('%B %d, %Y') %></dd>
 
           <dt class="col-sm-5">Time:</dt>
-          <dd class="col-sm-7"><%= @occurrence.occurs_at.strftime('%I:%M %p') %></dd>
-
-          <dt class="col-sm-5">Duration:</dt>
-          <dd class="col-sm-7"><%= @occurrence.duration %> minutes</dd>
+          <dd class="col-sm-7"><%= @occurrence.occurs_at.strftime('%I:%M %p') %> to <%= (@occurrence.occurs_at + @occurrence.duration.minutes).strftime('%I:%M %p') %></dd>
 
           <% if @occurrence.event_location.present? %>
             <dt class="col-sm-5"><i class="bi bi-geo-alt-fill"></i> Location:</dt>
