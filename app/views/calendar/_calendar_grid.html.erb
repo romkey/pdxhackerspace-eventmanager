@@ -14,14 +14,14 @@
 
 <div class="calendar-grid">
   <div class="calendar-header">
-    <% Date::DAYNAMES.rotate(Date.current.wday - Date.current.beginning_of_week.wday).each do |day| %>
+    <% Date::DAYNAMES.each do |day| %>
       <div class="calendar-day-header"><%= day %></div>
     <% end %>
   </div>
   
   <div class="calendar-body">
-    <% calendar_start = @current_month.beginning_of_month.beginning_of_week %>
-    <% calendar_end = @current_month.end_of_month.end_of_week %>
+    <% calendar_start = @current_month.beginning_of_month.beginning_of_week(:sunday) %>
+    <% calendar_end = @current_month.end_of_month.end_of_week(:sunday) %>
     <% (calendar_start..calendar_end).each do |date| %>
       <div class="calendar-cell <%= 'other-month' unless date.month == @current_month.month %> <%= 'today' if date == Date.current %>">
         <div class="calendar-date-number"><%= date.day %></div>
