@@ -142,7 +142,7 @@
               open_to_label = case @event.open_to
               when 'public' then 'Everyone'
               when 'members' then 'Members Only'
-              when 'private' then 'By Invitation'
+              when 'private' then 'Private'
               else @event.open_to&.titleize
               end
               open_to_icon = @event.open_to == 'public' ? 'door-open' : (@event.open_to == 'members' ? 'people-fill' : 'envelope')

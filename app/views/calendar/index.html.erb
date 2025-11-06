@@ -76,7 +76,7 @@
                 <p class="mb-0">
                   <span class="badge bg-secondary">
                     <i class="bi bi-<%= occurrence.event.open_to == 'public' ? 'door-open' : (occurrence.event.open_to == 'members' ? 'people-fill' : 'envelope') %>"></i>
-                    <%= occurrence.event.open_to == 'public' ? 'Open to All' : (occurrence.event.open_to == 'members' ? 'Members Only' : 'By Invitation') %>
+                    <%= occurrence.event.open_to == 'public' ? 'Open to All' : (occurrence.event.open_to == 'members' ? 'Members Only' : 'Private') %>
                   </span>
                   <% if occurrence.event.requires_mask %>
                     <span class="badge bg-info">

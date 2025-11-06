@@ -57,13 +57,13 @@
         </p>
       <% end %>
       <p class="mb-0">
-        <% 
-          open_to_text = case event.open_to
-          when 'public' then 'Open to All'
-          when 'members' then 'Members Only'
-          when 'private' then 'By Invitation'
-          end
-        %>
+      <% 
+        open_to_text = case event.open_to
+        when 'public' then 'Open to All'
+        when 'members' then 'Members Only'
+        when 'private' then 'Private'
+        end
+      %>
         <span class="badge bg-secondary">
           <i class="bi bi-<%= event.open_to == 'public' ? 'door-open' : (event.open_to == 'members' ? 'people-fill' : 'envelope') %>"></i>
           <%= open_to_text %>
