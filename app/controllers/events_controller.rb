@@ -1,8 +1,8 @@
 class EventsController < ApplicationController
   skip_before_action :verify_authenticity_token, only: [:ical]
 
-  before_action :authenticate_user!, except: %i[index show ical]
-  before_action :set_event, only: %i[show edit update destroy postpone cancel reactivate]
+  before_action :authenticate_user!, except: %i[index show ical embed]
+  before_action :set_event, only: %i[show embed edit update destroy postpone cancel reactivate]
   before_action :authorize_event, only: %i[edit update destroy postpone cancel reactivate]
 
   def index
@@ -59,6 +59,41 @@ class EventsController < ApplicationController
 
   def show
     authorize @event
+  end
+
+  def embed
+    # Public embed view for event calendar
+    # Only show for public events or if user is authorized
+    unless @event.public? || (current_user && (current_user.admin? || @event.hosted_by?(current_user)))
+      head :forbidden
+      return
+    end
+
+    @view = params[:view] || 'calendar' # Default to calendar view
+
+    if @view == 'calendar'
+      # Get occurrences for display in calendar
+      @current_month = params[:month] ? Date.parse(params[:month]) : @event.start_time.beginning_of_month
+      month_start = @current_month.beginning_of_month
+      month_end = @current_month.end_of_month
+
+      @occurrences = @event.occurrences
+                     .where('occurs_at >= ? AND occurs_at <= ?', month_start, month_end)
+                     .where(status: %w[active postponed cancelled])
+                     .order(:occurs_at)
+
+      @occurrences_by_date = @occurrences.group_by { |occ| occ.occurs_at.to_date }
+    else
+      # List view
+      @occurrences = @event.occurrences
+                     .where('occurs_at >= ? OR status IN (?)', Time.now, %w[postponed cancelled])
+                     .order(:occurs_at)
+                     .limit(50)
+
+      @occurrences_by_month = @occurrences.group_by { |occ| occ.occurs_at.beginning_of_month }
+    end
+
+    render layout: 'embed'
   end
 
   def new

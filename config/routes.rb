@@ -41,6 +41,7 @@ Rails.application.routes.draw do
       post :postpone
       post :cancel
       post :reactivate
+      get :embed
     end
 
     # Host management
@@ -58,6 +59,7 @@ Rails.application.routes.draw do
 
   # Calendar view
   get 'calendar', to: 'calendar#index', as: 'calendar'
+  get 'calendar/embed', to: 'calendar#embed', as: 'calendar_embed'
 
   # Site-wide public iCal feed
   get 'calendar.ics', to: 'calendar#ical', as: 'calendar_ical'

@@ -1,0 +1,57 @@
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h3 class="mb-0"><i class="bi bi-calendar3"></i> <%= @site_config&.organization_name || 'EventManager' %></h3>
+
+  <div class="btn-group btn-group-sm" role="group" aria-label="View selector">
+    <%= link_to calendar_embed_path(view: 'calendar'), class: "btn #{@view == 'calendar' ? 'btn-primary' : 'btn-outline-primary'}" do %>
+      <i class="bi bi-calendar3"></i> Calendar
+    <% end %>
+    <%= link_to calendar_embed_path(view: 'list'), class: "btn #{@view == 'list' ? 'btn-primary' : 'btn-outline-primary'}" do %>
+      <i class="bi bi-list-ul"></i> List
+    <% end %>
+  </div>
+</div>
+
+<% if @view == 'calendar' %>
+  <%= render 'calendar_grid' %>
+<% elsif @occurrences_by_month.any? %>
+  <% @occurrences_by_month.sort.each do |month, occurrences| %>
+    <div class="card mb-3">
+      <div class="card-header bg-primary text-white py-2">
+        <h5 class="mb-0"><%= month.strftime('%B %Y') %></h5>
+      </div>
+      <div class="list-group list-group-flush">
+        <% occurrences.each do |occurrence| %>
+          <div class="list-group-item <%= 'list-group-item-warning' if occurrence.status == 'postponed' %> <%= 'list-group-item-danger' if occurrence.status == 'cancelled' %>">
+            <div class="d-flex justify-content-between align-items-start">
+              <div>
+                <h6 class="mb-1">
+                  <%= link_to occurrence.event.title, event_path(occurrence.event), class: "text-decoration-none", target: "_blank" %>
+                  <% if occurrence.status != 'active' %>
+                    <span class="badge bg-<%= occurrence.status == 'postponed' ? 'warning' : 'danger' %>">
+                      <%= occurrence.status.titleize %>
+                    </span>
+                  <% end %>
+                </h6>
+                <p class="mb-1 small text-muted">
+                  <i class="bi bi-calendar"></i> <%= occurrence.occurs_at.strftime('%B %d') %>
+                  ·
+                  <i class="bi bi-clock"></i> <%= occurrence.occurs_at.strftime('%I:%M %p') %> to <%= (occurrence.occurs_at + occurrence.duration.minutes).strftime('%I:%M %p') %>
+                </p>
+                <% if occurrence.event.requires_mask %>
+                  <span class="badge bg-info badge-sm">
+                    <i class="bi bi-shield-fill-check"></i> Masks Required
+                  </span>
+                <% end %>
+              </div>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+<% else %>
+  <div class="alert alert-info">
+    <p class="mb-0">No upcoming event occurrences scheduled.</p>
+  </div>
+<% end %>
+

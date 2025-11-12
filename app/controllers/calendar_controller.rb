@@ -109,6 +109,42 @@ class CalendarController < ApplicationController
     end
   end
 
+  def embed
+    # Same logic as index but with embed layout
+    @view = params[:view] || 'calendar' # Default to calendar view
+    @current_month = params[:month] ? Date.parse(params[:month]) : Date.current.beginning_of_month
+
+    # Get occurrences based on view type (public events only for embeds)
+    if @view == 'calendar'
+      month_start = @current_month.beginning_of_month
+      month_end = @current_month.end_of_month
+
+      @occurrences = EventOccurrence
+                     .joins(:event)
+                     .where(events: { visibility: 'public' })
+                     .where('event_occurrences.occurs_at >= ? AND event_occurrences.occurs_at <= ?',
+                            month_start, month_end)
+                     .where(event_occurrences: { status: %w[active postponed cancelled] })
+                     .includes(event: %i[hosts user], banner_image_attachment: :blob)
+                     .order(:occurs_at)
+
+      @occurrences_by_date = @occurrences.group_by { |occ| occ.occurs_at.to_date }
+    else
+      @occurrences = EventOccurrence
+                     .joins(:event)
+                     .where(events: { visibility: 'public' })
+                     .where('event_occurrences.occurs_at >= ? OR event_occurrences.status IN (?)',
+                            Time.now, %w[postponed cancelled])
+                     .includes(event: %i[hosts user], banner_image_attachment: :blob)
+                     .order(:occurs_at)
+                     .limit(50)
+
+      @occurrences_by_month = @occurrences.group_by { |occ| occ.occurs_at.beginning_of_month }
+    end
+
+    render layout: 'embed'
+  end
+
   def ical
     # Get all public event occurrences (next 6 months)
     six_months_from_now = 6.months.from_now
