@@ -14,7 +14,7 @@ module EventsHelper
 
       # Extract day of week
       day_of_week = validations[:day_of_week]
-      
+
       if day_of_week.present? && !day_of_week.empty?
         # day_of_week is a hash like { monday: [1, 3] } meaning 1st and 3rd Monday
         day_sym = day_of_week.keys.first
