@@ -141,9 +141,10 @@
   <div id="weekly_options" class="mb-3" style="display: none;">
     <label class="form-label">Repeat on days:</label>
     <div class="d-flex flex-wrap gap-2">
+      <% weekly_days = parse_weekly_recurrence(event) %>
       <% Date::DAYNAMES.each_with_index do |day, index| %>
         <div class="form-check">
-          <%= check_box_tag "recurrence_days[]", index, false, id: "day_#{index}", class: "form-check-input" %>
+          <%= check_box_tag "recurrence_days[]", index, weekly_days.include?(index), id: "day_#{index}", class: "form-check-input" %>
           <%= label_tag "day_#{index}", day, class: "form-check-label" %>
         </div>
       <% end %>
@@ -159,12 +160,13 @@
       </small>
     </div>
     <div class="row">
+      <% monthly_schedule = parse_monthly_recurrence(event) %>
       <div class="col-md-6">
         <label class="form-label">Which week(s) of the month: <small class="text-muted">(check one or more)</small></label>
         <div class="d-flex flex-column gap-2">
           <% [['First', 'first'], ['Second', 'second'], ['Third', 'third'], ['Fourth', 'fourth'], ['Last', 'last']].each do |label, value| %>
             <div class="form-check">
-              <%= check_box_tag "recurrence_occurrences[]", value, false, id: "occurrence_#{value}", class: "form-check-input" %>
+              <%= check_box_tag "recurrence_occurrences[]", value, monthly_schedule[:occurrences].include?(value), id: "occurrence_#{value}", class: "form-check-input" %>
               <%= label_tag "occurrence_#{value}", label, class: "form-check-label" %>
             </div>
           <% end %>
@@ -181,7 +183,7 @@
               ['Friday', 'friday'],
               ['Saturday', 'saturday'],
               ['Sunday', 'sunday']
-            ]),
+            ], monthly_schedule[:day]),
             class: "form-select" %>
         <small class="form-text text-muted">
           <i class="bi bi-calendar-week"></i> You can select multiple weeks above for complex schedules
