@@ -78,17 +78,17 @@ class EventsController < ApplicationController
       month_end = @current_month.end_of_month
 
       @occurrences = @event.occurrences
-                     .where('occurs_at >= ? AND occurs_at <= ?', month_start, month_end)
-                     .where(status: %w[active postponed cancelled])
-                     .order(:occurs_at)
+                           .where('occurs_at >= ? AND occurs_at <= ?', month_start, month_end)
+                           .where(status: %w[active postponed cancelled])
+                           .order(:occurs_at)
 
       @occurrences_by_date = @occurrences.group_by { |occ| occ.occurs_at.to_date }
     else
       # List view
       @occurrences = @event.occurrences
-                     .where('occurs_at >= ? OR status IN (?)', Time.now, %w[postponed cancelled])
-                     .order(:occurs_at)
-                     .limit(50)
+                           .where('occurs_at >= ? OR status IN (?)', Time.now, %w[postponed cancelled])
+                           .order(:occurs_at)
+                           .limit(50)
 
       @occurrences_by_month = @occurrences.group_by { |occ| occ.occurs_at.beginning_of_month }
     end
