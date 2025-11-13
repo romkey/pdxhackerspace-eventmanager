@@ -15,7 +15,7 @@ RSpec.describe "Calendar", type: :request do
       end
 
       it "shows public event occurrences only" do
-        get calendar_path
+        get calendar_path(view: 'list')
         expect(response.body).to include(public_event.title)
         expect(response.body).not_to include(members_event.title)
         expect(response.body).not_to include(private_event.title)
@@ -34,7 +34,7 @@ RSpec.describe "Calendar", type: :request do
       before { sign_in user }
 
       it "shows public and members event occurrences" do
-        get calendar_path
+        get calendar_path(view: 'list')
         expect(response.body).to include(public_event.title)
         expect(response.body).to include(members_event.title)
         expect(response.body).not_to include(private_event.title)
@@ -47,7 +47,7 @@ RSpec.describe "Calendar", type: :request do
       before { sign_in admin }
 
       it "shows all event occurrences" do
-        get calendar_path
+        get calendar_path(view: 'list')
         expect(response.body).to include(public_event.title)
         expect(response.body).to include(members_event.title)
         expect(response.body).to include(private_event.title)
