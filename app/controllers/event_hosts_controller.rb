@@ -16,7 +16,7 @@ class EventHostsController < ApplicationController
       )
       redirect_to @event, notice: "#{@user_to_add.name || @user_to_add.email} was added as a host."
     else
-      redirect_to @event, alert: "Could not add host. They may already be a host."
+      redirect_to @event, alert: "#{@user_to_add.name || @user_to_add.email} is already a host of this event."
     end
   end
 

@@ -84,7 +84,11 @@ class Event < ApplicationRecord
   end
 
   def add_host(user)
-    hosts << user unless hosted_by?(user)
+    # Check if user is already in the hosts list (not just if they have host permissions)
+    return false if hosts.include?(user)
+
+    hosts << user
+    true
   end
 
   def remove_host(user)
