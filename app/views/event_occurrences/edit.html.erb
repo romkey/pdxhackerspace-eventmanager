@@ -63,7 +63,7 @@
             <%= f.label :banner_image, "Custom Banner Image (Optional)", class: "form-label" %>
             <%= f.file_field :banner_image, class: "form-control", accept: "image/*" %>
             <small class="form-text text-muted">
-              <i class="bi bi-image"></i> Upload a custom banner for this occurrence, or leave blank to use the event's banner
+              <i class="bi bi-image"></i> Recommended: 1200x400 pixels or similar 3:1 aspect ratio. Maximum file size: 5MB. Upload a custom banner for this occurrence, or leave blank to use the event's banner
             </small>
             <% if @occurrence.banner_image.attached? %>
               <div class="mt-2">
