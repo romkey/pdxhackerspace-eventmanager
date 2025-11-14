@@ -43,8 +43,24 @@
                       <i class="bi bi-shield-fill-check"></i>
                     <% end %>
                     <%= truncate(occurrence.event.title, length: 30) %>
-                    <% if occurrence.status != 'active' %>
-                      <span class="badge badge-sm bg-dark"><%= occurrence.status.first.upcase %></span>
+                    <% if occurrence.status == 'postponed' && occurrence.postponed_until %>
+                      <%
+                        new_occurrence = occurrence.event.occurrences.find_by(
+                          occurs_at: occurrence.postponed_until,
+                          status: 'active'
+                        )
+                      %>
+                      <div class="fw-bold mt-1" style="font-size: 0.65rem;">
+                        <% if new_occurrence %>
+                          <%= link_to event_occurrence_path(new_occurrence), class: "text-reset" do %>
+                            POSTPONED to <%= occurrence.postponed_until.strftime('%b %d') %>
+                          <% end %>
+                        <% else %>
+                          POSTPONED to <%= occurrence.postponed_until.strftime('%b %d') %>
+                        <% end %>
+                      </div>
+                    <% elsif occurrence.status == 'cancelled' %>
+                      <span class="badge badge-sm bg-dark">C</span>
                     <% end %>
                   </div>
                 </div>
