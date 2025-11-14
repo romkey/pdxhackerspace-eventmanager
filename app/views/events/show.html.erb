@@ -166,6 +166,35 @@
           <dt class="col-sm-5">Status:</dt>
           <dd class="col-sm-7"><%= @event.status.titleize %></dd>
 
+          <% postponed_occurrences = @event.occurrences.where(status: 'postponed').where.not(postponed_until: nil) %>
+          <% if postponed_occurrences.any? %>
+            <dt class="col-sm-5">Postponed:</dt>
+            <dd class="col-sm-7">
+              <% postponed_occurrences.each do |occurrence| %>
+                <%
+                  new_occurrence = occurrence.event.occurrences.find_by(
+                    occurs_at: occurrence.postponed_until,
+                    status: 'active'
+                  )
+                %>
+                <div class="mb-2">
+                  <small class="text-muted d-block">
+                    Originally: <%= occurrence.occurs_at.strftime('%b %d') %>
+                  </small>
+                  <% if new_occurrence %>
+                    <%= link_to event_occurrence_path(new_occurrence), class: "badge bg-warning text-dark text-decoration-none" do %>
+                      <i class="bi bi-arrow-right"></i> <%= occurrence.postponed_until.strftime('%B %d at %I:%M %p') %>
+                    <% end %>
+                  <% else %>
+                    <span class="badge bg-warning text-dark">
+                      <i class="bi bi-arrow-right"></i> <%= occurrence.postponed_until.strftime('%B %d at %I:%M %p') %>
+                    </span>
+                  <% end %>
+                </div>
+              <% end %>
+            </dd>
+          <% end %>
+
           <% if @event.requires_mask %>
             <dt class="col-sm-5">Safety:</dt>
             <dd class="col-sm-7">
