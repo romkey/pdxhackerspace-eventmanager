@@ -73,7 +73,7 @@ class EventsController < ApplicationController
 
     if @view == 'calendar'
       # Get occurrences for display in calendar
-      @current_month = params[:month] ? Date.parse(params[:month]) : @event.start_time.beginning_of_month
+      @current_month = params[:month] ? Date.parse(params[:month]) : @event.start_time.to_date.beginning_of_month
       month_start = @current_month.beginning_of_month
       month_end = @current_month.end_of_month
 
