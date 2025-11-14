@@ -2,13 +2,8 @@
   <h1 class="display-4">Welcome to EventManager</h1>
   <p class="lead">Manage and discover events at our hackerspace</p>
   <hr class="my-4">
-  <p>Browse upcoming events, create your own, and stay connected with the community.</p>
-  <%= link_to "View All Events", events_path, class: "btn btn-primary btn-lg" %>
-  <% if !user_signed_in? %>
-    <% if authentik_configured? %>
-      <%= button_to "Sign In with Authentik", user_authentik_omniauth_authorize_path, method: :post, class: "btn btn-secondary btn-lg", data: { turbo: false } %>
-    <% end %>
-  <% elsif can_create_events? %>
+  <p>All upcoming events are shown below in chronological order.</p>
+  <% if user_signed_in? && can_create_events? %>
     <%= link_to "Create New Event", new_event_path, class: "btn btn-success btn-lg" %>
   <% end %>
 </div>
