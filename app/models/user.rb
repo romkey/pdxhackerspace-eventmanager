@@ -39,12 +39,16 @@ class User < ApplicationRecord
 
   def self.determine_role_from_auth(auth)
     # Check if Authentik sends the event_manager_admin claim in raw_info
-    is_admin = auth.extra&.raw_info&.[]('event_manager_admin')
+    is_admin_claim = auth.extra&.raw_info&.[]('event_manager_admin')
+
+    # Handle both boolean true and string "true" from Authentik
+    # Only set admin if explicitly true (boolean) or "true" (string)
+    is_admin = is_admin_claim == true || is_admin_claim == 'true'
 
     # Log for debugging
-    Rails.logger.info "Role check for #{auth.info.email}: event_manager_admin = #{is_admin.inspect}, setting role to #{is_admin == true ? 'admin' : 'user'}"
+    Rails.logger.info "Role check for #{auth.info.email}: event_manager_admin claim = #{is_admin_claim.inspect} (type: #{is_admin_claim.class}), setting role to #{is_admin ? 'admin' : 'user'}"
 
-    # Return admin if claim is true, otherwise user
-    is_admin == true ? 'admin' : 'user'
+    # Return admin if claim is explicitly true, otherwise user (safe default)
+    is_admin ? 'admin' : 'user'
   end
 end
