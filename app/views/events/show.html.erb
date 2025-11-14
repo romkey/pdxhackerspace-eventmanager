@@ -63,9 +63,25 @@
               <div class="list-group-item d-flex justify-content-between align-items-center">
                 <div>
                   <%= occurrence.occurs_at.strftime('%A, %B %d, %Y at %I:%M %p') %>
-                  <% if occurrence.status != 'active' %>
-                    <span class="badge bg-<%= occurrence.status == 'postponed' ? 'warning' : 'danger' %> ms-2">
-                      <%= occurrence.status.titleize %>
+                  <% if occurrence.status == 'postponed' && occurrence.postponed_until %>
+                    <%
+                      new_occurrence = occurrence.event.occurrences.find_by(
+                        occurs_at: occurrence.postponed_until,
+                        status: 'active'
+                      )
+                    %>
+                    <% if new_occurrence %>
+                      <%= link_to event_occurrence_path(new_occurrence), class: "badge bg-warning text-dark ms-2 text-decoration-none" do %>
+                        Postponed to <%= occurrence.postponed_until.strftime('%B %d at %I:%M %p') %>
+                      <% end %>
+                    <% else %>
+                      <span class="badge bg-warning text-dark ms-2">
+                        Postponed to <%= occurrence.postponed_until.strftime('%B %d at %I:%M %p') %>
+                      </span>
+                    <% end %>
+                  <% elsif occurrence.status == 'cancelled' %>
+                    <span class="badge bg-danger ms-2">
+                      Cancelled
                     </span>
                   <% end %>
                 </div>
