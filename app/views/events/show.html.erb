@@ -104,7 +104,7 @@
                     <%= host.name || host.email %>
                   </span>
                   <% if user_signed_in? && (current_user.admin? || @event.hosted_by?(current_user)) %>
-                    <% can_remove = @event.hosts.count > 1 || host != @event.creator %>
+                    <% can_remove = @event.hosts.count > 1 %>
                     <%= button_to event_host_path(@event, host),
                         method: :delete,
                         class: "btn btn-sm btn-outline-danger #{can_remove ? '' : 'disabled'}",

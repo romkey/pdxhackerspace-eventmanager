@@ -94,8 +94,8 @@ class Event < ApplicationRecord
   # rubocop:enable Naming/PredicateMethod
 
   def remove_host(user)
-    # Don't allow removing the creator unless they're not the only host
-    return false if user == self.user && hosts.count <= 1
+    # Don't allow removing the only host (event must have at least one host)
+    return false if hosts.count <= 1
 
     event_hosts.find_by(user: user)&.destroy
   end
