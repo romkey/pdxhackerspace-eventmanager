@@ -44,12 +44,8 @@
         </p>
       <% end %>
       <p class="mb-1">
-        <i class="bi bi-person"></i> 
-        <% if event.hosts.count > 1 %>
-          <%= event.hosts.map { |h| h.name || h.email }.join(', ') %>
-        <% else %>
-          <%= event.user.name || event.user.email %>
-        <% end %>
+        <i class="bi bi-person"></i>
+        <%= event.hosts.map { |h| h.name || h.email }.join(', ') %>
       </p>
       <% if event.recurring? %>
         <p class="mb-1">
