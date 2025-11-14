@@ -43,10 +43,12 @@ class User < ApplicationRecord
 
     # Handle both boolean true and string "true" from Authentik
     # Only set admin if explicitly true (boolean) or "true" (string)
-    is_admin = is_admin_claim == true || is_admin_claim == 'true'
+    is_admin = [true, 'true'].include?(is_admin_claim)
 
     # Log for debugging
-    Rails.logger.info "Role check for #{auth.info.email}: event_manager_admin claim = #{is_admin_claim.inspect} (type: #{is_admin_claim.class}), setting role to #{is_admin ? 'admin' : 'user'}"
+    role = is_admin ? 'admin' : 'user'
+    Rails.logger.info "Role check for #{auth.info.email}: event_manager_admin claim = #{is_admin_claim.inspect} " \
+                      "(type: #{is_admin_claim.class}), setting role to #{role}"
 
     # Return admin if claim is explicitly true, otherwise user (safe default)
     is_admin ? 'admin' : 'user'

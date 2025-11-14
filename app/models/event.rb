@@ -83,6 +83,7 @@ class Event < ApplicationRecord
     user.admin? || hosts.include?(user)
   end
 
+  # rubocop:disable Naming/PredicateMethod
   def add_host(user)
     # Check if user is already in the hosts list (not just if they have host permissions)
     return false if hosts.include?(user)
@@ -90,6 +91,7 @@ class Event < ApplicationRecord
     hosts << user
     true
   end
+  # rubocop:enable Naming/PredicateMethod
 
   def remove_host(user)
     # Don't allow removing the creator unless they're not the only host
