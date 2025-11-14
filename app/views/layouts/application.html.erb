@@ -100,7 +100,7 @@
       <% if flash[:conflict] %>
         <div class="alert alert-warning alert-dismissible fade show" role="alert" style="background-color: #dc3545; color: white; border-color: #dc3545;">
           <h5 class="alert-heading"><i class="bi bi-exclamation-triangle-fill"></i> Scheduling Conflict Warning</h5>
-          <%= flash[:conflict] %>
+          <%= flash[:conflict].html_safe %>
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert"></button>
         </div>
       <% end %>
