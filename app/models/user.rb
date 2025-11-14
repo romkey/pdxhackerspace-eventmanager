@@ -8,6 +8,7 @@ class User < ApplicationRecord
   has_many :events, dependent: :destroy # Events created by this user
   has_many :event_hosts, dependent: :destroy
   has_many :hosted_events, through: :event_hosts, source: :event # Events this user co-hosts
+  has_many :event_journals, dependent: :destroy # Audit logs for this user's actions
 
   validates :role, inclusion: { in: %w[user admin] }
   validates :email, presence: true, uniqueness: true
