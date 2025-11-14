@@ -77,6 +77,9 @@ Rails.application.routes.draw do
   # Site configuration (admin only, singleton)
   resource :site_config, only: %i[edit update]
 
+  # Location information page (public)
+  get 'location', to: 'site_config#location', as: 'location'
+
   # Locations management (admin only)
   resources :locations, except: %i[show]
 end

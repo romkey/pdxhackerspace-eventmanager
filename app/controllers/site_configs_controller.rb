@@ -1,7 +1,11 @@
 class SiteConfigsController < ApplicationController
-  before_action :authenticate_user!
+  before_action :authenticate_user!, except: [:location]
   before_action :set_site_config
-  before_action :authorize_site_config
+  before_action :authorize_site_config, except: [:location]
+
+  def location
+    # Public location page - no authentication required
+  end
 
   def edit; end
 
@@ -44,6 +48,8 @@ class SiteConfigsController < ApplicationController
       :contact_email,
       :contact_phone,
       :footer_text,
+      :location_info,
+      :address,
       :favicon,
       :banner_image
     )

@@ -99,6 +99,24 @@
             <% end %>
           </div>
 
+          <h5 class="border-bottom pb-2 mb-3 mt-4">Location Information</h5>
+
+          <div class="mb-3">
+            <%= f.label :location_info, "General Location Information", class: "form-label" %>
+            <%= f.text_area :location_info, class: "form-control", rows: 4, placeholder: "Tell people about your space, how to find it, parking info, accessibility, etc." %>
+            <small class="form-text text-muted">
+              <i class="bi bi-info-circle"></i> This appears on the /location page. Include directions, parking, accessibility, etc.
+            </small>
+          </div>
+
+          <div class="mb-3">
+            <%= f.label :address, "Physical Address", class: "form-label" %>
+            <%= f.text_field :address, class: "form-control", placeholder: "123 Main St, Portland, OR 97201" %>
+            <small class="form-text text-muted">
+              <i class="bi bi-pin-map-fill"></i> This will be used to show a Google Map on the /location page
+            </small>
+          </div>
+
           <h5 class="border-bottom pb-2 mb-3 mt-4">Footer</h5>
 
           <div class="mb-3">
