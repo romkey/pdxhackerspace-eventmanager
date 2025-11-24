@@ -32,51 +32,7 @@ class EventsController < ApplicationController
 
     respond_to do |format|
       format.html
-      format.json do
-        # For JSON, only return published public events with upcoming occurrences
-        public_events = Event.published
-                             .public_events
-                             .active
-                             .includes(:hosts, :occurrences, banner_image_attachment: :blob)
-                             .order(start_time: :asc)
-
-        events_data = public_events.map do |event|
-          {
-            id: event.id,
-            title: event.title,
-            description: event.description,
-            status: event.status,
-            start_time: event.start_time.iso8601,
-            duration: event.duration,
-            recurrence_type: event.recurrence_type,
-            more_info_url: event.more_info_url,
-            location: event.location ? { id: event.location.id, name: event.location.name, description: event.location.description } : nil,
-            hosts: event.hosts.map { |h| h.name || h.email },
-            banner_url: event.banner_image.attached? ? url_for(event.banner_image) : nil,
-            occurrences: event.occurrences.upcoming.limit(event.max_occurrences || 5).map do |occ|
-              {
-                id: occ.id,
-                occurs_at: occ.occurs_at.iso8601,
-                status: occ.status,
-                duration: occ.duration,
-                description: occ.description,
-                postponed_until: occ.postponed_until&.iso8601,
-                cancellation_reason: occ.cancellation_reason,
-                location: occ.event_location ? { id: occ.event_location.id, name: occ.event_location.name } : nil,
-                has_custom_location: occ.location_id.present?,
-                banner_url: occ.banner.attached? ? url_for(occ.banner) : nil,
-                has_custom_banner: occ.banner_image.attached?
-              }
-            end
-          }
-        end
-
-        render json: {
-          events: events_data,
-          generated_at: Time.now.iso8601,
-          count: events_data.count
-        }
-      end
+      format.json { render json: events_json_response }
     end
   end
 
@@ -297,5 +253,51 @@ class EventsController < ApplicationController
       occurrences: params[:recurrence_occurrences], # Array of occurrences (e.g., ['first', 'third'])
       day: params[:recurrence_day]
     }.compact
+  end
+
+  def events_json_response
+    # For JSON, only return published public events with upcoming occurrences
+    public_events = Event.published
+                         .public_events
+                         .active
+                         .includes(:hosts, :occurrences, banner_image_attachment: :blob)
+                         .order(start_time: :asc)
+
+    events_data = public_events.map do |event|
+      {
+        id: event.id,
+        title: event.title,
+        description: event.description,
+        status: event.status,
+        start_time: event.start_time.iso8601,
+        duration: event.duration,
+        recurrence_type: event.recurrence_type,
+        more_info_url: event.more_info_url,
+        location: event.location ? { id: event.location.id, name: event.location.name, description: event.location.description } : nil,
+        hosts: event.hosts.map { |h| h.name || h.email },
+        banner_url: event.banner_image.attached? ? url_for(event.banner_image) : nil,
+        occurrences: event.occurrences.upcoming.limit(event.max_occurrences || 5).map do |occ|
+          {
+            id: occ.id,
+            occurs_at: occ.occurs_at.iso8601,
+            status: occ.status,
+            duration: occ.duration,
+            description: occ.description,
+            postponed_until: occ.postponed_until&.iso8601,
+            cancellation_reason: occ.cancellation_reason,
+            location: occ.event_location ? { id: occ.event_location.id, name: occ.event_location.name } : nil,
+            has_custom_location: occ.location_id.present?,
+            banner_url: occ.banner.attached? ? url_for(occ.banner) : nil,
+            has_custom_banner: occ.banner_image.attached?
+          }
+        end
+      }
+    end
+
+    {
+      events: events_data,
+      generated_at: Time.now.iso8601,
+      count: events_data.count
+    }
   end
 end

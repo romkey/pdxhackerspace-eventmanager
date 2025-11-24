@@ -4,8 +4,8 @@ require 'json'
 
 class SlackService
   def self.post_message(text, channel: '#announcements')
-    webhook_url = ENV['SLACK_WEBHOOK_URL']
-    return false unless webhook_url.present?
+    webhook_url = ENV.fetch('SLACK_WEBHOOK_URL', nil)
+    return false if webhook_url.blank?
 
     payload = {
       text: text,
@@ -35,4 +35,3 @@ class SlackService
     false
   end
 end
-

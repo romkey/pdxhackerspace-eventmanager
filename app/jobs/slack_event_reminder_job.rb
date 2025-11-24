@@ -5,8 +5,8 @@ class SlackEventReminderJob < ApplicationJob
     site_config = SiteConfig.current
     return unless site_config.slack_enabled?
 
-    webhook_url = ENV['SLACK_WEBHOOK_URL']
-    return unless webhook_url.present?
+    webhook_url = ENV.fetch('SLACK_WEBHOOK_URL', nil)
+    return if webhook_url.blank?
 
     # Get all events happening today (9AM check, so events starting today)
     today = Date.current
@@ -55,13 +55,9 @@ class SlackEventReminderJob < ApplicationJob
       message += "\n#{desc}\n"
     end
 
-    if event.location.present?
-      message += "\n📍 Location: #{event.location.name}\n"
-    end
+    message += "\n📍 Location: #{event.location.name}\n" if event.location.present?
 
-    if event.more_info_url.present?
-      message += "\n🔗 More info: #{event.more_info_url}\n"
-    end
+    message += "\n🔗 More info: #{event.more_info_url}\n" if event.more_info_url.present?
 
     # Add link to event page
     host = ENV.fetch('RAILS_HOST', ENV.fetch('HOST', 'localhost:3000'))
@@ -85,4 +81,3 @@ class SlackEventReminderJob < ApplicationJob
     end
   end
 end
-
