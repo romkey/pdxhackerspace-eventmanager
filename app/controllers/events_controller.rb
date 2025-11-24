@@ -7,14 +7,16 @@ class EventsController < ApplicationController
 
   def index
     # Only show events that have at least one upcoming active occurrence
-    @events = policy_scope(Event)
-              .joins(:event_occurrences)
-              .where('event_occurrences.occurs_at >= ?', Time.now)
-              .where(events: { status: 'active' })
-              .where(event_occurrences: { status: 'active' })
-              .distinct
-              .includes(:user, :hosts)
-              .order(title: :asc)
+    # Get all upcoming occurrences first, then get unique events from them
+    upcoming_occurrences = EventOccurrence
+                          .joins(:event)
+                          .where(event: policy_scope(Event))
+                          .where(events: { status: 'active' })
+                          .where(event_occurrences: { status: 'active' })
+                          .upcoming
+                          .includes(event: %i[user hosts])
+
+    @events = upcoming_occurrences.map(&:event).uniq.sort_by(&:title)
 
     respond_to do |format|
       format.html
