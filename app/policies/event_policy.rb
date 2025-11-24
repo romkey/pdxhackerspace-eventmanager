@@ -4,6 +4,10 @@ class EventPolicy < ApplicationPolicy
   end
 
   def show?
+    # Draft events - only author and admins can view
+    return false if record.draft? && user.present? && !user.admin? && user != record.user
+    return false if record.draft? && user.blank?
+
     # Public events - anyone can view
     return true if record.public?
 
@@ -43,16 +47,16 @@ class EventPolicy < ApplicationPolicy
   class Scope < Scope
     def resolve
       if user.blank?
-        # Not signed in - only show public events
-        scope.public_events
+        # Not signed in - only show published public events
+        scope.published.public_events
       elsif user.admin?
-        # Admins can see all events
+        # Admins can see all events (including drafts)
         scope.all
       else
-        # Regular users can see public, members, and their own private events
+        # Regular users can see published public, members, their own private events, and their own drafts
         scope.where(
-          'visibility = ? OR visibility = ? OR (visibility = ? AND user_id = ?)',
-          'public', 'members', 'private', user.id
+          '(draft = ? AND (visibility = ? OR visibility = ? OR (visibility = ? AND user_id = ?))) OR (draft = ? AND user_id = ?)',
+          false, 'public', 'members', 'private', user.id, true, user.id
         )
       end
     end

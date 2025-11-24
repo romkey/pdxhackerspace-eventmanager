@@ -6,13 +6,22 @@ class EventsController < ApplicationController
   before_action :authorize_event, only: %i[edit update destroy postpone cancel reactivate]
 
   def index
-    @events = policy_scope(Event).includes(:user, :hosts).order(title: :asc)
+    # Only show events that have at least one upcoming active occurrence
+    @events = policy_scope(Event)
+              .joins(:event_occurrences)
+              .where('event_occurrences.occurs_at >= ?', Time.now)
+              .where(events: { status: 'active' })
+              .where(event_occurrences: { status: 'active' })
+              .distinct
+              .includes(:user, :hosts)
+              .order(title: :asc)
 
     respond_to do |format|
       format.html
       format.json do
-        # For JSON, only return public events with upcoming occurrences
-        public_events = Event.public_events
+        # For JSON, only return published public events with upcoming occurrences
+        public_events = Event.published
+                             .public_events
                              .active
                              .includes(:hosts, :occurrences, banner_image_attachment: :blob)
                              .order(start_time: :asc)
@@ -63,6 +72,12 @@ class EventsController < ApplicationController
 
   def embed
     # Public embed view for event calendar
+    # Don't allow embedding draft events
+    if @event.draft?
+      head :forbidden
+      return
+    end
+
     # Only show for public events or if user is authorized
     unless @event.public? || (current_user && (current_user.admin? || @event.hosted_by?(current_user)))
       head :forbidden
@@ -210,6 +225,15 @@ class EventsController < ApplicationController
   def ical
     @event = Event.find_by!(ical_token: params[:token])
 
+    # Don't include draft events in iCal feeds
+    if @event.draft?
+      calendar = Icalendar::Calendar.new
+      respond_to do |format|
+        format.ics { render plain: calendar.to_ical, content_type: 'text/calendar' }
+      end
+      return
+    end
+
     calendar = Icalendar::Calendar.new
 
     # Use actual EventOccurrence records (includes status, customizations)
@@ -250,7 +274,7 @@ class EventsController < ApplicationController
     params.require(:event).permit(:title, :description, :start_time, :duration,
                                   :recurrence_type, :status, :visibility, :open_to,
                                   :more_info_url, :max_occurrences, :banner_image,
-                                  :location_id, :requires_mask)
+                                  :location_id, :requires_mask, :draft)
   end
 
   def build_recurrence_params

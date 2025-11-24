@@ -34,6 +34,8 @@ class Event < ApplicationRecord
   scope :public_events, -> { where(visibility: 'public') }
   scope :members_events, -> { where(visibility: 'members') }
   scope :private_events, -> { where(visibility: 'private') }
+  scope :published, -> { where(draft: false) }
+  scope :drafts, -> { where(draft: true) }
 
   # Get occurrence dates for a date range (from IceCube schedule)
   def occurrence_dates(start_date, end_date)

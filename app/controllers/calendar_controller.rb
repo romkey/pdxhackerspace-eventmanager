@@ -21,7 +21,7 @@ class CalendarController < ApplicationController
                      else
                        EventOccurrence
                          .joins(:event)
-                         .where(events: { visibility: 'public' })
+                         .where(events: { visibility: 'public', draft: false })
                          .where('event_occurrences.occurs_at >= ? AND event_occurrences.occurs_at <= ?',
                                 month_start, month_end)
                          .where(event_occurrences: { status: %w[active postponed cancelled] })
@@ -50,7 +50,7 @@ class CalendarController < ApplicationController
                      else
                        EventOccurrence
                          .joins(:event)
-                         .where(events: { visibility: 'public' })
+                         .where(events: { visibility: 'public', draft: false })
                          .where('event_occurrences.occurs_at >= ? OR event_occurrences.status IN (?)',
                                 Time.now, %w[postponed cancelled])
                          .includes(event: %i[hosts user], banner_image_attachment: :blob)
@@ -65,10 +65,10 @@ class CalendarController < ApplicationController
     respond_to do |format|
       format.html
       format.json do
-        # For JSON, only return public event occurrences
+        # For JSON, only return published public event occurrences
         public_occurrences = EventOccurrence
                              .joins(:event)
-                             .where(events: { visibility: 'public' })
+                             .where(events: { visibility: 'public', draft: false })
                              .upcoming
                              .includes(event: [:hosts,
                                                { banner_image_attachment: :blob }], banner_image_attachment: :blob)
@@ -121,7 +121,7 @@ class CalendarController < ApplicationController
 
       @occurrences = EventOccurrence
                      .joins(:event)
-                     .where(events: { visibility: 'public' })
+                     .where(events: { visibility: 'public', draft: false })
                      .where('event_occurrences.occurs_at >= ? AND event_occurrences.occurs_at <= ?',
                             month_start, month_end)
                      .where(event_occurrences: { status: %w[active postponed cancelled] })
@@ -132,7 +132,7 @@ class CalendarController < ApplicationController
     else
       @occurrences = EventOccurrence
                      .joins(:event)
-                     .where(events: { visibility: 'public' })
+                     .where(events: { visibility: 'public', draft: false })
                      .where('event_occurrences.occurs_at >= ? OR event_occurrences.status IN (?)',
                             Time.now, %w[postponed cancelled])
                      .includes(event: %i[hosts user], banner_image_attachment: :blob)
@@ -150,7 +150,7 @@ class CalendarController < ApplicationController
     six_months_from_now = 6.months.from_now
     @occurrences = EventOccurrence
                    .joins(:event)
-                   .where(events: { visibility: 'public', status: 'active' })
+                   .where(events: { visibility: 'public', status: 'active', draft: false })
                    .where('event_occurrences.occurs_at >= ?', Time.current)
                    .where('event_occurrences.occurs_at <= ?', six_months_from_now)
                    .where(event_occurrences: { status: 'active' })

@@ -138,6 +138,16 @@
     </div>
   </div>
 
+  <div class="mb-3">
+    <div class="form-check">
+      <%= f.check_box :draft, class: "form-check-input" %>
+      <%= f.label :draft, "Save as Draft", class: "form-check-label" %>
+      <div class="form-text">
+        <i class="bi bi-file-earmark-text"></i> Draft events are only visible to you and won't appear in any public feeds or listings
+      </div>
+    </div>
+  </div>
+
   <div id="weekly_options" class="mb-3" style="display: none;">
     <label class="form-label">Repeat on days:</label>
     <div class="d-flex flex-wrap gap-2">

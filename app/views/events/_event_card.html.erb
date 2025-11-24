@@ -9,11 +9,18 @@
       <h5 class="card-title">
         <%= link_to event.title, event_path(event), class: "text-decoration-none text-body" %>
       </h5>
-      <% if event.status != 'active' %>
-        <span class="badge bg-<%= event.status == 'postponed' ? 'warning' : 'danger' %>">
-          <%= event.status.titleize %>
-        </span>
-      <% end %>
+      <div>
+        <% if event.draft? %>
+          <span class="badge bg-secondary me-1">
+            <i class="bi bi-file-earmark-text"></i> Draft
+          </span>
+        <% end %>
+        <% if event.status != 'active' %>
+          <span class="badge bg-<%= event.status == 'postponed' ? 'warning' : 'danger' %>">
+            <%= event.status.titleize %>
+          </span>
+        <% end %>
+      </div>
     </div>
     
     <% if event.status != 'active' && event.cancellation_reason.present? %>
