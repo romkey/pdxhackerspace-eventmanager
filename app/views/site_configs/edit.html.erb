@@ -117,6 +117,18 @@
             </small>
           </div>
 
+          <h5 class="border-bottom pb-2 mb-3 mt-4">Integrations</h5>
+
+          <div class="mb-3">
+            <div class="form-check">
+              <%= f.check_box :slack_enabled, class: "form-check-input" %>
+              <%= f.label :slack_enabled, "Enable Slack Notifications", class: "form-check-label" %>
+              <div class="form-text">
+                <i class="bi bi-slack"></i> When enabled, event reminders will be posted to Slack at 9 AM on the day of the event. Requires <code>SLACK_WEBHOOK_URL</code> environment variable.
+              </div>
+            </div>
+          </div>
+
           <h5 class="border-bottom pb-2 mb-3 mt-4">Footer</h5>
 
           <div class="mb-3">

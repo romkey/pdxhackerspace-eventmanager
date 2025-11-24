@@ -12,4 +12,8 @@
     cron: '0 2 * * *'  # Daily at 2 AM
     class: RegenerateEventOccurrencesJob
     description: "Regenerate event occurrences for recurring events"
+  slack_event_reminders:
+    cron: '0 9 * * *'  # Daily at 9 AM
+    class: SlackEventReminderJob
+    description: "Post Slack reminders for events happening today"
 

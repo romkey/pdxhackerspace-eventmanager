@@ -148,6 +148,16 @@
     </div>
   </div>
 
+  <div class="mb-3">
+    <div class="form-check">
+      <%= f.check_box :slack_announce, class: "form-check-input" %>
+      <%= f.label :slack_announce, "Post to Slack", class: "form-check-label" %>
+      <div class="form-text">
+        <i class="bi bi-slack"></i> When enabled, a reminder will be posted to Slack at 9 AM on the day of the event (only for public and members-only events)
+      </div>
+    </div>
+  </div>
+
   <div id="weekly_options" class="mb-3" style="display: none;">
     <label class="form-label">Repeat on days:</label>
     <div class="d-flex flex-wrap gap-2">

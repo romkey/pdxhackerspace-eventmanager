@@ -127,7 +127,53 @@ AUTHENTIK_SITE_URL=https://your-authentik-instance.com
 
 To use `.env` files, add `gem 'dotenv-rails'` to your Gemfile and run `bundle install`.
 
-#### 6. Start the Application
+#### 6. Configure Slack Notifications (Optional)
+
+EventManager can post event reminders to Slack at 9 AM on the day of each event. To enable this:
+
+1. **Create a Slack Incoming Webhook:**
+   - Go to https://api.slack.com/apps
+   - Create a new app or select an existing one
+   - Navigate to "Incoming Webhooks" and activate it
+   - Click "Add New Webhook to Workspace"
+   - Select the channel (e.g., `#announcements`) where reminders should be posted
+   - Copy the webhook URL
+
+2. **Set the environment variable:**
+   ```bash
+   export SLACK_WEBHOOK_URL=https://hooks.slack.com/services/YOUR/WEBHOOK/URL
+   ```
+
+   Or add it to your `.env` file:
+   ```
+   SLACK_WEBHOOK_URL=https://hooks.slack.com/services/YOUR/WEBHOOK/URL
+   ```
+
+3. **Set the application host (for event links in Slack messages):**
+   ```bash
+   export RAILS_HOST=your-domain.com
+   export RAILS_PROTOCOL=https  # or http for development
+   ```
+
+   Or in `.env`:
+   ```
+   RAILS_HOST=your-domain.com
+   RAILS_PROTOCOL=https
+   ```
+
+4. **Enable Slack in Site Configuration:**
+   - Sign in as an admin
+   - Go to Site Configuration
+   - Check "Enable Slack Notifications"
+   - Save
+
+5. **Enable Slack announcements for events:**
+   - When creating or editing an event, check "Post to Slack"
+   - Reminders will only be posted for public and members-only events (not private or draft events)
+
+**Note:** The Slack reminder job runs daily at 9 AM via Sidekiq. Make sure Sidekiq is running for reminders to be posted.
+
+#### 7. Start the Application
 
 Development mode with asset compilation:
 
