@@ -9,12 +9,12 @@ class EventsController < ApplicationController
     # Only show events that have at least one upcoming active occurrence
     # Get all upcoming occurrences first, then get unique events from them
     upcoming_occurrences = EventOccurrence
-                          .joins(:event)
-                          .where(event: policy_scope(Event))
-                          .where(events: { status: 'active' })
-                          .where(event_occurrences: { status: 'active' })
-                          .upcoming
-                          .includes(event: %i[user hosts])
+                           .joins(:event)
+                           .where(event: policy_scope(Event))
+                           .where(events: { status: 'active' })
+                           .where(event_occurrences: { status: 'active' })
+                           .upcoming
+                           .includes(event: %i[user hosts])
 
     @events = upcoming_occurrences.map(&:event).uniq.sort_by(&:title)
 
