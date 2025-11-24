@@ -16,7 +16,19 @@ class EventsController < ApplicationController
                            .upcoming
                            .includes(event: %i[user hosts])
 
-    @events = upcoming_occurrences.map(&:event).uniq.sort_by(&:title)
+    # Build a map of event_id => next occurrence for display
+    @next_occurrence_by_event = {}
+    upcoming_occurrences.each do |occurrence|
+      event_id = occurrence.event_id
+      next if @next_occurrence_by_event[event_id] # Already have the first (earliest) occurrence
+
+      @next_occurrence_by_event[event_id] = occurrence
+    end
+
+    # Get unique events, sorted by next occurrence date
+    @events = upcoming_occurrences.map(&:event).uniq.sort_by do |event|
+      @next_occurrence_by_event[event.id]&.occurs_at || event.start_time
+    end
 
     respond_to do |format|
       format.html
@@ -276,7 +288,7 @@ class EventsController < ApplicationController
     params.require(:event).permit(:title, :description, :start_time, :duration,
                                   :recurrence_type, :status, :visibility, :open_to,
                                   :more_info_url, :max_occurrences, :banner_image,
-                                  :location_id, :requires_mask, :draft)
+                                  :location_id, :requires_mask, :draft, :slack_announce)
   end
 
   def build_recurrence_params
