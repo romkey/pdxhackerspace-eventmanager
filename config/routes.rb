@@ -45,7 +45,7 @@ Rails.application.routes.draw do
     end
 
     # Host management
-    resources :event_hosts, only: %i[create destroy], shallow: true
+    resources :event_hosts, only: %i[create destroy]
   end
 
   # Event Occurrences routes
