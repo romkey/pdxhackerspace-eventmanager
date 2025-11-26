@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_11_25_163334) do
+ActiveRecord::Schema[7.1].define(version: 2025_11_26_071509) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -142,6 +142,8 @@ ActiveRecord::Schema[7.1].define(version: 2025_11_25_163334) do
     t.string "address"
     t.boolean "slack_enabled", default: false, null: false
     t.boolean "social_reminders_enabled", default: false, null: false
+    t.text "ai_reminder_prompt", default: "Create a short, friendly reminder for {{event_title}} happening on {{event_date}} at {{event_time}} at PDX Hackerspace.", null: false
+    t.string "ai_model"
   end
 
   create_table "users", force: :cascade do |t|
