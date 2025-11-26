@@ -35,7 +35,7 @@
                 else 'bg-primary text-white'
                 end
               %>
-              <%= link_to event_occurrence_path(occurrence), class: "calendar-event-item text-decoration-none" do %>
+              <%= link_to event_occurrence_path(occurrence), class: "calendar-event-item text-decoration-none", target: "_blank", rel: "noopener" do %>
                 <div class="calendar-event-badge <%= badge_class %>">
                   <div class="event-time"><%= occurrence.occurs_at.strftime('%I:%M %p') %></div>
                   <div class="event-title">
@@ -52,7 +52,7 @@
                       %>
                       <div class="fw-bold mt-1" style="font-size: 0.65rem;">
                         <% if new_occurrence %>
-                          <%= link_to event_occurrence_path(new_occurrence), class: "text-reset" do %>
+                          <%= link_to event_occurrence_path(new_occurrence), class: "text-reset", target: "_blank", rel: "noopener" do %>
                             POSTPONED to <%= occurrence.postponed_until.strftime('%b %d') %>
                           <% end %>
                         <% else %>
