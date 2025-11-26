@@ -143,8 +143,28 @@
             <%= f.label :ai_reminder_prompt, "AI reminder prompt", class: "form-label" %>
             <%= f.text_area :ai_reminder_prompt, class: "form-control", rows: 3, placeholder: SiteConfig::DEFAULT_AI_REMINDER_PROMPT %>
             <small class="form-text text-muted">
-              Customize the prompt used when “Generate with AI” is clicked. Use {{event_title}}, {{event_date}}, and {{event_time}} placeholders; defaults to a friendly reminder mentioning PDX Hackerspace.
+              Customize the prompt used when "Generate with AI" is clicked. Use {{event_title}}, {{event_date}}, {{event_time}}, and {{event_description}} placeholders; defaults to a friendly reminder mentioning PDX Hackerspace.
             </small>
+          </div>
+
+          <div class="mb-3">
+            <%= f.label :ai_model, "AI Model", class: "form-label" %>
+            <% if OllamaService.configured? && @ollama_models.any? %>
+              <%= f.select :ai_model, options_for_select(@ollama_models, @site_config.ai_model), { include_blank: "Select a model..." }, class: "form-select" %>
+              <small class="form-text text-muted">
+                <i class="bi bi-robot"></i> Select the Ollama model to use for generating AI reminder messages.
+              </small>
+            <% elsif OllamaService.configured? %>
+              <%= f.text_field :ai_model, class: "form-control", placeholder: "e.g. llama2, mistral, gemma" %>
+              <small class="form-text text-muted text-warning">
+                <i class="bi bi-exclamation-triangle"></i> Could not fetch models from Ollama server. Enter a model name manually.
+              </small>
+            <% else %>
+              <%= f.text_field :ai_model, class: "form-control", disabled: true, placeholder: "Ollama not configured" %>
+              <small class="form-text text-muted">
+                <i class="bi bi-info-circle"></i> Set <code>OLLAMA_SERVER</code> environment variable to enable AI features.
+              </small>
+            <% end %>
           </div>
 
           <h5 class="border-bottom pb-2 mb-3 mt-4">Footer</h5>

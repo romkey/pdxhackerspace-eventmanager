@@ -7,7 +7,9 @@ class SiteConfigsController < ApplicationController
     # Public location page - no authentication required
   end
 
-  def edit; end
+  def edit
+    @ollama_models = OllamaService.available_models
+  end
 
   def update
     # Handle favicon removal
@@ -54,7 +56,8 @@ class SiteConfigsController < ApplicationController
       :banner_image,
       :slack_enabled,
       :social_reminders_enabled,
-      :ai_reminder_prompt
+      :ai_reminder_prompt,
+      :ai_model
     )
   end
 end
