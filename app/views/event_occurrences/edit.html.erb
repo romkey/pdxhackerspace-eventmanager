@@ -59,6 +59,7 @@
             </small>
           </div>
 
+          <% ai_enabled = defined?(OLLAMA_SERVER) && OLLAMA_SERVER.present? %>
           <div class="card mb-4 border-info">
             <div class="card-body">
               <h5 class="card-title mb-3">AI Reminder Messages</h5>
@@ -70,12 +71,17 @@
                 </div>
                 <div class="mb-3">
                   <div class="btn-group btn-group-sm">
-                    <button type="button" class="btn btn-outline-secondary" data-action="set-default" data-target="<%= field %>">Use default</button>
-                    <button type="button" class="btn btn-outline-primary" data-action="regenerate" data-target="<%= field %>">Regenerate</button>
+                    <button type="button" class="btn btn-outline-secondary" data-action="set-default" data-target="<%= field %>" <%= 'disabled' unless ai_enabled %>>Use default</button>
+                    <button type="button" class="btn btn-outline-primary" data-action="regenerate" data-target="<%= field %>" <%= 'disabled' unless ai_enabled %>>Regenerate</button>
                   </div>
                   <small class="form-text text-muted">
                     Clicking "Regenerate" will rerun the AI prompt (placeholder for now) and "Use default" loads the standard reminder copy.
                   </small>
+                </div>
+              <% end %>
+              <% unless ai_enabled %>
+                <div class="alert alert-warning mt-3 mb-0">
+                  <strong>AI disabled:</strong> Set <code>OLLAMA_SERVER</code> in your environment to enable the AI buttons.
                 </div>
               <% end %>
             </div>
