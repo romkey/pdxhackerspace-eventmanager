@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_11_25_160902) do
+ActiveRecord::Schema[7.1].define(version: 2025_11_25_163334) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -78,6 +78,8 @@ ActiveRecord::Schema[7.1].define(version: 2025_11_25_160902) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.bigint "location_id"
+    t.text "ai_reminder_7d"
+    t.text "ai_reminder_1d"
     t.index ["event_id", "occurs_at"], name: "index_event_occurrences_on_event_id_and_occurs_at"
     t.index ["event_id"], name: "index_event_occurrences_on_event_id"
     t.index ["location_id"], name: "index_event_occurrences_on_location_id"
@@ -106,6 +108,7 @@ ActiveRecord::Schema[7.1].define(version: 2025_11_25_160902) do
     t.bigint "location_id"
     t.boolean "requires_mask", default: false, null: false
     t.boolean "draft", default: false, null: false
+    t.boolean "slack_announce", default: true, null: false
     t.boolean "social_reminders", default: true, null: false
     t.index ["ical_token"], name: "index_events_on_ical_token", unique: true
     t.index ["location_id"], name: "index_events_on_location_id"
@@ -137,6 +140,7 @@ ActiveRecord::Schema[7.1].define(version: 2025_11_25_160902) do
     t.string "website_url"
     t.text "location_info"
     t.string "address"
+    t.boolean "slack_enabled", default: false, null: false
     t.boolean "social_reminders_enabled", default: false, null: false
   end
 
