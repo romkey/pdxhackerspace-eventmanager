@@ -1,4 +1,6 @@
 class SlackEventReminderJob < ApplicationJob
+  include ReminderMessageBuilder
+
   queue_as :default
 
   def perform
@@ -32,7 +34,7 @@ class SlackEventReminderJob < ApplicationJob
       event = occurrence.event
       next unless event.slack_announce?
 
-      message = build_reminder_message(event, occurrence)
+      message = reminder_message(occurrence, 'today')
       SlackService.post_message(message)
     end
 

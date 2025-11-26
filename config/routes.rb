@@ -54,6 +54,8 @@ Rails.application.routes.draw do
       post :postpone
       post :cancel
       post :reactivate
+      post :post_slack_reminder
+      post :post_social_reminder
     end
   end
 

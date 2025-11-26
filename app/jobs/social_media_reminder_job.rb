@@ -1,4 +1,6 @@
 class SocialMediaReminderJob < ApplicationJob
+  include ReminderMessageBuilder
+
   queue_as :default
 
   REMINDER_OFFSETS = {
@@ -35,7 +37,7 @@ class SocialMediaReminderJob < ApplicationJob
     occurrences.each do |occurrence|
       next if occurrence.event.social_reminders? == false
 
-      message = build_social_message(occurrence, label)
+      message = reminder_message(occurrence, label)
       SocialService.post_instagram(message)
       SocialService.post_bluesky(message)
     end

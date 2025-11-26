@@ -1,6 +1,11 @@
 class EventOccurrencesController < ApplicationController
+  include ReminderMessageBuilder
+
   before_action :set_occurrence, only: %i[show edit update destroy postpone cancel reactivate]
   before_action :authorize_occurrence, only: %i[edit update destroy postpone cancel reactivate]
+
+  before_action :authorize_occurrence, only: %i[post_slack_reminder post_social_reminder]
+  before_action :set_occurrence, only: %i[post_slack_reminder post_social_reminder]
 
   def show
     @event = @occurrence.event
@@ -59,6 +64,39 @@ class EventOccurrencesController < ApplicationController
       redirect_to @occurrence, notice: 'Occurrence was reactivated.'
     else
       redirect_to @occurrence, alert: 'Failed to reactivate occurrence.'
+    end
+  end
+
+  def post_slack_reminder
+    site_config = SiteConfig.current
+    unless site_config.slack_enabled? && @occurrence.event.slack_announce?
+      redirect_to @occurrence, alert: 'Slack reminders are disabled for this occurrence.'
+      return
+    end
+
+    message = reminder_message(@occurrence, 'today')
+    if SlackService.post_message(message)
+      redirect_to @occurrence, notice: 'Posted reminder to Slack.'
+    else
+      redirect_to @occurrence, alert: 'Failed to post to Slack.'
+    end
+  end
+
+  def post_social_reminder
+    site_config = SiteConfig.current
+    unless site_config.social_reminders_enabled? && @occurrence.event.social_reminders?
+      redirect_to @occurrence, alert: 'Social reminders are disabled for this occurrence.'
+      return
+    end
+
+    message = reminder_message(@occurrence, 'today')
+    success_instagram = SocialService.post_instagram(message)
+    success_bluesky = SocialService.post_bluesky(message)
+
+    if success_instagram || success_bluesky
+      redirect_to @occurrence, notice: 'Posted reminder to social media.'
+    else
+      redirect_to @occurrence, alert: 'Failed to post to social media.'
     end
   end
 

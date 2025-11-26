@@ -87,6 +87,25 @@
             </div>
           </div>
 
+          <div class="card mb-4 border-secondary">
+            <div class="card-body">
+              <h5 class="card-title mb-3">Manual Reminders</h5>
+              <% site_config = SiteConfig.current %>
+              <% slack_disabled = !site_config.slack_enabled? || !@event.slack_announce? %>
+              <% social_disabled = !site_config.social_reminders_enabled? || !@event.social_reminders? %>
+              <div class="mb-3">
+                <%= button_to 'Post to Slack now', post_slack_reminder_event_occurrence_path(@occurrence), method: :post, class: "btn btn-warning me-2", disabled: slack_disabled %>
+                <%= button_to 'Post to Social Media now', post_social_reminder_event_occurrence_path(@occurrence), method: :post, class: "btn btn-info", disabled: social_disabled %>
+              </div>
+              <% unless site_config.slack_enabled? %>
+                <p class="text-muted mb-0"><i class="bi bi-slack"></i> Enable Slack reminders in Site Config to post now.</p>
+              <% end %>
+              <% unless site_config.social_reminders_enabled? %>
+                <p class="text-muted mb-0"><i class="bi bi-share"></i> Enable social reminders in Site Config to post now.</p>
+              <% end %>
+            </div>
+          </div>
+
           <div class="mb-3">
             <%= f.label :banner_image, "Custom Banner Image (Optional)", class: "form-label" %>
             <%= f.file_field :banner_image, class: "form-control", accept: "image/*" %>
