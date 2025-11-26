@@ -1,4 +1,6 @@
 class CalendarController < ApplicationController
+  before_action :allow_iframe, only: :embed
+
   def index
     @view = params[:view] || 'calendar' # Default to calendar view
     @current_month = params[:month] ? Date.parse(params[:month]) : Date.current.beginning_of_month
@@ -189,5 +191,11 @@ class CalendarController < ApplicationController
     respond_to do |format|
       format.ics { render plain: calendar.to_ical, content_type: 'text/calendar' }
     end
+  end
+
+  private
+
+  def allow_iframe
+    response.headers.delete('X-Frame-Options')
   end
 end
