@@ -1,22 +1,15 @@
 class EventOccurrencesController < ApplicationController
   include ReminderMessageBuilder
 
-  before_action :set_occurrence, only: %i[show edit update destroy postpone cancel reactivate]
-  before_action :authorize_occurrence, only: %i[edit update destroy postpone cancel reactivate]
-
-  before_action :authorize_occurrence, only: %i[post_slack_reminder post_social_reminder]
-  before_action :set_occurrence, only: %i[post_slack_reminder post_social_reminder]
+  before_action :set_occurrence, only: %i[show edit update destroy postpone cancel reactivate post_slack_reminder post_social_reminder]
+  before_action :authorize_occurrence, only: %i[edit update destroy postpone cancel reactivate post_slack_reminder post_social_reminder]
 
   def show
-    @event = @occurrence.event || Event.find(@occurrence.event_id)
-  rescue ActiveRecord::RecordNotFound
-    redirect_back(fallback_location: events_path, alert: 'Event not found.')
+    @event = @occurrence.event
   end
 
   def edit
-    @event = @occurrence.event || Event.find(@occurrence.event_id)
-  rescue ActiveRecord::RecordNotFound
-    redirect_back(fallback_location: events_path, alert: 'Event not found.')
+    @event = @occurrence.event
   end
 
   def update
