@@ -12,6 +12,13 @@ class EventOccurrence < ApplicationRecord
   scope :upcoming, -> { where('occurs_at >= ?', Time.now).order(:occurs_at) }
   scope :past, -> { where('occurs_at < ?', Time.now).order(occurs_at: :desc) }
 
+  def ai_reminder_default(days_ahead)
+    label = days_ahead == 7 ? 'One week away' : 'Tomorrow'
+    date_str = occurs_at.strftime('%B %d, %Y')
+    time_str = occurs_at.strftime('%I:%M %p')
+    "#{event.title} is #{label} at PDX Hackerspace on #{date_str} at #{time_str}. Join us!"
+  end
+
   after_update :log_update
   after_save :log_banner_change
 

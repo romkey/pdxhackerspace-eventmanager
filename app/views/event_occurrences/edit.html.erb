@@ -59,6 +59,28 @@
             </small>
           </div>
 
+          <div class="card mb-4 border-info">
+            <div class="card-body">
+              <h5 class="card-title mb-3">AI Reminder Messages</h5>
+              <% [[7, :ai_reminder_7d], [1, :ai_reminder_1d]].each do |days, field| %>
+                <% default_text = @occurrence.ai_reminder_default(days) %>
+                <div class="mb-3">
+                  <%= label_tag "#{field}", "#{days}-day reminder", class: "form-label" %>
+                  <%= text_area_tag "event_occurrence[#{field}]", @occurrence.public_send(field), id: "#{field}", class: "form-control", rows: 3, data: { default_text: default_text } %>
+                </div>
+                <div class="mb-3">
+                  <div class="btn-group btn-group-sm">
+                    <button type="button" class="btn btn-outline-secondary" data-action="set-default" data-target="<%= field %>">Use default</button>
+                    <button type="button" class="btn btn-outline-primary" data-action="regenerate" data-target="<%= field %>">Regenerate</button>
+                  </div>
+                  <small class="form-text text-muted">
+                    Clicking "Regenerate" will rerun the AI prompt (placeholder for now) and "Use default" loads the standard reminder copy.
+                  </small>
+                </div>
+              <% end %>
+            </div>
+          </div>
+
           <div class="mb-3">
             <%= f.label :banner_image, "Custom Banner Image (Optional)", class: "form-label" %>
             <%= f.file_field :banner_image, class: "form-control", accept: "image/*" %>
@@ -91,3 +113,23 @@
     </div>
   </div>
 </div>
+<script>
+  document.addEventListener("click", function(event) {
+    const button = event.target.closest("[data-action]");
+    if (!button) return;
+    const targetId = button.dataset.target;
+    if (!targetId) return;
+    const textarea = document.getElementById(targetId);
+    if (!textarea) return;
+
+    if (button.dataset.action === "set-default") {
+      textarea.value = textarea.dataset.defaultText || "";
+    }
+
+    if (button.dataset.action === "regenerate") {
+      textarea.value = textarea.dataset.defaultText || "";
+      textarea.classList.add("is-warning");
+      setTimeout(() => textarea.classList.remove("is-warning"), 500);
+    }
+  });
+</script>

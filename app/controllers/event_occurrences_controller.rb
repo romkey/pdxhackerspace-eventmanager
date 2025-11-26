@@ -77,6 +77,6 @@ class EventOccurrencesController < ApplicationController
 
   def occurrence_params
     params.require(:event_occurrence).permit(:custom_description, :duration_override, :status, :banner_image,
-                                             :remove_banner_image, :location_id)
+                                             :remove_banner_image, :location_id, :ai_reminder_7d, :ai_reminder_1d)
   end
 end

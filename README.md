@@ -198,7 +198,23 @@ Social media reminders post to Instagram and Bluesky one week and one day prior 
 
 **Note:** The social reminder job runs daily at 10 AM via Sidekiq.
 
-#### 8. Start the Application
+#### 8. Configure AI Reminder Generation (Optional)
+
+If you want Ollama to craft flavorful reminder copy, set:
+
+```
+export OLLAMA_SERVER=http://localhost:11434
+```
+
+Or add to `.env`:
+
+```
+OLLAMA_SERVER=http://localhost:11434
+```
+
+This server is queried to generate AI text a week or a day before each event, using the event description, time, and the fact that it's at PDX Hackerspace.
+
+#### 9. Start the Application
 
 Development mode with asset compilation:
 
