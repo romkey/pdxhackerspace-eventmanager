@@ -15,12 +15,12 @@ class SlackEventReminderJob < ApplicationJob
     today_start = today.beginning_of_day
     today_end = today.end_of_day
 
-    # Find all active occurrences happening today
+    # Find all occurrences happening today (active, cancelled, or postponed)
     occurrences = EventOccurrence
                   .joins(:event)
                   .where('event_occurrences.occurs_at >= ? AND event_occurrences.occurs_at <= ?',
                          today_start, today_end)
-                  .where(event_occurrences: { status: 'active' })
+                  .where(event_occurrences: { status: %w[active cancelled postponed] })
                   .where(events: { status: 'active', draft: false })
                   .where(events: { visibility: %w[public members] })
                   .where(events: { slack_announce: true })

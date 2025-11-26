@@ -27,7 +27,7 @@ class SocialMediaReminderJob < ApplicationJob
     occurrences = EventOccurrence
                   .joins(:event)
                   .where('event_occurrences.occurs_at >= ? AND event_occurrences.occurs_at <= ?', start_time, end_time)
-                  .where(event_occurrences: { status: 'active' })
+                  .where(event_occurrences: { status: %w[active cancelled postponed] })
                   .where(events: { status: 'active', draft: false, social_reminders: true })
                   .where(events: { visibility: %w[public members] })
                   .includes(:event)
