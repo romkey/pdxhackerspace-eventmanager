@@ -10,7 +10,7 @@ Rails.application.configure do
 
   # Disable host authorization in the test environment so Capybara can talk to the app
   config.hosts.clear unless config.hosts.frozen?
-  config.hosts << ->(host) { true }
+  config.hosts << ->(_host) { true }
   config.hosts << "www.example.com"
   config.hosts << "localhost"
   config.hosts << "127.0.0.1"

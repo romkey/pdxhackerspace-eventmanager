@@ -8,21 +8,15 @@ class EventOccurrencesController < ApplicationController
   before_action :set_occurrence, only: %i[post_slack_reminder post_social_reminder]
 
   def show
-    unless @occurrence&.event
-      redirect_back(fallback_location: events_path, alert: 'Event not found.')
-      return
-    end
-
-    @event = @occurrence.event
+    @event = @occurrence.event || Event.find(@occurrence.event_id)
+  rescue ActiveRecord::RecordNotFound
+    redirect_back(fallback_location: events_path, alert: 'Event not found.')
   end
 
   def edit
-    unless @occurrence&.event
-      redirect_back(fallback_location: events_path, alert: 'Event not found.')
-      return
-    end
-
-    @event = @occurrence.event
+    @event = @occurrence.event || Event.find(@occurrence.event_id)
+  rescue ActiveRecord::RecordNotFound
+    redirect_back(fallback_location: events_path, alert: 'Event not found.')
   end
 
   def update
