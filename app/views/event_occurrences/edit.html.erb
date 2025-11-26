@@ -66,7 +66,8 @@
                  data-ai-prompt="<%= h(SiteConfig.current.ai_reminder_prompt_with_default) %>"
                  data-ai-event-title="<%= h(@event.title) %>"
                  data-ai-event-date="<%= @occurrence.occurs_at.strftime('%B %d, %Y') %>"
-                 data-ai-event-time="<%= @occurrence.occurs_at.strftime('%I:%M %p') %>">
+                 data-ai-event-time="<%= @occurrence.occurs_at.strftime('%I:%M %p') %>"
+                 data-ai-event-description="<%= h(@event.description) %>">
             <div class="card-body">
                 <h5 class="card-title mb-3">Reminder Messages</h5>
               <% [[7, :ai_reminder_7d], [1, :ai_reminder_1d]].each do |days, field| %>
@@ -172,24 +173,28 @@
       const title = aiCard?.dataset.aiEventTitle;
       const date = aiCard?.dataset.aiEventDate;
       const time = aiCard?.dataset.aiEventTime;
-      textarea.value = buildAiMessage(prompt, title, date, time, textarea.dataset.defaultText);
+      const description = aiCard?.dataset.aiEventDescription;
+      textarea.value = buildAiMessage(prompt, title, date, time, description, textarea.dataset.defaultText);
       textarea.classList.add("is-warning");
       setTimeout(() => textarea.classList.remove("is-warning"), 500);
     }
   });
   document.querySelectorAll("[data-reminder-action]").forEach((trigger) => {
-    trigger.addEventListener("click", () => {
+    trigger.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
       const form = document.getElementById(trigger.dataset.reminderAction);
-      form?.submit();
+      if (form) form.submit();
     });
   });
 
-  function buildAiMessage(prompt, title, date, time, fallback) {
+  function buildAiMessage(prompt, title, date, time, description, fallback) {
     if (!prompt) return fallback || "";
     return prompt
       .replace(/{{\s*event_title\s*}}/gi, title || "")
       .replace(/{{\s*event_date\s*}}/gi, date || "")
       .replace(/{{\s*event_time\s*}}/gi, time || "")
+      .replace(/{{\s*event_description\s*}}/gi, description || "")
       .trim() || fallback || "";
   }
 </script>
