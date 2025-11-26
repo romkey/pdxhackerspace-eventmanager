@@ -59,12 +59,12 @@ Rails.application.routes.draw do
     end
   end
 
+  # Site-wide public iCal feed
+  get 'calendar.ics', to: 'calendar#ical', as: 'calendar_ical'
+
   # Calendar view
   get 'calendar', to: 'calendar#index', as: 'calendar'
   get 'calendar/embed', to: 'calendar#embed', as: 'calendar_embed'
-
-  # Site-wide public iCal feed
-  get 'calendar.ics', to: 'calendar#ical', as: 'calendar_ical'
 
   # Public iCal feed
   get 'events/:token/ical', to: 'events#ical', as: 'event_ical'
