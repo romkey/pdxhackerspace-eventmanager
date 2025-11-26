@@ -38,8 +38,7 @@ class SocialMediaReminderJob < ApplicationJob
       next if occurrence.event.social_reminders? == false
 
       message = reminder_message(occurrence, label)
-      SocialService.post_instagram(message)
-      SocialService.post_bluesky(message)
+      SocialService.post_occurrence_reminder(occurrence, message)
     end
   end
 

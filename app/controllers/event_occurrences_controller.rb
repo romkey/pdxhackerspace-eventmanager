@@ -87,10 +87,7 @@ class EventOccurrencesController < ApplicationController
     end
 
     message = reminder_message(@occurrence, 'today')
-    success_instagram = SocialService.post_instagram(message)
-    success_bluesky = SocialService.post_bluesky(message)
-
-    if success_instagram || success_bluesky
+    if SocialService.post_occurrence_reminder(@occurrence, message)
       redirect_to @occurrence, notice: 'Posted reminder to social media.'
     else
       redirect_to @occurrence, alert: 'Failed to post to social media.'
