@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_11_23_000000) do
+ActiveRecord::Schema[7.1].define(version: 2025_11_25_160902) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -106,6 +106,7 @@ ActiveRecord::Schema[7.1].define(version: 2025_11_23_000000) do
     t.bigint "location_id"
     t.boolean "requires_mask", default: false, null: false
     t.boolean "draft", default: false, null: false
+    t.boolean "social_reminders", default: true, null: false
     t.index ["ical_token"], name: "index_events_on_ical_token", unique: true
     t.index ["location_id"], name: "index_events_on_location_id"
     t.index ["open_to"], name: "index_events_on_open_to"
@@ -136,6 +137,7 @@ ActiveRecord::Schema[7.1].define(version: 2025_11_23_000000) do
     t.string "website_url"
     t.text "location_info"
     t.string "address"
+    t.boolean "social_reminders_enabled", default: false, null: false
   end
 
   create_table "users", force: :cascade do |t|

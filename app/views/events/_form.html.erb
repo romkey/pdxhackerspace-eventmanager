@@ -158,6 +158,16 @@
     </div>
   </div>
 
+  <div class="mb-3">
+    <div class="form-check">
+      <%= f.check_box :social_reminders, class: "form-check-input" %>
+      <%= f.label :social_reminders, "Post to Social Media", class: "form-check-label" %>
+      <div class="form-text">
+        <i class="bi bi-share"></i> When enabled, reminders will be posted to Instagram and Bluesky one week and one day before the event (public/members-only only)
+      </div>
+    </div>
+  </div>
+
   <div id="weekly_options" class="mb-3" style="display: none;">
     <label class="form-label">Repeat on days:</label>
     <div class="d-flex flex-wrap gap-2">

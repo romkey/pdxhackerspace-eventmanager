@@ -173,7 +173,32 @@ EventManager can post event reminders to Slack at 9 AM on the day of each event.
 
 **Note:** The Slack reminder job runs daily at 9 AM via Sidekiq. Make sure Sidekiq is running for reminders to be posted.
 
-#### 7. Start the Application
+#### 7. Configure Social Media Reminders (Optional)
+
+Social media reminders post to Instagram and Bluesky one week and one day prior to each event at 10 AM. To enable them:
+
+1. **Set the environment variables:**
+   ```bash
+   export INSTAGRAM_ACCESS_TOKEN=your_instagram_token
+   export INSTAGRAM_PAGE_ID=your_instagram_page_id
+   export BLUESKY_ACCESS_TOKEN=your_bluesky_token
+   export BLUESKY_HANDLE=your_bluesky_handle
+   ```
+
+   Or add them to your `.env` file:
+   ```
+   INSTAGRAM_ACCESS_TOKEN=your_instagram_token
+   INSTAGRAM_PAGE_ID=your_instagram_page_id
+   BLUESKY_ACCESS_TOKEN=your_bluesky_token
+   BLUESKY_HANDLE=your_bluesky_handle
+   ```
+
+2. **Enable social reminders in Site Configuration:** check “Enable Social Media Reminders”.
+3. **Enable the flag on individual events:** check “Post to Social Media” when creating/editing (only public or members-only events will post).
+
+**Note:** The social reminder job runs daily at 10 AM via Sidekiq.
+
+#### 8. Start the Application
 
 Development mode with asset compilation:
 
@@ -192,7 +217,7 @@ yarn build
 yarn watch:css
 ```
 
-#### 7. Access the Application
+#### 9. Access the Application
 
 Open your browser and navigate to:
 

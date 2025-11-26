@@ -16,4 +16,8 @@
     cron: '0 9 * * *'  # Daily at 9 AM
     class: SlackEventReminderJob
     description: "Post Slack reminders for events happening today"
+  social_media_reminders:
+    cron: '0 10 * * *'  # Daily at 10 AM
+    class: SocialMediaReminderJob
+    description: "Post social media reminders for upcoming events (1 week/1 day)"
 

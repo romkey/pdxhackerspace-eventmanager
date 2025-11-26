@@ -52,7 +52,8 @@ class SiteConfigsController < ApplicationController
       :address,
       :favicon,
       :banner_image,
-      :slack_enabled
+      :slack_enabled,
+      :social_reminders_enabled
     )
   end
 end

@@ -124,7 +124,17 @@
               <%= f.check_box :slack_enabled, class: "form-check-input" %>
               <%= f.label :slack_enabled, "Enable Slack Notifications", class: "form-check-label" %>
               <div class="form-text">
-                <i class="bi bi-slack"></i> When enabled, event reminders will be posted to Slack at 9 AM on the day of the event. Requires <code>SLACK_WEBHOOK_URL</code> environment variable.
+                <i class="bi bi-slack"></i> When enabled, event reminders are posted to Slack at 9 AM on the day of the event. Requires <code>SLACK_WEBHOOK_URL</code>.
+              </div>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <div class="form-check">
+              <%= f.check_box :social_reminders_enabled, class: "form-check-input" %>
+              <%= f.label :social_reminders_enabled, "Enable Social Media Reminders", class: "form-check-label" %>
+              <div class="form-text">
+                <i class="bi bi-share"></i> When enabled, event reminders are posted to Instagram and Bluesky one week and one day before each event at 10 AM. Requires social media credentials in environment variables.
               </div>
             </div>
           </div>
