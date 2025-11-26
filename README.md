@@ -198,6 +198,8 @@ Social media reminders post to Instagram and Bluesky one week and one day prior 
 
 **Note:** The social reminder job runs daily at 10 AM via Sidekiq.
 
+You can customize the prompt used when generating reminders in the Site Configuration page. The default prompt is `Create a short, friendly reminder for {{event_title}} happening on {{event_date}} at {{event_time}} at PDX Hackerspace.` Use the `{{event_title}}`, `{{event_date}}`, and `{{event_time}}` placeholders to include occurrence details from the UI.
+
 #### 8. Configure AI Reminder Generation (Optional)
 
 If you want Ollama to craft flavorful reminder copy, set:

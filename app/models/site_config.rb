@@ -1,4 +1,6 @@
 class SiteConfig < ApplicationRecord
+  DEFAULT_AI_REMINDER_PROMPT = "Create a short, friendly reminder for {{event_title}} happening on {{event_date}} at {{event_time}} at PDX Hackerspace.".freeze
+
   has_one_attached :favicon
   has_one_attached :banner_image
 
@@ -15,5 +17,9 @@ class SiteConfig < ApplicationRecord
 
   def self.current
     instance
+  end
+
+  def ai_reminder_prompt_with_default
+    ai_reminder_prompt.presence || DEFAULT_AI_REMINDER_PROMPT
   end
 end

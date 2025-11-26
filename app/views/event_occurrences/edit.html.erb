@@ -60,9 +60,15 @@
           </div>
 
           <% ai_enabled = defined?(OLLAMA_SERVER) && OLLAMA_SERVER.present? %>
-          <div class="card mb-4 border-info">
+          <% show_notifications = SiteConfig.current.slack_enabled? || SiteConfig.current.social_reminders_enabled? %>
+          <% if show_notifications %>
+            <div class="card mb-4 border-info"
+                 data-ai-prompt="<%= h(SiteConfig.current.ai_reminder_prompt_with_default) %>"
+                 data-ai-event-title="<%= h(@event.title) %>"
+                 data-ai-event-date="<%= @occurrence.occurs_at.strftime('%B %d, %Y') %>"
+                 data-ai-event-time="<%= @occurrence.occurs_at.strftime('%I:%M %p') %>">
             <div class="card-body">
-              <h5 class="card-title mb-3">AI Reminder Messages</h5>
+                <h5 class="card-title mb-3">Reminder Messages</h5>
               <% [[7, :ai_reminder_7d], [1, :ai_reminder_1d]].each do |days, field| %>
                 <% default_text = @occurrence.ai_reminder_default(days) %>
                 <div class="mb-3">
@@ -72,7 +78,7 @@
                 <div class="mb-3">
                   <div class="btn-group btn-group-sm">
                     <button type="button" class="btn btn-outline-secondary" data-action="set-default" data-target="<%= field %>" <%= 'disabled' unless ai_enabled %>>Use default</button>
-                    <button type="button" class="btn btn-outline-primary" data-action="regenerate" data-target="<%= field %>" <%= 'disabled' unless ai_enabled %>>Regenerate</button>
+                    <button type="button" class="btn btn-outline-primary" data-action="regenerate" data-target="<%= field %>" <%= 'disabled' unless ai_enabled %>>Generate with AI</button>
                   </div>
                   <small class="form-text text-muted">
                     Clicking "Regenerate" will rerun the AI prompt (placeholder for now) and "Use default" loads the standard reminder copy.
@@ -87,24 +93,27 @@
             </div>
           </div>
 
-          <div class="card mb-4 border-secondary">
-            <div class="card-body">
-              <h5 class="card-title mb-3">Manual Reminders</h5>
-              <% site_config = SiteConfig.current %>
-              <% slack_disabled = !site_config.slack_enabled? || !@event.slack_announce? %>
-              <% social_disabled = !site_config.social_reminders_enabled? || !@event.social_reminders? %>
-              <div class="mb-3">
-                <%= button_to 'Post to Slack now', post_slack_reminder_event_occurrence_path(@occurrence), method: :post, class: "btn btn-warning me-2", disabled: slack_disabled %>
-                <%= button_to 'Post to Social Media now', post_social_reminder_event_occurrence_path(@occurrence), method: :post, class: "btn btn-info", disabled: social_disabled %>
+          <% if SiteConfig.current.slack_enabled? || SiteConfig.current.social_reminders_enabled? %>
+            <div class="card mb-4 border-secondary">
+              <div class="card-body">
+                <h5 class="card-title mb-3">Manual Reminders</h5>
+                <% site_config = SiteConfig.current %>
+                <% slack_disabled = !site_config.slack_enabled? || !@event.slack_announce? %>
+                <% social_disabled = !site_config.social_reminders_enabled? || !@event.social_reminders? %>
+                <div class="mb-3">
+                  <button type="button" class="btn btn-warning me-2" data-reminder-action="post-slack-form" <%= 'disabled' if slack_disabled %>>Post to Slack now</button>
+                  <button type="button" class="btn btn-info" data-reminder-action="post-social-form" <%= 'disabled' if social_disabled %>>Post to Social Media now</button>
+                </div>
+                <% unless site_config.slack_enabled? %>
+                  <p class="text-muted mb-0"><i class="bi bi-slack"></i> Enable Slack reminders in Site Config to post now.</p>
+                <% end %>
+                <% unless site_config.social_reminders_enabled? %>
+                  <p class="text-muted mb-0"><i class="bi bi-share"></i> Enable social reminders in Site Config to post now.</p>
+                <% end %>
               </div>
-              <% unless site_config.slack_enabled? %>
-                <p class="text-muted mb-0"><i class="bi bi-slack"></i> Enable Slack reminders in Site Config to post now.</p>
-              <% end %>
-              <% unless site_config.social_reminders_enabled? %>
-                <p class="text-muted mb-0"><i class="bi bi-share"></i> Enable social reminders in Site Config to post now.</p>
-              <% end %>
             </div>
-          </div>
+          <% end %>
+        <% end %>
 
           <div class="mb-3">
             <%= f.label :banner_image, "Custom Banner Image (Optional)", class: "form-label" %>
@@ -138,6 +147,12 @@
     </div>
   </div>
 </div>
+
+<%= form_with url: post_slack_reminder_event_occurrence_path(@occurrence), method: :post, id: "post-slack-form", local: true do %>
+<% end %>
+<%= form_with url: post_social_reminder_event_occurrence_path(@occurrence), method: :post, id: "post-social-form", local: true do %>
+<% end %>
+
 <script>
   document.addEventListener("click", function(event) {
     const button = event.target.closest("[data-action]");
@@ -152,9 +167,29 @@
     }
 
     if (button.dataset.action === "regenerate") {
-      textarea.value = textarea.dataset.defaultText || "";
+      const aiCard = textarea.closest("[data-ai-prompt]");
+      const prompt = aiCard?.dataset.aiPrompt;
+      const title = aiCard?.dataset.aiEventTitle;
+      const date = aiCard?.dataset.aiEventDate;
+      const time = aiCard?.dataset.aiEventTime;
+      textarea.value = buildAiMessage(prompt, title, date, time, textarea.dataset.defaultText);
       textarea.classList.add("is-warning");
       setTimeout(() => textarea.classList.remove("is-warning"), 500);
     }
   });
+  document.querySelectorAll("[data-reminder-action]").forEach((trigger) => {
+    trigger.addEventListener("click", () => {
+      const form = document.getElementById(trigger.dataset.reminderAction);
+      form?.submit();
+    });
+  });
+
+  function buildAiMessage(prompt, title, date, time, fallback) {
+    if (!prompt) return fallback || "";
+    return prompt
+      .replace(/{{\s*event_title\s*}}/gi, title || "")
+      .replace(/{{\s*event_date\s*}}/gi, date || "")
+      .replace(/{{\s*event_time\s*}}/gi, time || "")
+      .trim() || fallback || "";
+  }
 </script>

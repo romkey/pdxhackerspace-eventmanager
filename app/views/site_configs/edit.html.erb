@@ -139,6 +139,14 @@
             </div>
           </div>
 
+          <div class="mb-3">
+            <%= f.label :ai_reminder_prompt, "AI reminder prompt", class: "form-label" %>
+            <%= f.text_area :ai_reminder_prompt, class: "form-control", rows: 3, placeholder: SiteConfig::DEFAULT_AI_REMINDER_PROMPT %>
+            <small class="form-text text-muted">
+              Customize the prompt used when “Generate with AI” is clicked. Use {{event_title}}, {{event_date}}, and {{event_time}} placeholders; defaults to a friendly reminder mentioning PDX Hackerspace.
+            </small>
+          </div>
+
           <h5 class="border-bottom pb-2 mb-3 mt-4">Footer</h5>
 
           <div class="mb-3">
