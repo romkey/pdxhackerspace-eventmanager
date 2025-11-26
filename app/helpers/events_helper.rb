@@ -12,13 +12,24 @@ module EventsHelper
       rule = rules.first
       validations = rule.validations
 
-      # Extract day of week
-      day_of_week = validations[:day_of_week]
+      raw_day_of_week = validations[:day_of_week]
+      day_of_week = {}
 
-      if day_of_week.present? && !day_of_week.empty?
-        # day_of_week is a hash like { monday: [1, 3] } meaning 1st and 3rd Monday
-        day_sym = day_of_week.keys.first
-        occurrence_nums = day_of_week[day_sym]
+      if raw_day_of_week.is_a?(Hash)
+        day_of_week = raw_day_of_week
+      elsif raw_day_of_week.respond_to?(:each)
+        raw_day_of_week.each do |validation|
+          next unless validation.respond_to?(:day)
+
+          validation.day.each do |day_sym, occurrence_nums|
+            day_of_week[day_sym] ||= []
+            day_of_week[day_sym].concat(Array(occurrence_nums))
+          end
+        end
+      end
+
+      if day_of_week.present?
+        day_sym, occurrence_nums = day_of_week.first
 
         # Convert numbers to names: 1=first, 2=second, 3=third, 4=fourth, -1=last
         occurrence_map = { 1 => 'first', 2 => 'second', 3 => 'third', 4 => 'fourth', -1 => 'last' }
