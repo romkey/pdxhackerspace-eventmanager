@@ -1,12 +1,13 @@
 <div class="calendar-navigation mb-3">
   <div class="d-flex justify-content-between align-items-center">
-    <%= link_to calendar_path(view: 'calendar', month: (@current_month - 1.month).strftime('%Y-%m-%d')), class: "btn btn-outline-primary" do %>
+    <% path_helper = @embed ? :calendar_embed_path : :calendar_path %>
+    <%= link_to send(path_helper, view: 'calendar', month: (@current_month - 1.month).strftime('%Y-%m-%d')), class: "btn btn-outline-primary" do %>
       <i class="bi bi-chevron-left"></i> <%= (@current_month - 1.month).strftime('%B %Y') %>
     <% end %>
     
     <h3 class="mb-0"><%= @current_month.strftime('%B %Y') %></h3>
     
-    <%= link_to calendar_path(view: 'calendar', month: (@current_month + 1.month).strftime('%Y-%m-%d')), class: "btn btn-outline-primary" do %>
+    <%= link_to send(path_helper, view: 'calendar', month: (@current_month + 1.month).strftime('%Y-%m-%d')), class: "btn btn-outline-primary" do %>
       <%= (@current_month + 1.month).strftime('%B %Y') %> <i class="bi bi-chevron-right"></i>
     <% end %>
   </div>

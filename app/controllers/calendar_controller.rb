@@ -2,6 +2,7 @@ class CalendarController < ApplicationController
   before_action :allow_iframe, only: :embed
 
   def index
+    @embed = false
     @view = params[:view] || 'calendar' # Default to calendar view
     @current_month = params[:month] ? Date.parse(params[:month]) : Date.current.beginning_of_month
 
@@ -144,6 +145,7 @@ class CalendarController < ApplicationController
       @occurrences_by_month = @occurrences.group_by { |occ| occ.occurs_at.beginning_of_month }
     end
 
+    @embed = true
     render layout: 'embed'
   end
 
