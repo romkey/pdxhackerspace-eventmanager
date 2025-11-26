@@ -72,7 +72,7 @@ class EventOccurrencesController < ApplicationController
     end
 
     message = reminder_message(@occurrence, 'today')
-    if SlackService.post_message(message)
+    if SlackService.post_occurrence_reminder(@occurrence, message)
       redirect_to @occurrence, notice: 'Posted reminder to Slack.'
     else
       redirect_to @occurrence, alert: 'Failed to post to Slack.'

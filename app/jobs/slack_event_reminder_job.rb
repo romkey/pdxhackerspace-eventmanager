@@ -35,7 +35,7 @@ class SlackEventReminderJob < ApplicationJob
       next unless event.slack_announce?
 
       message = reminder_message(occurrence, 'today')
-      SlackService.post_message(message)
+      SlackService.post_occurrence_reminder(occurrence, message)
     end
 
     Rails.logger.info "SlackEventReminderJob: Completed posting #{occurrences.count} reminders"
