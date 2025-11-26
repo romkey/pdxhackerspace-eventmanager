@@ -24,7 +24,7 @@ module ReminderMessageBuilder
       message += " #{desc}"
     end
     message += " Location: #{occurrence.event_location.name}." if occurrence.event_location.present?
-    message += " #{event_url(event)}"
+    message += " #{reminder_event_link(event)}"
     message
   end
 
@@ -36,7 +36,7 @@ module ReminderMessageBuilder
     message = "⚠️ CANCELLED: #{event.title} scheduled for #{date_str} at #{time_str} has been cancelled."
     message += " Reason: #{occurrence.cancellation_reason}" if occurrence.cancellation_reason.present?
     message += " We apologize for any inconvenience."
-    message += " #{event_url(event)}"
+    message += " #{reminder_event_link(event)}"
     message
   end
 
@@ -51,11 +51,11 @@ module ReminderMessageBuilder
       new_time_str = occurrence.postponed_until.strftime('%I:%M %p')
       message += " New date: #{new_date_str} at #{new_time_str}."
     end
-    message += " #{event_url(event)}"
+    message += " #{reminder_event_link(event)}"
     message
   end
 
-  def event_url(event)
+  def reminder_event_link(event)
     host = ENV.fetch('RAILS_HOST', ENV.fetch('HOST', 'localhost:3000'))
     protocol = ENV.fetch('RAILS_PROTOCOL', 'http')
     "More info: #{protocol}://#{host}/events/#{event.id}"
