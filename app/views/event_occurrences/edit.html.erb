@@ -62,12 +62,12 @@
           <% ai_enabled = defined?(OLLAMA_SERVER) && OLLAMA_SERVER.present? %>
           <% show_notifications = SiteConfig.current.slack_enabled? || SiteConfig.current.social_reminders_enabled? %>
           <% if show_notifications %>
-            <div class="card mb-4 border-info"
-                 data-ai-prompt="<%= h(SiteConfig.current.ai_reminder_prompt_with_default) %>"
-                 data-ai-event-title="<%= h(@event.title) %>"
+            <div class="card mb-4 border-info" id="ai-reminder-card"
+                 data-ai-prompt="<%= SiteConfig.current.ai_reminder_prompt_with_default %>"
+                 data-ai-event-title="<%= @event.title %>"
                  data-ai-event-date="<%= @occurrence.occurs_at.strftime('%B %d, %Y') %>"
                  data-ai-event-time="<%= @occurrence.occurs_at.strftime('%I:%M %p') %>"
-                 data-ai-event-description="<%= h(@event.description) %>">
+                 data-ai-event-description="<%= @event.description.to_s %>">
             <div class="card-body">
                 <h5 class="card-title mb-3">Reminder Messages</h5>
               <% [[7, :ai_reminder_7d], [1, :ai_reminder_1d]].each do |days, field| %>
