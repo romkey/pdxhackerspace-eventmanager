@@ -8,10 +8,13 @@ require "active_support/core_ext/integer/time"
 Rails.application.configure do
   # Settings specified here will take precedence over those in config/application.rb.
 
-  # Disable host authorization in test environment - allow all test hosts
-  config.hosts << "www.example.com" unless config.hosts.frozen?
+  # Disable host authorization in the test environment so Capybara can talk to the app
+  config.hosts.clear unless config.hosts.frozen?
+  config.hosts << ->(host) { true }
+  config.hosts << "www.example.com"
   config.hosts << "localhost"
   config.hosts << "127.0.0.1"
+  config.middleware.delete ActionDispatch::HostAuthorization
 
   # Turn false under Spring and add config.action_view.cache_template_loading = true.
   config.cache_classes = true
