@@ -181,17 +181,21 @@ Social media reminders post to Instagram and Bluesky one week and one day prior 
    ```bash
    export INSTAGRAM_ACCESS_TOKEN=your_instagram_token
    export INSTAGRAM_PAGE_ID=your_instagram_page_id
-   export BLUESKY_ACCESS_TOKEN=your_bluesky_token
    export BLUESKY_HANDLE=your_bluesky_handle
+   export BLUESKY_APP_PASSWORD=your_bluesky_app_password
    ```
 
    Or add them to your `.env` file:
    ```
    INSTAGRAM_ACCESS_TOKEN=your_instagram_token
    INSTAGRAM_PAGE_ID=your_instagram_page_id
-   BLUESKY_ACCESS_TOKEN=your_bluesky_token
    BLUESKY_HANDLE=your_bluesky_handle
+   BLUESKY_APP_PASSWORD=your_bluesky_app_password
    ```
+
+   **Note:** For Bluesky, you need to create an App Password in your Bluesky account settings 
+   (Settings → App Passwords → Add App Password). Your handle should be in the format 
+   `yourname.bsky.social` or your custom domain if you have one.
 
 2. **Enable social reminders in Site Configuration:** check “Enable Social Media Reminders”.
 3. **Enable the flag on individual events:** check “Post to Social Media” when creating/editing (only public or members-only events will post).

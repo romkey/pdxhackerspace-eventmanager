@@ -31,12 +31,19 @@ class SocialService
     end
 
     def post_bluesky(message, image_url: nil, image_alt: 'Event banner')
-      token = ENV.fetch('BLUESKY_ACCESS_TOKEN', nil)
       handle = ENV.fetch('BLUESKY_HANDLE', nil)
-      return false if token.blank? || handle.blank?
+      app_password = ENV.fetch('BLUESKY_APP_PASSWORD', nil)
+      return false if handle.blank? || app_password.blank?
+
+      # First, create a session to get an access token
+      session = create_bluesky_session(handle, app_password)
+      return false unless session
+
+      access_token = session['accessJwt']
+      did = session['did']
 
       # If we have an image URL, upload it first
-      image_blob = upload_bluesky_image(token, image_url) if image_url.present?
+      image_blob = upload_bluesky_image(access_token, image_url) if image_url.present?
 
       record = {
         '$type': 'app.bsky.feed.post',
@@ -59,10 +66,10 @@ class SocialService
 
       uri = URI('https://bsky.social/xrpc/com.atproto.repo.createRecord')
       request = Net::HTTP::Post.new(uri)
-      request['Authorization'] = "Bearer #{token}"
+      request['Authorization'] = "Bearer #{access_token}"
       request['Content-Type'] = 'application/json'
       request.body = {
-        repo: handle,
+        repo: did,
         collection: 'app.bsky.feed.post',
         record: record
       }.to_json
@@ -92,6 +99,28 @@ class SocialService
     end
 
     private
+
+    def create_bluesky_session(handle, app_password)
+      uri = URI('https://bsky.social/xrpc/com.atproto.server.createSession')
+      request = Net::HTTP::Post.new(uri)
+      request['Content-Type'] = 'application/json'
+      request.body = {
+        identifier: handle,
+        password: app_password
+      }.to_json
+
+      response = Net::HTTP.start(uri.host, uri.port, use_ssl: true) { |http| http.request(request) }
+
+      if response.is_a?(Net::HTTPSuccess)
+        JSON.parse(response.body)
+      else
+        Rails.logger.error "SocialService: Failed to create Bluesky session (#{response.code}) #{response.body}"
+        nil
+      end
+    rescue StandardError => e
+      Rails.logger.error "SocialService: Bluesky session error - #{e.message}"
+      nil
+    end
 
     def upload_bluesky_image(token, image_url)
       # Fetch the image from the URL
