@@ -3,6 +3,11 @@ class SlackEventReminderJob < ApplicationJob
 
   queue_as :default
 
+  REMINDER_OFFSETS = {
+    7 => '1 week',
+    1 => '1 day'
+  }.freeze
+
   def perform
     site_config = SiteConfig.current
     return unless site_config.slack_enabled?
@@ -10,16 +15,22 @@ class SlackEventReminderJob < ApplicationJob
     webhook_url = ENV.fetch('SLACK_WEBHOOK_URL', nil)
     return if webhook_url.blank?
 
-    # Get all events happening today (9AM check, so events starting today)
-    today = Date.current
-    today_start = today.beginning_of_day
-    today_end = today.end_of_day
+    REMINDER_OFFSETS.each do |days_ahead, label|
+      post_reminders_for_days(days_ahead, label)
+    end
+  end
 
-    # Find all occurrences happening today (active, cancelled, or postponed)
+  private
+
+  def post_reminders_for_days(days_ahead, label)
+    target_date = Date.current + days_ahead.days
+    start_time = target_date.beginning_of_day
+    end_time = target_date.end_of_day
+
     occurrences = EventOccurrence
                   .joins(:event)
                   .where('event_occurrences.occurs_at >= ? AND event_occurrences.occurs_at <= ?',
-                         today_start, today_end)
+                         start_time, end_time)
                   .where(event_occurrences: { status: %w[active cancelled postponed] })
                   .where(events: { status: 'active', draft: false })
                   .where(events: { visibility: %w[public members] })
@@ -28,58 +39,16 @@ class SlackEventReminderJob < ApplicationJob
 
     return if occurrences.empty?
 
-    Rails.logger.info "SlackEventReminderJob: Found #{occurrences.count} events to announce today"
+    Rails.logger.info "SlackEventReminderJob: Found #{occurrences.count} events #{label} away"
 
     occurrences.each do |occurrence|
       event = occurrence.event
       next unless event.slack_announce?
 
-      message = reminder_message(occurrence, 'today')
+      message = reminder_message(occurrence, label)
       SlackService.post_occurrence_reminder(occurrence, message)
     end
 
-    Rails.logger.info "SlackEventReminderJob: Completed posting #{occurrences.count} reminders"
-  end
-
-  private
-
-  def build_reminder_message(event, occurrence)
-    time_str = occurrence.occurs_at.strftime('%I:%M %p')
-    date_str = occurrence.occurs_at.strftime('%B %d, %Y')
-    duration_str = format_duration(occurrence.duration)
-
-    message = "📅 *Event Reminder: #{event.title}*\n"
-    message += "📅 #{date_str} at #{time_str} (#{duration_str})\n"
-
-    if event.description.present?
-      # Truncate description if too long
-      desc = event.description.length > 300 ? "#{event.description[0..297]}..." : event.description
-      message += "\n#{desc}\n"
-    end
-
-    message += "\n📍 Location: #{event.location.name}\n" if event.location.present?
-
-    message += "\n🔗 More info: #{event.more_info_url}\n" if event.more_info_url.present?
-
-    # Add link to event page
-    host = ENV.fetch('RAILS_HOST', ENV.fetch('HOST', 'localhost:3000'))
-    protocol = ENV.fetch('RAILS_PROTOCOL', 'http')
-    event_url = "#{protocol}://#{host}/events/#{event.id}"
-    message += "\n📋 View event: #{event_url}"
-
-    message
-  end
-
-  def format_duration(minutes)
-    hours = minutes / 60
-    mins = minutes % 60
-
-    if hours.positive? && mins.positive?
-      "#{hours}h #{mins}m"
-    elsif hours.positive?
-      "#{hours}h"
-    else
-      "#{mins}m"
-    end
+    Rails.logger.info "SlackEventReminderJob: Completed posting #{occurrences.count} reminders for #{label}"
   end
 end
