@@ -97,7 +97,7 @@ class EventOccurrencesController < ApplicationController
   private
 
   def set_occurrence
-    @occurrence = EventOccurrence.find(params[:id])
+    @occurrence = EventOccurrence.friendly_find(params[:id])
   end
 
   def authorize_occurrence

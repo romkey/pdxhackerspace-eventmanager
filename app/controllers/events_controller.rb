@@ -233,7 +233,7 @@ class EventsController < ApplicationController
   private
 
   def set_event
-    @event = Event.find(params[:id])
+    @event = Event.friendly_find(params[:id])
   end
 
   def authorize_event
@@ -266,6 +266,7 @@ class EventsController < ApplicationController
     events_data = public_events.map do |event|
       {
         id: event.id,
+        slug: event.slug,
         title: event.title,
         description: event.description,
         status: event.status,
@@ -279,6 +280,7 @@ class EventsController < ApplicationController
         occurrences: event.occurrences.upcoming.limit(event.max_occurrences || 5).map do |occ|
           {
             id: occ.id,
+            slug: occ.slug,
             occurs_at: occ.occurs_at.iso8601,
             status: occ.status,
             duration: occ.duration,

@@ -58,7 +58,7 @@ module ReminderMessageBuilder
   def reminder_event_link(event)
     host = ENV.fetch('RAILS_HOST', ENV.fetch('HOST', 'localhost:3000'))
     protocol = ENV.fetch('RAILS_PROTOCOL', 'http')
-    "More info: #{protocol}://#{host}/events/#{event.id}"
+    "More info: #{protocol}://#{host}/events/#{event.slug}"
   end
 
   def format_duration(minutes)

@@ -8,6 +8,8 @@ class Event < ApplicationRecord
   has_many :event_journals, dependent: :destroy
   has_one_attached :banner_image
 
+  before_validation :generate_slug, on: :create
+  before_validation :update_slug_if_title_changed, on: :update
   before_create :generate_ical_token
   after_create :add_creator_as_host
   after_create :generate_initial_occurrences
@@ -27,6 +29,16 @@ class Event < ApplicationRecord
   validates :open_to, inclusion: { in: %w[public members private] }
   validates :more_info_url,
             format: { with: URI::DEFAULT_PARSER.make_regexp(%w[http https]), message: "must be a valid URL" }, allow_blank: true
+  validates :slug, presence: true, uniqueness: true
+
+  # Allow finding by slug or ID
+  def self.friendly_find(param)
+    find_by(slug: param) || find(param)
+  end
+
+  def to_param
+    slug
+  end
 
   scope :active, -> { where(status: 'active') }
   scope :postponed, -> { where(status: 'postponed') }
@@ -224,6 +236,28 @@ class Event < ApplicationRecord
   end
 
   private
+
+  def generate_slug
+    return if slug.present?
+    return if title.blank?
+
+    base_slug = title.parameterize
+    new_slug = base_slug
+    counter = 1
+
+    while Event.exists?(slug: new_slug)
+      new_slug = "#{base_slug}-#{counter}"
+      counter += 1
+    end
+
+    self.slug = new_slug
+  end
+
+  def update_slug_if_title_changed
+    return unless title_changed?
+
+    generate_slug
+  end
 
   def generate_ical_token
     self.ical_token = SecureRandom.urlsafe_base64(32)

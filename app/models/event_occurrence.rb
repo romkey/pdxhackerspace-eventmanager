@@ -3,8 +3,20 @@ class EventOccurrence < ApplicationRecord
   belongs_to :location, optional: true
   has_one_attached :banner_image
 
+  before_validation :generate_slug, on: :create
+
   validates :occurs_at, presence: true
   validates :status, inclusion: { in: %w[active postponed cancelled] }
+  validates :slug, presence: true, uniqueness: true
+
+  # Allow finding by slug or ID
+  def self.friendly_find(param)
+    find_by(slug: param) || find(param)
+  end
+
+  def to_param
+    slug
+  end
 
   scope :active, -> { where(status: 'active') }
   scope :postponed, -> { where(status: 'postponed') }
@@ -103,6 +115,24 @@ class EventOccurrence < ApplicationRecord
   end
 
   private
+
+  def generate_slug
+    return if slug.present?
+    return if event.blank? || occurs_at.blank?
+
+    event_slug = event.title.parameterize
+    date_slug = occurs_at.strftime('%Y-%m-%d')
+    base_slug = "#{event_slug}-#{date_slug}"
+    new_slug = base_slug
+    counter = 1
+
+    while EventOccurrence.exists?(slug: new_slug)
+      new_slug = "#{base_slug}-#{counter}"
+      counter += 1
+    end
+
+    self.slug = new_slug
+  end
 
   def log_update
     return unless current_user_for_journal

@@ -56,7 +56,7 @@ class SocialMediaReminderJob < ApplicationJob
 
     host = ENV.fetch('RAILS_HOST', ENV.fetch('HOST', 'localhost:3000'))
     protocol = ENV.fetch('RAILS_PROTOCOL', 'http')
-    event_url = "#{protocol}://#{host}/events/#{event.id}"
+    event_url = "#{protocol}://#{host}/events/#{event.slug}"
     message += "View event: #{event_url}"
 
     message

@@ -80,6 +80,7 @@ class CalendarController < ApplicationController
         occurrences_data = public_occurrences.map do |occ|
           {
             id: occ.id,
+            slug: occ.slug,
             occurs_at: occ.occurs_at.iso8601,
             status: occ.status,
             duration: occ.duration,
@@ -92,6 +93,7 @@ class CalendarController < ApplicationController
             has_custom_banner: occ.banner_image.attached?,
             event: {
               id: occ.event.id,
+              slug: occ.event.slug,
               title: occ.event.title,
               recurrence_type: occ.event.recurrence_type,
               more_info_url: occ.event.more_info_url,
