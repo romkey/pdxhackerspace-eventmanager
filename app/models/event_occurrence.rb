@@ -1,9 +1,12 @@
 class EventOccurrence < ApplicationRecord
   belongs_to :event
   belongs_to :location, optional: true
-  has_one_attached :banner_image
+  has_one_attached :banner_image do |attachable|
+    attachable.variant :thumb, resize_to_limit: [300, 300]
+  end
 
   before_validation :generate_slug, on: :create
+  before_save :rename_banner_image
 
   validates :occurs_at, presence: true
   validates :status, inclusion: { in: %w[active postponed cancelled] }
@@ -132,6 +135,18 @@ class EventOccurrence < ApplicationRecord
     end
 
     self.slug = new_slug
+  end
+
+  def rename_banner_image
+    return unless banner_image.attached?
+    return unless banner_image.blob.persisted? == false || banner_image.attachment&.new_record?
+
+    blob = banner_image.blob
+    extension = File.extname(blob.filename.to_s)
+    timestamp = Time.current.to_i
+    new_filename = "#{slug || "#{event.title.parameterize}-#{occurs_at.strftime('%Y-%m-%d')}"}-banner-#{timestamp}#{extension}"
+
+    blob.filename = new_filename
   end
 
   def log_update

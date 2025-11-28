@@ -6,10 +6,13 @@ class Event < ApplicationRecord
   has_many :event_occurrences, dependent: :destroy
   has_many :occurrences, class_name: 'EventOccurrence', dependent: :destroy
   has_many :event_journals, dependent: :destroy
-  has_one_attached :banner_image
+  has_one_attached :banner_image do |attachable|
+    attachable.variant :thumb, resize_to_limit: [300, 300]
+  end
 
   before_validation :generate_slug, on: :create
   before_validation :update_slug_if_title_changed, on: :update
+  before_save :rename_banner_image
   before_create :generate_ical_token
   after_create :add_creator_as_host
   after_create :generate_initial_occurrences
@@ -257,6 +260,18 @@ class Event < ApplicationRecord
     return unless title_changed?
 
     generate_slug
+  end
+
+  def rename_banner_image
+    return unless banner_image.attached?
+    return unless banner_image.blob.persisted? == false || banner_image.attachment&.new_record?
+
+    blob = banner_image.blob
+    extension = File.extname(blob.filename.to_s)
+    timestamp = Time.current.to_i
+    new_filename = "#{slug || title.parameterize}-banner-#{timestamp}#{extension}"
+
+    blob.filename = new_filename
   end
 
   def generate_ical_token
