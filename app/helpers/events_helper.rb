@@ -1,4 +1,11 @@
 module EventsHelper
+  # Day number to name mapping for IceCube
+  DAY_NUM_TO_NAME = { 0 => 'sunday', 1 => 'monday', 2 => 'tuesday', 3 => 'wednesday',
+                      4 => 'thursday', 5 => 'friday', 6 => 'saturday' }.freeze
+
+  # Occurrence number to name mapping
+  OCC_NUM_TO_NAME = { 1 => 'first', 2 => 'second', 3 => 'third', 4 => 'fourth', -1 => 'last' }.freeze
+
   def parse_monthly_recurrence(event)
     # Return empty if not a monthly event or no recurrence rule
     return { occurrences: [], day: nil } unless event.persisted? && event.recurrence_type == 'monthly' && event.recurrence_rule.present?
@@ -11,33 +18,28 @@ module EventsHelper
 
       rule = rules.first
       validations = rule.validations
-
       raw_day_of_week = validations[:day_of_week]
-      day_of_week = {}
 
-      if raw_day_of_week.is_a?(Hash)
-        day_of_week = raw_day_of_week
-      elsif raw_day_of_week.respond_to?(:each)
-        raw_day_of_week.each do |validation|
-          next unless validation.respond_to?(:day)
+      return { occurrences: [], day: nil } if raw_day_of_week.blank?
 
-          validation.day.each do |day_sym, occurrence_nums|
-            day_of_week[day_sym] ||= []
-            day_of_week[day_sym].concat(Array(occurrence_nums))
-          end
-        end
+      # IceCube stores day_of_week validations as an array of Validation objects
+      # Each object has @day (0-6 for Sun-Sat) and @occ (1,2,3,4,-1 for first,second,third,fourth,last)
+      day_num = nil
+      occurrence_nums = []
+
+      raw_day_of_week.each do |validation|
+        # Access instance variables directly since there's no public accessor for @occ
+        day_num ||= validation.day if validation.respond_to?(:day)
+        occ = validation.instance_variable_get(:@occ)
+        occurrence_nums << occ if occ
       end
 
-      if day_of_week.present?
-        day_sym, occurrence_nums = day_of_week.first
+      if day_num && occurrence_nums.any?
+        day_name = DAY_NUM_TO_NAME[day_num]
+        occurrence_names = occurrence_nums.map { |num| OCC_NUM_TO_NAME[num] }.compact
 
-        # Convert numbers to names: 1=first, 2=second, 3=third, 4=fourth, -1=last
-        occurrence_map = { 1 => 'first', 2 => 'second', 3 => 'third', 4 => 'fourth', -1 => 'last' }
-        occurrence_names = occurrence_nums.map { |num| occurrence_map[num] }.compact
-
-        { occurrences: occurrence_names, day: day_sym.to_s }
+        { occurrences: occurrence_names, day: day_name }
       else
-        # No day_of_week validation means it's monthly on same day of month
         { occurrences: [], day: nil }
       end
     rescue StandardError => e
