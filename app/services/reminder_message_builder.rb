@@ -29,8 +29,8 @@ module ReminderMessageBuilder
   def active_message_parts(occurrence, label, days_ahead)
     event = occurrence.event
 
-    # Check for custom AI reminder message (occurrence's own or inherited from event)
-    custom_message = days_ahead == 7 ? occurrence.effective_ai_reminder_7d : occurrence.effective_ai_reminder_1d
+    # Check for custom reminder message (occurrence's own or inherited from event)
+    custom_message = days_ahead == 7 ? occurrence.effective_reminder_7d : occurrence.effective_reminder_1d
 
     if custom_message.present?
       message = custom_message

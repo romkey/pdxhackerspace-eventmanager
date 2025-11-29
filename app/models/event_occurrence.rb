@@ -27,7 +27,7 @@ class EventOccurrence < ApplicationRecord
   scope :upcoming, -> { where('occurs_at >= ?', Time.now).order(:occurs_at) }
   scope :past, -> { where('occurs_at < ?', Time.now).order(occurs_at: :desc) }
 
-  def ai_reminder_default(days_ahead)
+  def reminder_default(days_ahead)
     label = days_ahead == 7 ? 'One week away' : 'Tomorrow'
     date_str = occurs_at.strftime('%B %d, %Y')
     time_str = occurs_at.strftime('%I:%M %p')
@@ -35,13 +35,13 @@ class EventOccurrence < ApplicationRecord
   end
 
   # Get the effective 7-day reminder (own or inherited from event)
-  def effective_ai_reminder_7d
-    ai_reminder_7d.presence || event.ai_reminder_7d
+  def effective_reminder_7d
+    reminder_7d.presence || event.reminder_7d
   end
 
   # Get the effective 1-day reminder (own or inherited from event)
-  def effective_ai_reminder_1d
-    ai_reminder_1d.presence || event.ai_reminder_1d
+  def effective_reminder_1d
+    reminder_1d.presence || event.reminder_1d
   end
 
   after_update :log_update

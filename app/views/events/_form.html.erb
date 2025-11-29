@@ -180,19 +180,19 @@
       </div>
       <div class="card-body">
         <div class="mb-3">
-          <%= f.label :ai_reminder_7d, "7-Day Reminder Message", class: "form-label" %>
-          <%= f.text_area :ai_reminder_7d, 
+          <%= f.label :reminder_7d, "7-Day Reminder Message", class: "form-label" %>
+          <%= f.text_area :reminder_7d, 
               class: "form-control", 
               rows: 3, 
-              id: "event_ai_reminder_7d",
-              placeholder: event.ai_reminder_default(7),
-              data: { default_text: event.ai_reminder_default(7) } %>
+              id: "event_reminder_7d",
+              placeholder: event.reminder_default(7),
+              data: { default_text: event.reminder_default(7) } %>
           <div class="mt-2 d-flex gap-2">
-            <button type="button" class="btn btn-sm btn-outline-secondary" data-action="set-default" data-target="event_ai_reminder_7d">
+            <button type="button" class="btn btn-sm btn-outline-secondary" data-action="set-default" data-target="event_reminder_7d">
               Use Default
             </button>
             <% if ollama_configured %>
-              <button type="button" class="btn btn-sm btn-outline-primary" data-action="regenerate" data-target="event_ai_reminder_7d">
+              <button type="button" class="btn btn-sm btn-outline-primary" data-action="regenerate" data-target="event_reminder_7d">
                 <i class="bi bi-stars"></i> Generate with AI
               </button>
             <% end %>
@@ -200,19 +200,19 @@
         </div>
 
         <div class="mb-3">
-          <%= f.label :ai_reminder_1d, "1-Day Reminder Message", class: "form-label" %>
-          <%= f.text_area :ai_reminder_1d, 
+          <%= f.label :reminder_1d, "1-Day Reminder Message", class: "form-label" %>
+          <%= f.text_area :reminder_1d, 
               class: "form-control", 
               rows: 3, 
-              id: "event_ai_reminder_1d",
-              placeholder: event.ai_reminder_default(1),
-              data: { default_text: event.ai_reminder_default(1) } %>
+              id: "event_reminder_1d",
+              placeholder: event.reminder_default(1),
+              data: { default_text: event.reminder_default(1) } %>
           <div class="mt-2 d-flex gap-2">
-            <button type="button" class="btn btn-sm btn-outline-secondary" data-action="set-default" data-target="event_ai_reminder_1d">
+            <button type="button" class="btn btn-sm btn-outline-secondary" data-action="set-default" data-target="event_reminder_1d">
               Use Default
             </button>
             <% if ollama_configured %>
-              <button type="button" class="btn btn-sm btn-outline-primary" data-action="regenerate" data-target="event_ai_reminder_1d">
+              <button type="button" class="btn btn-sm btn-outline-primary" data-action="regenerate" data-target="event_reminder_1d">
                 <i class="bi bi-stars"></i> Generate with AI
               </button>
             <% end %>
@@ -349,7 +349,7 @@
       return;
     }
 
-    const days = targetId.includes('7d') ? 7 : 1;
+    const days = targetId.includes('_7d') ? 7 : 1;
     const originalText = button.textContent;
     button.disabled = true;
     button.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> Generating...';

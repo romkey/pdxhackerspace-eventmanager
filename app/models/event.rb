@@ -44,7 +44,7 @@ class Event < ApplicationRecord
   end
 
   # Default reminder message for the event (used when no custom message is set)
-  def ai_reminder_default(days_ahead)
+  def reminder_default(days_ahead)
     label = days_ahead == 7 ? 'One week away' : 'Tomorrow'
     "#{title} is #{label} at PDX Hackerspace. Join us!"
   end

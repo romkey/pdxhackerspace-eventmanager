@@ -67,8 +67,8 @@
             <div class="card-body">
                 <h5 class="card-title mb-3">Reminder Messages</h5>
                 <div id="ai-notification" class="alert d-none mb-3" role="alert"></div>
-              <% [[7, :ai_reminder_7d], [1, :ai_reminder_1d]].each do |days, field| %>
-                <% default_text = @occurrence.ai_reminder_default(days) %>
+              <% [[7, :reminder_7d], [1, :reminder_1d]].each do |days, field| %>
+                <% default_text = @occurrence.reminder_default(days) %>
                 <div class="mb-3">
                   <%= label_tag "#{field}", "#{days}-day reminder", class: "form-label" %>
                   <%= text_area_tag "event_occurrence[#{field}]", @occurrence.public_send(field), id: "#{field}", class: "form-control", rows: 3, data: { default_text: default_text, days: days } %>
