@@ -240,10 +240,36 @@
       </div>
     </section>
 
+    <% next_occurrence = @event.occurrences.upcoming.first %>
+    <% if next_occurrence %>
+      <section class="card mb-3">
+        <div class="card-body">
+          <h2 class="card-title h5">Add to Calendar</h2>
+          <p class="card-text small text-muted">Add the next occurrence (<%= next_occurrence.occurs_at.strftime('%b %d') %>) to your calendar</p>
+          <div class="d-grid gap-2">
+            <%= link_to google_calendar_url(next_occurrence), target: "_blank", rel: "noopener", class: "btn btn-outline-primary", "aria-label": "Add to Google Calendar" do %>
+              <i class="bi bi-google" aria-hidden="true"></i> Google Calendar
+            <% end %>
+            <%= link_to outlook_calendar_url(next_occurrence), target: "_blank", rel: "noopener", class: "btn btn-outline-primary", "aria-label": "Add to Outlook.com Calendar" do %>
+              <i class="bi bi-microsoft" aria-hidden="true"></i> Outlook.com
+            <% end %>
+            <div class="btn-group" role="group">
+              <%= link_to office365_calendar_url(next_occurrence), target: "_blank", rel: "noopener", class: "btn btn-outline-secondary btn-sm", "aria-label": "Add to Office 365 Calendar" do %>
+                <i class="bi bi-building" aria-hidden="true"></i> Office 365
+              <% end %>
+              <%= link_to yahoo_calendar_url(next_occurrence), target: "_blank", rel: "noopener", class: "btn btn-outline-secondary btn-sm", "aria-label": "Add to Yahoo Calendar" do %>
+                <i class="bi bi-calendar-plus" aria-hidden="true"></i> Yahoo
+              <% end %>
+            </div>
+          </div>
+        </div>
+      </section>
+    <% end %>
+
     <section class="card mb-3">
       <div class="card-body">
         <h2 class="card-title h5">Subscribe</h2>
-        <p class="card-text small text-muted">Add this event to your calendar or feed reader</p>
+        <p class="card-text small text-muted">Subscribe to all occurrences of this event</p>
         <%= link_to event_ical_path(@event.ical_token, format: :ics), class: "btn btn-primary w-100 mb-2", "aria-label": "Subscribe to #{@event.title} calendar feed" do %>
           <i class="bi bi-calendar-plus" aria-hidden="true"></i> iCal Feed
         <% end %>
