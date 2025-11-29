@@ -187,7 +187,7 @@
             <%= f.label :reminder_7d_short, "Short (#{short_max} chars max)", class: "form-label" %>
             <%= f.text_area :reminder_7d_short, 
                 class: "form-control", 
-                rows: 2, 
+                rows: 4, 
                 maxlength: short_max,
                 id: "event_reminder_7d_short",
                 placeholder: event.reminder_short_default(7),
@@ -206,7 +206,7 @@
             <%= f.label :reminder_7d_long, "Long (#{long_max} chars max)", class: "form-label" %>
             <%= f.text_area :reminder_7d_long, 
                 class: "form-control", 
-                rows: 2, 
+                rows: 6, 
                 maxlength: long_max,
                 id: "event_reminder_7d_long",
                 placeholder: event.reminder_long_default(7),
@@ -229,7 +229,7 @@
             <%= f.label :reminder_1d_short, "Short (#{short_max} chars max)", class: "form-label" %>
             <%= f.text_area :reminder_1d_short, 
                 class: "form-control", 
-                rows: 2, 
+                rows: 4, 
                 maxlength: short_max,
                 id: "event_reminder_1d_short",
                 placeholder: event.reminder_short_default(1),
@@ -248,7 +248,7 @@
             <%= f.label :reminder_1d_long, "Long (#{long_max} chars max)", class: "form-label" %>
             <%= f.text_area :reminder_1d_long, 
                 class: "form-control", 
-                rows: 2, 
+                rows: 6, 
                 maxlength: long_max,
                 id: "event_reminder_1d_long",
                 placeholder: event.reminder_long_default(1),

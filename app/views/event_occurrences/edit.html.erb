@@ -79,7 +79,7 @@
                       <% field_short = "reminder_#{days}d_short".to_sym %>
                       <%= label_tag field_short, "Short", class: "form-label" %>
                       <%= text_area_tag "event_occurrence[#{field_short}]", @occurrence.public_send(field_short), 
-                          id: field_short.to_s, class: "form-control", rows: 2, maxlength: short_max,
+                          id: field_short.to_s, class: "form-control", rows: 4, maxlength: short_max,
                           placeholder: @occurrence.reminder_short_default(days),
                           data: { default_text: @occurrence.reminder_short_default(days), days: days } %>
                       <div class="d-flex justify-content-between align-items-center mt-1">
@@ -99,7 +99,7 @@
                       <% field_long = "reminder_#{days}d_long".to_sym %>
                       <%= label_tag field_long, "Long", class: "form-label" %>
                       <%= text_area_tag "event_occurrence[#{field_long}]", @occurrence.public_send(field_long), 
-                          id: field_long.to_s, class: "form-control", rows: 2, maxlength: long_max,
+                          id: field_long.to_s, class: "form-control", rows: 6, maxlength: long_max,
                           placeholder: @occurrence.reminder_long_default(days),
                           data: { default_text: @occurrence.reminder_long_default(days), days: days } %>
                       <div class="d-flex justify-content-between align-items-center mt-1">
