@@ -1,7 +1,8 @@
 require 'rails_helper'
 
 RSpec.describe SiteConfigPolicy, type: :policy do
-  let(:site_config) { create(:site_config) }
+  # Use the singleton pattern - create once and reuse
+  let(:site_config) { SiteConfig.instance }
 
   describe 'permissions' do
     context 'for a guest user' do
@@ -35,7 +36,8 @@ RSpec.describe SiteConfigPolicy, type: :policy do
   end
 
   describe 'Scope' do
-    let!(:site_config) { create(:site_config) }
+    before { SiteConfig.instance } # Ensure site_config exists
+
     let(:user) { create(:user) }
     let(:admin) { create(:user, :admin) }
 
@@ -49,7 +51,7 @@ RSpec.describe SiteConfigPolicy, type: :policy do
     context 'for an admin' do
       it 'returns all configs' do
         scope = Pundit.policy_scope!(admin, SiteConfig)
-        expect(scope).to include(site_config)
+        expect(scope.count).to eq(1)
       end
     end
 

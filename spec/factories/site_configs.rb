@@ -1,9 +1,16 @@
 FactoryBot.define do
   factory :site_config do
+    # Always use id: 1 to satisfy the singleton constraint
+    id { 1 }
     organization_name { "Test Hackerspace" }
     contact_email { "info@testhackerspace.org" }
     contact_phone { "(555) 123-4567" }
     footer_text { "© 2025 Test Hackerspace - All Rights Reserved" }
+
+    # Use find_or_create to ensure we don't violate singleton constraint
+    initialize_with do
+      SiteConfig.find_by(id: 1) || new(**attributes)
+    end
 
     trait :with_favicon do
       after(:build) do |config|

@@ -44,6 +44,11 @@ RSpec.describe SiteConfig, type: :model do
       config = described_class.instance
       expect(config.organization_name).to eq('EventManager')
     end
+
+    it 'always uses id = 1' do
+      config = described_class.instance
+      expect(config.id).to eq(1)
+    end
   end
 
   describe '.current' do
@@ -54,11 +59,24 @@ RSpec.describe SiteConfig, type: :model do
   end
 
   describe 'singleton pattern' do
-    it 'maintains only one record' do
+    it 'maintains only one record with id = 1' do
+      # Create via factory (uses id: 1)
       create(:site_config)
-      described_class.instance
+
+      # Instance should return the same record
+      instance = described_class.instance
 
       expect(described_class.count).to eq(1)
+      expect(instance.id).to eq(1)
+    end
+
+    it 'enforces singleton via database constraint' do
+      create(:site_config)
+
+      # Attempting to create another record with different id should fail
+      expect {
+        described_class.create!(id: 2, organization_name: 'Another Org')
+      }.to raise_error(ActiveRecord::StatementInvalid, /site_configs_singleton/)
     end
   end
 
@@ -83,6 +101,12 @@ RSpec.describe SiteConfig, type: :model do
       expect(config).to be_valid
       expect(config.contact_email).to be_nil
       expect(config.footer_text).to be_nil
+    end
+
+    it 'returns existing record if one exists' do
+      first = create(:site_config)
+      second = create(:site_config)
+      expect(first.id).to eq(second.id)
     end
   end
 end
