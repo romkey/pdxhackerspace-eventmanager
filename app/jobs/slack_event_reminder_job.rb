@@ -45,7 +45,7 @@ class SlackEventReminderJob < ApplicationJob
       event = occurrence.event
       next unless event.slack_announce?
 
-      message = reminder_message(occurrence, label)
+      message = reminder_message(occurrence, label, days_ahead: days_ahead)
       SlackService.post_occurrence_reminder(occurrence, message)
     end
 

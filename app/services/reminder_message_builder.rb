@@ -3,37 +3,50 @@ module ReminderMessageBuilder
 
   # Returns { text: "...", link_url: "...", link_text: "More info →" }
   # The link_text appears at the end of the message and can be made clickable via facets
-  def reminder_message_with_link(occurrence, label)
+  # days_ahead: 7 for 1-week reminder, 1 for 1-day reminder
+  def reminder_message_with_link(occurrence, label, days_ahead: nil)
+    # Determine days_ahead from label if not provided
+    days_ahead ||= label.include?('week') ? 7 : 1
+
     case occurrence.status
     when 'cancelled'
       cancelled_message_parts(occurrence)
     when 'postponed'
       postponed_message_parts(occurrence)
     else
-      active_message_parts(occurrence, label)
+      active_message_parts(occurrence, label, days_ahead)
     end
   end
 
   # Legacy method for Slack and other platforms that support inline URLs
-  def reminder_message(occurrence, label)
-    parts = reminder_message_with_link(occurrence, label)
+  def reminder_message(occurrence, label, days_ahead: nil)
+    parts = reminder_message_with_link(occurrence, label, days_ahead: days_ahead)
     "#{parts[:text]} #{parts[:link_url]}"
   end
 
   private
 
-  def active_message_parts(occurrence, label)
+  def active_message_parts(occurrence, label, days_ahead)
     event = occurrence.event
-    date_str = occurrence.occurs_at.strftime('%B %d, %Y')
-    time_str = occurrence.occurs_at.strftime('%I:%M %p')
-    duration_str = format_duration(occurrence.duration)
 
-    message = "Reminder: #{event.title} is #{label} at PDX Hackerspace on #{date_str} at #{time_str} (#{duration_str})."
-    if event.description.present?
-      desc = event.description.length > 200 ? "#{event.description[0..197]}..." : event.description
-      message += " #{desc}"
+    # Check for custom AI reminder message (occurrence's own or inherited from event)
+    custom_message = days_ahead == 7 ? occurrence.effective_ai_reminder_7d : occurrence.effective_ai_reminder_1d
+
+    if custom_message.present?
+      message = custom_message
+    else
+      # Fall back to default generated message
+      date_str = occurrence.occurs_at.strftime('%B %d, %Y')
+      time_str = occurrence.occurs_at.strftime('%I:%M %p')
+      duration_str = format_duration(occurrence.duration)
+
+      message = "Reminder: #{event.title} is #{label} at PDX Hackerspace on #{date_str} at #{time_str} (#{duration_str})."
+      if event.description.present?
+        desc = event.description.length > 200 ? "#{event.description[0..197]}..." : event.description
+        message += " #{desc}"
+      end
+      message += " Location: #{occurrence.event_location.name}." if occurrence.event_location.present?
     end
-    message += " Location: #{occurrence.event_location.name}." if occurrence.event_location.present?
 
     { text: message, link_url: event_url_for(event), link_text: LINK_TEXT }
   end

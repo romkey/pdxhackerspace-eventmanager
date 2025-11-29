@@ -168,6 +168,66 @@
     </div>
   </div>
 
+  <% site_config = SiteConfig.current %>
+  <% if site_config.slack_enabled? || site_config.social_reminders_enabled? %>
+    <% ollama_configured = ENV['OLLAMA_SERVER'].present? %>
+    <div class="card mb-3" id="reminder-messages-section"
+         data-generate-ai-url="<%= event.persisted? && event.occurrences.any? ? generate_ai_reminder_event_occurrence_path(event.occurrences.first) : '' %>"
+         data-ai-event-description="<%= h(event.description.to_s) %>">
+      <div class="card-header">
+        <h5 class="mb-0"><i class="bi bi-chat-left-text"></i> Reminder Messages</h5>
+        <small class="text-muted">These messages will be used for all occurrences unless overridden on a specific occurrence</small>
+      </div>
+      <div class="card-body">
+        <div class="mb-3">
+          <%= f.label :ai_reminder_7d, "7-Day Reminder Message", class: "form-label" %>
+          <%= f.text_area :ai_reminder_7d, 
+              class: "form-control", 
+              rows: 3, 
+              id: "event_ai_reminder_7d",
+              placeholder: event.ai_reminder_default(7),
+              data: { default_text: event.ai_reminder_default(7) } %>
+          <div class="mt-2 d-flex gap-2">
+            <button type="button" class="btn btn-sm btn-outline-secondary" data-action="set-default" data-target="event_ai_reminder_7d">
+              Use Default
+            </button>
+            <% if ollama_configured %>
+              <button type="button" class="btn btn-sm btn-outline-primary" data-action="regenerate" data-target="event_ai_reminder_7d">
+                <i class="bi bi-stars"></i> Generate with AI
+              </button>
+            <% end %>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <%= f.label :ai_reminder_1d, "1-Day Reminder Message", class: "form-label" %>
+          <%= f.text_area :ai_reminder_1d, 
+              class: "form-control", 
+              rows: 3, 
+              id: "event_ai_reminder_1d",
+              placeholder: event.ai_reminder_default(1),
+              data: { default_text: event.ai_reminder_default(1) } %>
+          <div class="mt-2 d-flex gap-2">
+            <button type="button" class="btn btn-sm btn-outline-secondary" data-action="set-default" data-target="event_ai_reminder_1d">
+              Use Default
+            </button>
+            <% if ollama_configured %>
+              <button type="button" class="btn btn-sm btn-outline-primary" data-action="regenerate" data-target="event_ai_reminder_1d">
+                <i class="bi bi-stars"></i> Generate with AI
+              </button>
+            <% end %>
+          </div>
+        </div>
+
+        <% unless ollama_configured %>
+          <div class="alert alert-info py-2 mb-0">
+            <small><i class="bi bi-info-circle"></i> AI generation is disabled. Configure OLLAMA_SERVER to enable.</small>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+
   <div id="weekly_options" class="mb-3" style="display: none;">
     <label class="form-label">Repeat on days:</label>
     <div class="d-flex flex-wrap gap-2">
@@ -251,5 +311,79 @@
   document.addEventListener('DOMContentLoaded', initRecurrenceOptions);
   document.addEventListener('turbo:load', initRecurrenceOptions);
   document.addEventListener('turbo:render', initRecurrenceOptions);
+
+  // Reminder message buttons
+  function initReminderButtons() {
+    const reminderSection = document.getElementById('reminder-messages-section');
+    if (!reminderSection) return;
+
+    document.addEventListener("click", function(event) {
+      const button = event.target.closest("[data-action]");
+      if (!button) return;
+      
+      const targetId = button.dataset.target;
+      if (!targetId) return;
+      
+      const textarea = document.getElementById(targetId);
+      if (!textarea) return;
+
+      if (button.dataset.action === "set-default") {
+        textarea.value = textarea.dataset.defaultText || "";
+      }
+
+      if (button.dataset.action === "regenerate") {
+        generateAiMessageForEvent(button, targetId);
+      }
+    });
+  }
+
+  async function generateAiMessageForEvent(button, targetId) {
+    const textarea = document.getElementById(targetId);
+    if (!textarea) return;
+
+    const reminderSection = document.getElementById('reminder-messages-section');
+    const url = reminderSection?.dataset.generateAiUrl;
+    
+    if (!url) {
+      alert('AI generation is not available. Save the event first to enable AI generation.');
+      return;
+    }
+
+    const days = targetId.includes('7d') ? 7 : 1;
+    const originalText = button.textContent;
+    button.disabled = true;
+    button.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> Generating...';
+
+    try {
+      const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'X-CSRF-Token': csrfToken
+        },
+        body: JSON.stringify({ days: days })
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        textarea.value = data.message;
+        textarea.classList.add("is-valid");
+        setTimeout(() => textarea.classList.remove("is-valid"), 2000);
+      } else {
+        alert(`AI generation failed: ${data.message}`);
+      }
+    } catch (error) {
+      console.error('Error generating AI reminder:', error);
+      alert('An error occurred during AI generation. Please try again.');
+    } finally {
+      button.disabled = false;
+      button.innerHTML = '<i class="bi bi-stars"></i> Generate with AI';
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', initReminderButtons);
+  document.addEventListener('turbo:load', initReminderButtons);
 </script>
 

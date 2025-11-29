@@ -34,6 +34,16 @@ class EventOccurrence < ApplicationRecord
     "#{event.title} is #{label} at PDX Hackerspace on #{date_str} at #{time_str}. Join us!"
   end
 
+  # Get the effective 7-day reminder (own or inherited from event)
+  def effective_ai_reminder_7d
+    ai_reminder_7d.presence || event.ai_reminder_7d
+  end
+
+  # Get the effective 1-day reminder (own or inherited from event)
+  def effective_ai_reminder_1d
+    ai_reminder_1d.presence || event.ai_reminder_1d
+  end
+
   after_update :log_update
   after_save :log_banner_change
 
