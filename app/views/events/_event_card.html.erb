@@ -107,7 +107,14 @@
         <% end %>
       <% end %>
     </div>
-    <%= link_to "iCal Feed", event_ical_path(event.ical_token, format: :ics), class: "btn btn-sm btn-outline-secondary", "aria-label": "Subscribe to #{event.title} calendar feed" %>
+    <div class="btn-group" role="group" aria-label="Subscribe options for <%= event.title %>">
+      <%= link_to rss_event_path(event, format: :rss), class: "btn btn-sm btn-outline-warning", "aria-label": "RSS feed for #{event.title}" do %>
+        <i class="bi bi-rss" aria-hidden="true"></i>
+      <% end %>
+      <%= link_to event_ical_path(event.ical_token, format: :ics), class: "btn btn-sm btn-outline-secondary", "aria-label": "iCal feed for #{event.title}" do %>
+        <i class="bi bi-calendar-plus" aria-hidden="true"></i>
+      <% end %>
+    </div>
   </footer>
 </article>
 
