@@ -168,6 +168,7 @@ class EventsController < ApplicationController
     if @event.update(event_params)
       redirect_to @event, notice: 'Event was successfully updated.'
     else
+      Rails.logger.error "Event update failed: #{@event.errors.full_messages.join(', ')}"
       render :edit, status: :unprocessable_entity
     end
   end
