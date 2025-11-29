@@ -62,6 +62,7 @@ RUN apt-get update -qq && apt-get install -y \
     postgresql-client \
     libpq-dev \
     curl \
+    imagemagick \
     && rm -rf /var/lib/apt/lists/*
 
 # Create app directory
