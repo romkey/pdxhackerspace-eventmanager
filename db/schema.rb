@@ -168,6 +168,9 @@ ActiveRecord::Schema[7.1].define(version: 2025_11_29_044547) do
     t.string "ai_model"
     t.integer "short_reminder_max_length", default: 300, null: false
     t.integer "long_reminder_max_length", default: 800, null: false
+    t.boolean "matomo_enabled", default: false, null: false
+    t.string "matomo_url"
+    t.string "matomo_site_id"
     t.check_constraint "id = 1", name: "site_configs_singleton"
   end
 

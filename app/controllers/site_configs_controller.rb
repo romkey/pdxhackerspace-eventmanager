@@ -59,7 +59,10 @@ class SiteConfigsController < ApplicationController
       :ai_reminder_prompt,
       :ai_model,
       :short_reminder_max_length,
-      :long_reminder_max_length
+      :long_reminder_max_length,
+      :matomo_enabled,
+      :matomo_url,
+      :matomo_site_id
     )
   end
 end

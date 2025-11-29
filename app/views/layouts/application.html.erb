@@ -49,6 +49,24 @@
     
     <!-- Additional head content from views -->
     <%= content_for(:head) %>
+    
+    <!-- Matomo Analytics -->
+    <% if @site_config&.matomo_enabled && @site_config&.matomo_url.present? && @site_config&.matomo_site_id.present? %>
+      <script>
+        var _paq = window._paq = window._paq || [];
+        /* tracker methods like "setCustomDimension" should be called before "trackPageView" */
+        _paq.push(['trackPageView']);
+        _paq.push(['enableLinkTracking']);
+        (function() {
+          var u="<%= @site_config.matomo_url %>/";
+          _paq.push(['setTrackerUrl', u+'matomo.php']);
+          _paq.push(['setSiteId', '<%= @site_config.matomo_site_id %>']);
+          var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
+          g.async=true; g.src=u+'matomo.js'; s.parentNode.insertBefore(g,s);
+        })();
+      </script>
+      <noscript><p><img referrerpolicy="no-referrer-when-downgrade" src="<%= @site_config.matomo_url %>/matomo.php?idsite=<%= @site_config.matomo_site_id %>&amp;rec=1" style="border:0;" alt="" /></p></noscript>
+    <% end %>
   </head>
 
   <body>

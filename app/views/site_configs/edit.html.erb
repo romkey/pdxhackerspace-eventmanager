@@ -184,6 +184,38 @@
             </div>
           </div>
 
+          <h5 class="border-bottom pb-2 mb-3 mt-4">
+            <i class="bi bi-graph-up"></i> Analytics (Matomo)
+          </h5>
+
+          <div class="mb-3">
+            <div class="form-check form-switch">
+              <%= f.check_box :matomo_enabled, class: "form-check-input", role: "switch", id: "matomo_enabled" %>
+              <%= f.label :matomo_enabled, "Enable Matomo Analytics", class: "form-check-label" %>
+            </div>
+            <small class="form-text text-muted">
+              <i class="bi bi-info-circle"></i> When enabled, Matomo tracking code will be added to all pages
+            </small>
+          </div>
+
+          <div class="row" id="matomo-settings">
+            <div class="col-md-8 mb-3">
+              <%= f.label :matomo_url, "Matomo Server URL", class: "form-label" %>
+              <%= f.url_field :matomo_url, class: "form-control", placeholder: "https://analytics.example.org" %>
+              <small class="form-text text-muted">
+                The URL of your Matomo instance (without trailing slash)
+              </small>
+            </div>
+
+            <div class="col-md-4 mb-3">
+              <%= f.label :matomo_site_id, "Site ID", class: "form-label" %>
+              <%= f.text_field :matomo_site_id, class: "form-control", placeholder: "1" %>
+              <small class="form-text text-muted">
+                Your Matomo site ID number
+              </small>
+            </div>
+          </div>
+
           <h5 class="border-bottom pb-2 mb-3 mt-4">Footer</h5>
 
           <div class="mb-3">
