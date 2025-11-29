@@ -157,10 +157,11 @@ class EventsController < ApplicationController
       @event.banner_image.purge
     end
 
-    # Rebuild schedule if recurrence changed
-    if params[:event][:recurrence_type].present? && @event.recurring?
+    # Only rebuild schedule if recurrence settings were explicitly changed
+    if should_rebuild_schedule?
       recurrence_params = build_recurrence_params
-      schedule = Event.build_schedule(@event.start_time, params[:event][:recurrence_type], recurrence_params)
+      new_start_time = params[:event][:start_time].present? ? Time.parse(params[:event][:start_time]) : @event.start_time
+      schedule = Event.build_schedule(new_start_time, params[:event][:recurrence_type], recurrence_params)
       @event.recurrence_rule = schedule.to_yaml
     end
 
@@ -291,6 +292,24 @@ class EventsController < ApplicationController
       occurrences: params[:recurrence_occurrences], # Array of occurrences (e.g., ['first', 'third'])
       day: params[:recurrence_day]
     }.compact
+  end
+
+  def should_rebuild_schedule?
+    return false if params[:event][:recurrence_type].blank?
+
+    # Rebuild if recurrence type changed
+    return true if params[:event][:recurrence_type] != @event.recurrence_type
+
+    # Rebuild if start time changed (affects schedule)
+    return true if params[:event][:start_time].present? && Time.parse(params[:event][:start_time]) != @event.start_time
+
+    # Rebuild if weekly days were explicitly provided
+    return true if params[:recurrence_days].present?
+
+    # Rebuild if monthly options were explicitly provided
+    return true if params[:recurrence_occurrences].present? || params[:recurrence_day].present?
+
+    false
   end
 
   def events_json_response
