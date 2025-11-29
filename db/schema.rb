@@ -10,8 +10,9 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_11_29_015626) do
+ActiveRecord::Schema[7.1].define(version: 2025_11_29_044547) do
   # These are extensions that must be enabled in order to support this database
+  enable_extension "pg_trgm"
   enable_extension "plpgsql"
 
   create_table "active_storage_attachments", force: :cascade do |t|
@@ -57,9 +58,10 @@ ActiveRecord::Schema[7.1].define(version: 2025_11_29_015626) do
     t.bigint "user_id", null: false
     t.string "action", null: false
     t.jsonb "change_data", default: {}
-    t.integer "occurrence_id"
+    t.bigint "occurrence_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.index ["action"], name: "index_event_journals_on_action"
     t.index ["created_at"], name: "index_event_journals_on_created_at"
     t.index ["event_id", "created_at"], name: "index_event_journals_on_event_id_and_created_at"
     t.index ["event_id"], name: "index_event_journals_on_event_id"
@@ -83,12 +85,16 @@ ActiveRecord::Schema[7.1].define(version: 2025_11_29_015626) do
     t.text "reminder_7d_long"
     t.text "reminder_1d_long"
     t.string "slug"
+    t.datetime "deleted_at"
+    t.index ["deleted_at"], name: "index_event_occurrences_on_deleted_at"
     t.index ["event_id", "occurs_at"], name: "index_event_occurrences_on_event_id_and_occurs_at"
     t.index ["event_id"], name: "index_event_occurrences_on_event_id"
     t.index ["location_id"], name: "index_event_occurrences_on_location_id"
     t.index ["occurs_at"], name: "index_event_occurrences_on_occurs_at"
     t.index ["slug"], name: "index_event_occurrences_on_slug", unique: true
+    t.index ["status", "occurs_at"], name: "index_event_occurrences_on_status_and_occurs_at"
     t.index ["status"], name: "index_event_occurrences_on_status"
+    t.check_constraint "status::text = ANY (ARRAY['active'::character varying, 'postponed'::character varying, 'cancelled'::character varying]::text[])", name: "event_occurrences_status_check"
   end
 
   create_table "events", force: :cascade do |t|
@@ -98,8 +104,8 @@ ActiveRecord::Schema[7.1].define(version: 2025_11_29_015626) do
     t.datetime "start_time", null: false
     t.integer "duration", default: 60
     t.text "recurrence_rule"
-    t.string "recurrence_type"
-    t.string "status", default: "active"
+    t.string "recurrence_type", null: false
+    t.string "status", default: "active", null: false
     t.datetime "postponed_until"
     t.text "cancellation_reason"
     t.string "ical_token"
@@ -119,6 +125,8 @@ ActiveRecord::Schema[7.1].define(version: 2025_11_29_015626) do
     t.text "reminder_1d_short"
     t.text "reminder_7d_long"
     t.text "reminder_1d_long"
+    t.datetime "deleted_at"
+    t.index ["deleted_at"], name: "index_events_on_deleted_at"
     t.index ["ical_token"], name: "index_events_on_ical_token", unique: true
     t.index ["location_id"], name: "index_events_on_location_id"
     t.index ["open_to"], name: "index_events_on_open_to"
@@ -130,6 +138,10 @@ ActiveRecord::Schema[7.1].define(version: 2025_11_29_015626) do
     t.index ["status"], name: "index_events_on_status"
     t.index ["user_id"], name: "index_events_on_user_id"
     t.index ["visibility"], name: "index_events_on_visibility"
+    t.check_constraint "open_to::text = ANY (ARRAY['public'::character varying, 'members'::character varying, 'private'::character varying]::text[])", name: "events_open_to_check"
+    t.check_constraint "recurrence_type::text = ANY (ARRAY['once'::character varying, 'weekly'::character varying, 'monthly'::character varying, 'custom'::character varying]::text[])", name: "events_recurrence_type_check"
+    t.check_constraint "status::text = ANY (ARRAY['active'::character varying, 'postponed'::character varying, 'cancelled'::character varying]::text[])", name: "events_status_check"
+    t.check_constraint "visibility::text = ANY (ARRAY['public'::character varying, 'members'::character varying, 'private'::character varying]::text[])", name: "events_visibility_check"
   end
 
   create_table "locations", force: :cascade do |t|
@@ -156,6 +168,7 @@ ActiveRecord::Schema[7.1].define(version: 2025_11_29_015626) do
     t.string "ai_model"
     t.integer "short_reminder_max_length", default: 300, null: false
     t.integer "long_reminder_max_length", default: 800, null: false
+    t.check_constraint "id = 1", name: "site_configs_singleton"
   end
 
   create_table "users", force: :cascade do |t|
@@ -172,14 +185,17 @@ ActiveRecord::Schema[7.1].define(version: 2025_11_29_015626) do
     t.datetime "updated_at", null: false
     t.boolean "can_create_events", default: false, null: false
     t.index ["email"], name: "index_users_on_email", unique: true
+    t.index ["provider", "uid"], name: "index_users_on_provider_and_uid", unique: true, where: "((provider IS NOT NULL) AND (uid IS NOT NULL))"
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
     t.index ["role"], name: "index_users_on_role"
+    t.check_constraint "role::text = ANY (ARRAY['user'::character varying, 'admin'::character varying]::text[])", name: "users_role_check"
   end
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "event_hosts", "events"
   add_foreign_key "event_hosts", "users"
+  add_foreign_key "event_journals", "event_occurrences", column: "occurrence_id", on_delete: :nullify
   add_foreign_key "event_journals", "events"
   add_foreign_key "event_journals", "users"
   add_foreign_key "event_occurrences", "events"

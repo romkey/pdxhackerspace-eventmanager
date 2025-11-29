@@ -1,4 +1,6 @@
 class EventOccurrence < ApplicationRecord
+  include SoftDeletable
+
   belongs_to :event
   belongs_to :location, optional: true
   has_one_attached :banner_image do |attachable|

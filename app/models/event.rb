@@ -1,4 +1,6 @@
 class Event < ApplicationRecord
+  include SoftDeletable
+
   belongs_to :user # Original creator
   belongs_to :location, optional: true
   has_many :event_hosts, dependent: :destroy
