@@ -1,3 +1,10 @@
+<%# SEO - Homepage uses defaults from layout, but we can add breadcrumb %>
+<% content_for :json_ld do %>
+  <script type="application/ld+json"><%= breadcrumb_json_ld([
+    { name: 'Home', url: root_url }
+  ]) %></script>
+<% end %>
+
 <div class="jumbotron bg-light p-5 rounded">
   <h1 class="display-4">Welcome to EventManager</h1>
   <p class="lead">Manage and discover events at our hackerspace</p>

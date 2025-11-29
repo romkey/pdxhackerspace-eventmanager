@@ -85,4 +85,7 @@ Rails.application.routes.draw do
 
   # Locations management (admin only)
   resources :locations, except: %i[show]
+
+  # SEO: Sitemap
+  get 'sitemap.xml', to: 'sitemap#index', as: 'sitemap', defaults: { format: 'xml' }
 end

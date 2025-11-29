@@ -1,1 +1,12 @@
-# See https://www.robotstxt.org/robotstxt.html for documentation on how to use the robots.txt file
+# See https://www.robotstxt.org/robotstxt.html for documentation
+User-agent: *
+Allow: /
+
+# Sitemap location
+Sitemap: /sitemap.xml
+
+# Disallow admin and private areas
+Disallow: /sidekiq
+Disallow: /users
+Disallow: /site_config
+Disallow: /locations

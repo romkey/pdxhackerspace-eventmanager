@@ -1,3 +1,23 @@
+<%# SEO Meta Tags %>
+<% page_title "#{@event.title} - #{@occurrence.occurs_at.strftime('%B %d, %Y')}" %>
+<% page_description @occurrence.description %>
+<% og_type 'event' %>
+<% canonical_url event_occurrence_url(@occurrence) %>
+<% if @occurrence.banner.attached? %>
+  <% og_image url_for(@occurrence.banner) %>
+<% end %>
+
+<%# JSON-LD Structured Data for this specific occurrence %>
+<% content_for :json_ld do %>
+  <script type="application/ld+json"><%= event_json_ld(@event, @occurrence) %></script>
+  <script type="application/ld+json"><%= breadcrumb_json_ld([
+    { name: 'Home', url: root_url },
+    { name: 'Events', url: events_url },
+    { name: @event.title, url: event_url(@event) },
+    { name: @occurrence.occurs_at.strftime('%B %d, %Y'), url: event_occurrence_url(@occurrence) }
+  ]) %></script>
+<% end %>
+
 <div class="row">
   <div class="col-lg-8">
     <nav aria-label="breadcrumb">

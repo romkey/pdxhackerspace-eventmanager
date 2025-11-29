@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <!-- Homepage -->
+  <url>
+    <loc><%= root_url %></loc>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+
+  <!-- Events listing -->
+  <url>
+    <loc><%= events_url %></loc>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- Calendar -->
+  <url>
+    <loc><%= calendar_url %></loc>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Location info -->
+  <url>
+    <loc><%= location_info_url %></loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
+  <!-- Individual events -->
+  <% @events.each do |event| %>
+  <url>
+    <loc><%= event_url(event) %></loc>
+    <lastmod><%= event.updated_at.iso8601 %></lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <% end %>
+
+  <!-- Upcoming occurrences -->
+  <% @occurrences.each do |occurrence| %>
+  <url>
+    <loc><%= event_occurrence_url(occurrence) %></loc>
+    <lastmod><%= occurrence.updated_at.iso8601 %></lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <% end %>
+</urlset>
+

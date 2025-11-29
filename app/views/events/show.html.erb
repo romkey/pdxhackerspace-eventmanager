@@ -1,3 +1,22 @@
+<%# SEO Meta Tags %>
+<% page_title @event.title %>
+<% page_description @event.description %>
+<% og_type 'event' %>
+<% canonical_url event_url(@event) %>
+<% if @event.banner_image.attached? %>
+  <% og_image url_for(@event.banner_image) %>
+<% end %>
+
+<%# JSON-LD Structured Data for Event %>
+<% content_for :json_ld do %>
+  <script type="application/ld+json"><%= event_json_ld(@event) %></script>
+  <script type="application/ld+json"><%= breadcrumb_json_ld([
+    { name: 'Home', url: root_url },
+    { name: 'Events', url: events_url },
+    { name: @event.title, url: event_url(@event) }
+  ]) %></script>
+<% end %>
+
 <div class="row">
   <div class="col-lg-8">
     <% if @event.banner_image.attached? %>

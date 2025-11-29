@@ -1,3 +1,16 @@
+<%# SEO Meta Tags %>
+<% page_title "Calendar" %>
+<% page_description "View the event calendar for #{@site_config&.organization_name || 'our hackerspace'}. Find workshops, meetups, and community events." %>
+<% canonical_url calendar_url %>
+
+<%# Breadcrumb JSON-LD %>
+<% content_for :json_ld do %>
+  <script type="application/ld+json"><%= breadcrumb_json_ld([
+    { name: 'Home', url: root_url },
+    { name: 'Calendar', url: calendar_url }
+  ]) %></script>
+<% end %>
+
 <div class="d-flex justify-content-between align-items-center mb-4">
   <h1><i class="bi bi-calendar3"></i> Event Calendar</h1>
   <div>

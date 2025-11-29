@@ -1,18 +1,50 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
-    <title><%= @site_config&.organization_name || 'EventManager' %> - Hackerspace Event Management</title>
+    <title><%= full_page_title %></title>
+    <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="color-scheme" content="light dark">
+    <meta name="description" content="<%= meta_description %>">
+    <meta name="robots" content="index, follow">
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="<%= meta_canonical_url %>">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="<%= meta_og_type %>">
+    <meta property="og:url" content="<%= meta_canonical_url %>">
+    <meta property="og:title" content="<%= full_page_title %>">
+    <meta property="og:description" content="<%= meta_description %>">
+    <meta property="og:site_name" content="<%= @site_config&.organization_name || 'EventManager' %>">
+    <% if meta_og_image.present? %>
+      <meta property="og:image" content="<%= meta_og_image %>">
+    <% end %>
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="<%= full_page_title %>">
+    <meta name="twitter:description" content="<%= meta_description %>">
+    <% if meta_og_image.present? %>
+      <meta name="twitter:image" content="<%= meta_og_image %>">
+    <% end %>
+    
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
     
     <% if @site_config&.favicon&.attached? %>
       <%= favicon_link_tag url_for(@site_config.favicon) %>
     <% end %>
-
+    
+    <!-- RSS/Atom Feeds -->
+    <%= auto_discovery_link_tag :atom, events_path(format: :json), title: "Events JSON Feed" %>
+    
     <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
     <%= javascript_include_tag "application", "data-turbo-track": "reload", type: "module" %>
+    
+    <!-- JSON-LD Structured Data -->
+    <script type="application/ld+json"><%= organization_json_ld %></script>
+    <%= content_for(:json_ld) %>
   </head>
 
   <body>

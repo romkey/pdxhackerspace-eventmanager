@@ -1,3 +1,16 @@
+<%# SEO Meta Tags %>
+<% page_title "Location" %>
+<% page_description "Find us at #{@site_config&.address || @site_config&.organization_name || 'our hackerspace'}. Get directions and location information." %>
+<% canonical_url location_info_url %>
+
+<%# Breadcrumb JSON-LD %>
+<% content_for :json_ld do %>
+  <script type="application/ld+json"><%= breadcrumb_json_ld([
+    { name: 'Home', url: root_url },
+    { name: 'Location', url: location_info_url }
+  ]) %></script>
+<% end %>
+
 <div class="row">
   <div class="col-lg-8 mx-auto">
     <h1><i class="bi bi-geo-alt-fill"></i> Location</h1>
