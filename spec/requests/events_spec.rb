@@ -336,7 +336,14 @@ RSpec.describe "Events", type: :request do
       before { sign_in user }
 
       it "postpones the event" do
+        # Debug: verify the user is a host
+        expect(event.hosted_by?(user)).to be true, "User should be a host of the event"
+
         post postpone_event_path(event), params: postpone_params
+
+        # Debug: check response
+        expect(response).to redirect_to(event_path(event)), "Expected redirect to event, got: #{response.status} #{response.location}"
+
         event.reload
         expect(event.status).to eq('postponed')
       end
