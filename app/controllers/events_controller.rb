@@ -295,11 +295,22 @@ class EventsController < ApplicationController
   end
 
   def build_recurrence_params
-    {
-      days: params[:recurrence_days]&.map(&:to_i),
-      occurrences: params[:recurrence_occurrences], # Array of occurrences (e.g., ['first', 'third'])
-      day: params[:recurrence_day]
-    }.compact
+    recurrence_type = params[:event][:recurrence_type]
+    start_time = params[:event][:start_time].present? ? Time.parse(params[:event][:start_time]) : @event&.start_time
+
+    case recurrence_type
+    when 'weekly'
+      # For weekly events, automatically use the day of the week from the start date
+      { days: [start_time&.wday || 0] }
+    when 'monthly'
+      # For monthly events, use the form selections
+      {
+        occurrences: params[:recurrence_occurrences],
+        day: params[:recurrence_day]
+      }.compact
+    else
+      {}
+    end
   end
 
   def should_rebuild_schedule?
@@ -308,11 +319,8 @@ class EventsController < ApplicationController
     # Rebuild if recurrence type changed
     return true if params[:event][:recurrence_type] != @event.recurrence_type
 
-    # Rebuild if start time changed (affects schedule)
+    # Rebuild if start time changed (affects schedule for weekly events)
     return true if params[:event][:start_time].present? && Time.parse(params[:event][:start_time]) != @event.start_time
-
-    # Rebuild if weekly days were explicitly provided
-    return true if params[:recurrence_days].present?
 
     # Rebuild if monthly options were explicitly provided
     return true if params[:recurrence_occurrences].present? || params[:recurrence_day].present?

@@ -10,48 +10,65 @@
     </div>
   <% end %>
 
-  <div class="mb-3">
-    <%= f.label :title, class: "form-label" %>
-    <%= f.text_field :title, class: "form-control", required: true, placeholder: "Weekly Meetup" %>
-  </div>
-
-  <div class="mb-3">
-    <%= f.label :description, class: "form-label" %>
-    <div class="alert alert-info py-2 mb-2" role="note">
-      <small>
-        <i class="bi bi-info-circle" aria-hidden="true"></i>
-        <strong>What to include in your description:</strong>
-        Who is invited, what the event is about, any signup or RSVP links, what to bring, 
-        skill level requirements, costs (if any), and other important details that help 
-        people understand if this event is for them.
-      </small>
+  <div class="card mb-3">
+    <div class="card-header">
+      <h5 class="mb-0"><i class="bi bi-info-circle"></i> Event Details</h5>
     </div>
-    <%= f.text_area :description, class: "form-control", rows: 5, placeholder: "Describe your event...", "aria-describedby": "description-help" %>
-  </div>
+    <div class="card-body">
+      <div class="mb-3">
+        <%= f.label :title, class: "form-label" %>
+        <%= f.text_field :title, class: "form-control", required: true, placeholder: "Weekly Meetup" %>
+      </div>
 
-  <div class="mb-3">
-    <%= f.label :more_info_url, "More Info URL (Optional)", class: "form-label" %>
-    <%= f.url_field :more_info_url, class: "form-control", placeholder: "https://example.com/event-details", "aria-describedby": "more-info-url-help" %>
-    <small class="form-text text-muted" id="more-info-url-help">
-      <i class="bi bi-link-45deg" aria-hidden="true"></i> Add a link where attendees can learn more (website, registration page, etc.)
-    </small>
-  </div>
+      <div class="mb-3">
+        <%= f.label :description, class: "form-label" %>
+        <div class="alert alert-info py-2 mb-2" role="note">
+          <small>
+            <i class="bi bi-info-circle" aria-hidden="true"></i>
+            <strong>What to include in your description:</strong>
+            Who is invited, what the event is about, any signup or RSVP links, what to bring, 
+            skill level requirements, costs (if any), and other important details that help 
+            people understand if this event is for them.
+          </small>
+        </div>
+        <%= f.text_area :description, class: "form-control", rows: 5, placeholder: "Describe your event...", "aria-describedby": "description-help" %>
+      </div>
 
-  <div class="mb-3">
-    <%= f.label :banner_image, "Banner Image (Optional)", class: "form-label" %>
-    <%= f.file_field :banner_image, class: "form-control", accept: "image/*", "aria-describedby": "banner-image-help" %>
-    <small class="form-text text-muted" id="banner-image-help">
-      <i class="bi bi-image" aria-hidden="true"></i> Recommended: 1200x400 pixels or similar 3:1 aspect ratio. Maximum file size: 5MB. Formats: JPG, PNG, GIF
-    </small>
-    <% if event.banner_image.attached? %>
-      <div class="mt-2">
-        <%= image_tag event.banner_image, class: "img-thumbnail", style: "max-width: 300px;", alt: "Current banner image for #{event.title}" %>
-        <div class="form-check mt-2">
-          <%= f.check_box :remove_banner_image, class: "form-check-input" %>
-          <%= f.label :remove_banner_image, "Remove current banner image", class: "form-check-label" %>
+      <div class="mb-3">
+        <%= f.label :more_info_url, "More Info URL (Optional)", class: "form-label" %>
+        <%= f.url_field :more_info_url, class: "form-control", placeholder: "https://example.com/event-details", "aria-describedby": "more-info-url-help" %>
+        <small class="form-text text-muted" id="more-info-url-help">
+          <i class="bi bi-link-45deg" aria-hidden="true"></i> Add a link where attendees can learn more (website, registration page, etc.)
+        </small>
+      </div>
+
+      <div class="mb-3">
+        <%= f.label :banner_image, "Banner Image (Optional)", class: "form-label" %>
+        <%= f.file_field :banner_image, class: "form-control", accept: "image/*", "aria-describedby": "banner-image-help" %>
+        <small class="form-text text-muted" id="banner-image-help">
+          <i class="bi bi-image" aria-hidden="true"></i> Recommended: 1200x400 pixels or similar 3:1 aspect ratio. Maximum file size: 5MB. Formats: JPG, PNG, GIF
+        </small>
+        <% if event.banner_image.attached? %>
+          <div class="mt-2">
+            <%= image_tag event.banner_image, class: "img-thumbnail", style: "max-width: 300px;", alt: "Current banner image for #{event.title}" %>
+            <div class="form-check mt-2">
+              <%= f.check_box :remove_banner_image, class: "form-check-input" %>
+              <%= f.label :remove_banner_image, "Remove current banner image", class: "form-check-label" %>
+            </div>
+          </div>
+        <% end %>
+      </div>
+
+      <div class="mb-0">
+        <div class="form-check">
+          <%= f.check_box :requires_mask, class: "form-check-input" %>
+          <%= f.label :requires_mask, "Masks Required", class: "form-check-label" %>
+          <div class="form-text">
+            <i class="bi bi-shield-fill-check"></i> Check this if masks are required for safety at this event
+          </div>
         </div>
       </div>
-    <% end %>
+    </div>
   </div>
 
   <div class="card mb-3">
@@ -92,15 +109,11 @@
       </div>
 
       <div id="weekly_options" class="mb-3" style="display: none;">
-        <label class="form-label">Repeat on days:</label>
-        <div class="d-flex flex-wrap gap-2">
-          <% weekly_days = parse_weekly_recurrence(event) %>
-          <% Date::DAYNAMES.each_with_index do |day, index| %>
-            <div class="form-check">
-              <%= check_box_tag "recurrence_days[]", index, weekly_days.include?(index), id: "day_#{index}", class: "form-check-input" %>
-              <%= label_tag "day_#{index}", day, class: "form-check-label" %>
-            </div>
-          <% end %>
+        <div class="alert alert-info py-2">
+          <small>
+            <i class="bi bi-info-circle"></i>
+            This event will repeat every week on <strong id="weekly_day_name"></strong> (based on the start date).
+          </small>
         </div>
       </div>
 
@@ -157,74 +170,51 @@
     </div>
   </div>
 
-  <div class="row">
-    <div class="col-md-6 mb-3">
-      <%= f.label :visibility, "Event Visibility", class: "form-label" %>
-      <%= f.select :visibility, 
-          [
-            ['Public - Anyone can view', 'public'],
-            ['Members Only - Signed in users can view', 'members'],
-            ['Private - Only you and admins can view', 'private']
-          ], 
-          {}, 
-          class: "form-select" %>
-      <small class="form-text text-muted">
-        Who can see this event
-      </small>
+  <div class="card mb-3">
+    <div class="card-header">
+      <h5 class="mb-0"><i class="bi bi-eye"></i> Visibility & Publishing</h5>
     </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <%= f.label :visibility, "Event Visibility", class: "form-label" %>
+          <%= f.select :visibility, 
+              [
+                ['Public - Anyone can view', 'public'],
+                ['Members Only - Signed in users can view', 'members'],
+                ['Private - Only you and admins can view', 'private']
+              ], 
+              {}, 
+              class: "form-select" %>
+          <small class="form-text text-muted">
+            Who can see this event
+          </small>
+        </div>
 
-    <div class="col-md-6 mb-3">
-      <%= f.label :open_to, "Open To", class: "form-label" %>
-      <%= f.select :open_to, 
-          [
-            ['Public - Open to everyone', 'public'],
-            ['Members Only - Members can attend', 'members'],
-            ['Private - Invitation only', 'private']
-          ], 
-          {}, 
-          class: "form-select" %>
-      <small class="form-text text-muted">
-        Who can attend this event
-      </small>
-    </div>
-  </div>
-
-  <div class="mb-3">
-    <div class="form-check">
-      <%= f.check_box :requires_mask, class: "form-check-input" %>
-      <%= f.label :requires_mask, "Masks Required", class: "form-check-label" %>
-      <div class="form-text">
-        <i class="bi bi-shield-fill-check"></i> Check this if masks are required for safety at this event
+        <div class="col-md-6 mb-3">
+          <%= f.label :open_to, "Open To", class: "form-label" %>
+          <%= f.select :open_to, 
+              [
+                ['Public - Open to everyone', 'public'],
+                ['Members Only - Members can attend', 'members'],
+                ['Private - Invitation only', 'private']
+              ], 
+              {}, 
+              class: "form-select" %>
+          <small class="form-text text-muted">
+            Who can attend this event
+          </small>
+        </div>
       </div>
-    </div>
-  </div>
 
-  <div class="mb-3">
-    <div class="form-check">
-      <%= f.check_box :draft, class: "form-check-input" %>
-      <%= f.label :draft, "Save as Draft", class: "form-check-label" %>
-      <div class="form-text">
-        <i class="bi bi-file-earmark-text"></i> Draft events are only visible to you and won't appear in any public feeds or listings
-      </div>
-    </div>
-  </div>
-
-  <div class="mb-3">
-    <div class="form-check">
-      <%= f.check_box :slack_announce, class: "form-check-input" %>
-      <%= f.label :slack_announce, "Post to Slack", class: "form-check-label" %>
-      <div class="form-text">
-        <i class="bi bi-slack"></i> When enabled, a reminder will be posted to Slack at 9 AM on the day of the event (only for public and members-only events)
-      </div>
-    </div>
-  </div>
-
-  <div class="mb-3">
-    <div class="form-check">
-      <%= f.check_box :social_reminders, class: "form-check-input" %>
-      <%= f.label :social_reminders, "Post to Social Media", class: "form-check-label" %>
-      <div class="form-text">
-        <i class="bi bi-share"></i> When enabled, reminders will be posted to Instagram and Bluesky one week and one day before the event (public/members-only only)
+      <div class="mb-0">
+        <div class="form-check">
+          <%= f.check_box :draft, class: "form-check-input" %>
+          <%= f.label :draft, "Save as Draft", class: "form-check-label" %>
+          <div class="form-text">
+            <i class="bi bi-file-earmark-text"></i> Draft events are only visible to you and won't appear in any public feeds or listings
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -238,10 +228,33 @@
          data-generate-ai-url="<%= event.persisted? ? generate_ai_reminder_event_path(event) : '' %>"
          data-ai-event-description="<%= h(event.description.to_s) %>">
       <div class="card-header">
-        <h5 class="mb-0"><i class="bi bi-chat-left-text"></i> Reminder Messages</h5>
+        <h5 class="mb-0"><i class="bi bi-chat-left-text"></i> Notifications & Reminders</h5>
         <small class="text-muted">These messages will be used for all occurrences unless overridden. Short = Bluesky, Long = Slack/Instagram.</small>
       </div>
       <div class="card-body">
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <div class="form-check">
+              <%= f.check_box :slack_announce, class: "form-check-input" %>
+              <%= f.label :slack_announce, "Post to Slack", class: "form-check-label" %>
+              <div class="form-text">
+                <i class="bi bi-slack"></i> Reminders posted 7 days and 1 day before (public/members-only events)
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-check">
+              <%= f.check_box :social_reminders, class: "form-check-input" %>
+              <%= f.label :social_reminders, "Post to Social Media", class: "form-check-label" %>
+              <div class="form-text">
+                <i class="bi bi-share"></i> Reminders posted to Instagram and Bluesky (public/members-only events)
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <hr class="my-3">
+
         <div class="alert alert-info py-2 mb-3" role="note">
           <small>
             <i class="bi bi-info-circle" aria-hidden="true"></i>
@@ -355,17 +368,35 @@
     const recurrenceSelect = document.getElementById('recurrence_type_select');
     const weeklyOptions = document.getElementById('weekly_options');
     const monthlyOptions = document.getElementById('monthly_options');
+    const startTimeField = document.querySelector('input[name="event[start_time]"]');
+    const weeklyDayName = document.getElementById('weekly_day_name');
 
     if (!recurrenceSelect) return; // Guard in case form not present
+
+    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+    function updateWeeklyDayName() {
+      if (startTimeField && weeklyDayName && startTimeField.value) {
+        const date = new Date(startTimeField.value);
+        weeklyDayName.textContent = dayNames[date.getDay()];
+      }
+    }
 
     function updateRecurrenceOptions() {
       const value = recurrenceSelect.value;
       
       weeklyOptions.style.display = value === 'weekly' ? 'block' : 'none';
       monthlyOptions.style.display = value === 'monthly' ? 'block' : 'none';
+      
+      if (value === 'weekly') {
+        updateWeeklyDayName();
+      }
     }
 
     recurrenceSelect.addEventListener('change', updateRecurrenceOptions);
+    if (startTimeField) {
+      startTimeField.addEventListener('change', updateWeeklyDayName);
+    }
     updateRecurrenceOptions(); // Run immediately to show correct state
   }
 
