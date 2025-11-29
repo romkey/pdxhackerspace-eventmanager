@@ -98,7 +98,7 @@ group :test do
   gem "database_cleaner-active_record"
   gem "parallel_tests"
   gem "selenium-webdriver"
-  gem "shoulda-matchers", "~> 5.0"
+  gem "shoulda-matchers", "~> 7.0"
   gem "simplecov", require: false
 end
 
