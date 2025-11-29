@@ -6,12 +6,18 @@ class EventsController < ApplicationController
   before_action :authorize_event, only: %i[edit update destroy postpone cancel reactivate]
 
   def index
-    # Only show events that have at least one upcoming active occurrence
-    # Get all upcoming occurrences first, then get unique events from them
+    @search_query = params[:q]
+
+    # Start with policy-scoped events
+    base_events = policy_scope(Event).where(status: 'active')
+
+    # Apply search filter if query present
+    base_events = base_events.search(@search_query) if @search_query.present?
+
+    # Get upcoming occurrences for these events
     upcoming_occurrences = EventOccurrence
                            .joins(:event)
-                           .where(event: policy_scope(Event))
-                           .where(events: { status: 'active' })
+                           .where(event: base_events)
                            .where(event_occurrences: { status: 'active' })
                            .upcoming
                            .includes(event: %i[user hosts])

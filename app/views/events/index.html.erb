@@ -21,6 +21,44 @@
   </div>
 </div>
 
+<%# Search Form %>
+<div class="card mb-4">
+  <div class="card-body">
+    <%= form_with url: events_path, method: :get, local: true, class: "row g-3 align-items-center" do %>
+      <div class="col-md-8 col-lg-9">
+        <div class="input-group">
+          <span class="input-group-text" id="search-icon">
+            <i class="bi bi-search" aria-hidden="true"></i>
+          </span>
+          <%= text_field_tag :q, @search_query, 
+              class: "form-control", 
+              placeholder: "Search events by title or description...",
+              "aria-label": "Search events",
+              "aria-describedby": "search-icon" %>
+        </div>
+      </div>
+      <div class="col-md-4 col-lg-3">
+        <div class="d-grid gap-2 d-md-flex">
+          <%= submit_tag "Search", class: "btn btn-primary flex-grow-1" %>
+          <% if @search_query.present? %>
+            <%= link_to "Clear", events_path, class: "btn btn-outline-secondary" %>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<% if @search_query.present? %>
+  <div class="alert alert-info mb-4" role="status">
+    <i class="bi bi-info-circle" aria-hidden="true"></i>
+    Found <strong><%= @events.count %></strong> event<%= @events.count == 1 ? '' : 's' %> matching "<strong><%= @search_query %></strong>"
+    <% if @events.empty? %>
+      <p class="mb-0 mt-2">Try different keywords or <%= link_to "browse all events", events_path, class: "alert-link" %>.</p>
+    <% end %>
+  </div>
+<% end %>
+
 <% if @events.any? %>
   <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-4">
     <% @events.each do |event| %>

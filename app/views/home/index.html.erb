@@ -9,14 +9,46 @@
   <h1 class="display-4">Welcome to <%= @site_config&.organization_name || 'EventManager' %></h1>
   <p class="lead">Manage and discover events at our hackerspace</p>
   <hr class="my-4">
-  <p>All upcoming events are shown below in chronological order.</p>
+  
+  <%# Search Form %>
+  <%= form_with url: root_path, method: :get, local: true, class: "row g-3 align-items-center mb-3" do %>
+    <div class="col-md-8 col-lg-9">
+      <div class="input-group input-group-lg">
+        <span class="input-group-text" id="search-icon">
+          <i class="bi bi-search" aria-hidden="true"></i>
+        </span>
+        <%= text_field_tag :q, @search_query, 
+            class: "form-control", 
+            placeholder: "Search events...",
+            "aria-label": "Search events",
+            "aria-describedby": "search-icon" %>
+      </div>
+    </div>
+    <div class="col-md-4 col-lg-3">
+      <div class="d-grid gap-2 d-md-flex">
+        <%= submit_tag "Search", class: "btn btn-primary btn-lg flex-grow-1" %>
+        <% if @search_query.present? %>
+          <%= link_to "Clear", root_path, class: "btn btn-outline-secondary btn-lg" %>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+
   <% if user_signed_in? && can_create_events? %>
     <%= link_to "Create New Event", new_event_path, class: "btn btn-success btn-lg" %>
   <% end %>
 </header>
 
 <section class="mt-5" aria-labelledby="upcoming-events-heading">
-  <h2 id="upcoming-events-heading">Upcoming Events</h2>
+  <% if @search_query.present? %>
+    <h2 id="upcoming-events-heading">
+      Search Results for "<%= @search_query %>"
+      <small class="text-muted fs-6">(<%= @upcoming_events.count %> found)</small>
+    </h2>
+  <% else %>
+    <h2 id="upcoming-events-heading">Upcoming Events</h2>
+  <% end %>
+  
   <% if @upcoming_events.any? %>
     <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
       <% @upcoming_events.each do |event| %>
@@ -26,6 +58,14 @@
       <% end %>
     </div>
   <% else %>
-    <p class="text-muted">No upcoming events scheduled.</p>
+    <% if @search_query.present? %>
+      <div class="alert alert-info" role="status">
+        <i class="bi bi-info-circle" aria-hidden="true"></i>
+        No events found matching "<strong><%= @search_query %></strong>".
+        <p class="mb-0 mt-2">Try different keywords or <%= link_to "browse all events", root_path, class: "alert-link" %>.</p>
+      </div>
+    <% else %>
+      <p class="text-muted">No upcoming events scheduled.</p>
+    <% end %>
   <% end %>
 </section>

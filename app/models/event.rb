@@ -36,6 +36,15 @@ class Event < ApplicationRecord
             format: { with: URI::DEFAULT_PARSER.make_regexp(%w[http https]), message: "must be a valid URL" }, allow_blank: true
   validates :slug, presence: true, uniqueness: true
 
+  # Full-text search using pg_trgm (trigram matching)
+  # Searches title and description with fuzzy matching
+  scope :search, lambda { |query|
+    return all if query.blank?
+
+    sanitized_query = "%#{sanitize_sql_like(query)}%"
+    where('title ILIKE :q OR description ILIKE :q', q: sanitized_query)
+  }
+
   # Allow finding by slug or ID
   def self.friendly_find(param)
     find_by(slug: param) || find(param)
