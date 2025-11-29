@@ -113,7 +113,7 @@ class Event < ApplicationRecord
   def hosted_by?(user)
     return false unless user
 
-    user.admin? || hosts.include?(user)
+    user.admin? || host_ids.include?(user.id)
   end
 
   # rubocop:disable Naming/PredicateMethod
