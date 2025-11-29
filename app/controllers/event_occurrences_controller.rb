@@ -100,8 +100,8 @@ class EventOccurrencesController < ApplicationController
     end
 
     Rails.logger.info "post_social_reminder: Posting for occurrence #{@occurrence.id} (#{@occurrence.event.title})"
-    message = reminder_message(@occurrence, 'today')
-    if SocialService.post_occurrence_reminder(@occurrence, message)
+    message_parts = reminder_message_with_link(@occurrence, 'today')
+    if SocialService.post_occurrence_reminder(@occurrence, message_parts)
       respond_to do |format|
         format.html { redirect_to @occurrence, notice: 'Posted reminder to social media.' }
         format.json { render json: { success: true, message: 'Posted reminder to social media.' } }

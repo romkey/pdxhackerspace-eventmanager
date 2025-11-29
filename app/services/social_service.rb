@@ -36,7 +36,7 @@ class SocialService # rubocop:disable Metrics/ClassLength
       false
     end
 
-    def post_bluesky(message, image_url: nil, image_alt: 'Event banner')
+    def post_bluesky(message, image_url: nil, image_alt: 'Event banner', link_url: nil, link_text: nil)
       handle = ENV.fetch('BLUESKY_HANDLE', nil)
       app_password = ENV.fetch('BLUESKY_APP_PASSWORD', nil)
 
@@ -55,7 +55,7 @@ class SocialService # rubocop:disable Metrics/ClassLength
       Rails.logger.info "SocialService: Bluesky session created for DID #{did}"
 
       image_blob = fetch_bluesky_image_blob(access_token, image_url)
-      record = build_bluesky_record(message, image_blob, image_alt)
+      record = build_bluesky_record(message, image_blob, image_alt, link_url: link_url, link_text: link_text)
 
       uri = URI('https://bsky.social/xrpc/com.atproto.repo.createRecord')
       request = Net::HTTP::Post.new(uri)
@@ -90,8 +90,24 @@ class SocialService # rubocop:disable Metrics/ClassLength
       blob
     end
 
-    def build_bluesky_record(message, image_blob, image_alt)
+    def build_bluesky_record(message, image_blob, image_alt, link_url: nil, link_text: nil)
       record = { '$type': 'app.bsky.feed.post', createdAt: Time.current.iso8601, text: message }
+
+      # Add link facet if provided
+      if link_url.present? && link_text.present?
+        # Find where the link text appears in the message
+        link_start = message.index(link_text)
+        if link_start
+          link_end = link_start + link_text.bytesize
+          record[:facets] = [
+            {
+              index: { byteStart: link_start, byteEnd: link_end },
+              features: [{ '$type': 'app.bsky.richtext.facet#link', uri: link_url }]
+            }
+          ]
+          Rails.logger.info "SocialService: Added link facet for '#{link_text}' -> #{link_url}"
+        end
+      end
 
       if image_blob
         Rails.logger.info "SocialService: Adding image embed to Bluesky post"
@@ -104,15 +120,34 @@ class SocialService # rubocop:disable Metrics/ClassLength
       record
     end
 
-    def post_occurrence_reminder(occurrence, message)
+    # Post reminder with structured message parts for facet support
+    # message_parts should be { text: "...", link_url: "...", link_text: "..." }
+    def post_occurrence_reminder(occurrence, message_parts)
       image_url = banner_url_for(occurrence)
       image_alt = occurrence.event.title
 
       Rails.logger.info "SocialService: Posting occurrence reminder for '#{occurrence.event.title}'"
       Rails.logger.info "SocialService: Banner image URL: #{image_url || 'none'}"
 
-      success_instagram = post_instagram(message, image_url: image_url)
-      success_bluesky = post_bluesky(message, image_url: image_url, image_alt: image_alt)
+      # Handle both old string format and new hash format for backwards compatibility
+      if message_parts.is_a?(Hash)
+        # New format with link parts - build Bluesky message with link text appended
+        bluesky_message = "#{message_parts[:text]} #{message_parts[:link_text]}"
+        instagram_message = "#{message_parts[:text]} #{message_parts[:link_url]}"
+
+        success_instagram = post_instagram(instagram_message, image_url: image_url)
+        success_bluesky = post_bluesky(
+          bluesky_message,
+          image_url: image_url,
+          image_alt: image_alt,
+          link_url: message_parts[:link_url],
+          link_text: message_parts[:link_text]
+        )
+      else
+        # Legacy string format
+        success_instagram = post_instagram(message_parts, image_url: image_url)
+        success_bluesky = post_bluesky(message_parts, image_url: image_url, image_alt: image_alt)
+      end
 
       success_instagram || success_bluesky
     end

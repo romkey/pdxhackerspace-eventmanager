@@ -76,10 +76,14 @@ RSpec.describe "Smoke Tests", type: :feature do
     end
 
     it "shows upcoming occurrences" do
-      event = create(:event, visibility: 'public', title: 'Calendar Event')
+      # Create event with start_time in the middle of current month to avoid month boundary issues
+      mid_month = Date.current.beginning_of_month + 15.days
+      start_time = mid_month.to_time + 14.hours # 2 PM on the 15th
+      event = create(:event, visibility: 'public', title: 'Calendar Event', start_time: start_time)
       occurrence = event.occurrences.first
 
-      visit calendar_path
+      # Visit the calendar for the month containing the occurrence
+      visit calendar_path(month: occurrence.occurs_at.strftime('%Y-%m-%d'))
       expect(page).to have_content('Calendar Event')
       expect(page).to have_content(occurrence.occurs_at.day.to_s)
     end

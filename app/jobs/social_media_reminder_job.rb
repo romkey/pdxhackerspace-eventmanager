@@ -37,8 +37,8 @@ class SocialMediaReminderJob < ApplicationJob
     occurrences.each do |occurrence|
       next if occurrence.event.social_reminders? == false
 
-      message = reminder_message(occurrence, label)
-      SocialService.post_occurrence_reminder(occurrence, message)
+      message_parts = reminder_message_with_link(occurrence, label)
+      SocialService.post_occurrence_reminder(occurrence, message_parts)
     end
   end
 

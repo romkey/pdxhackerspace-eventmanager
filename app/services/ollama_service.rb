@@ -70,12 +70,13 @@ class OllamaService
       time_str = occurrence.occurs_at.strftime('%I:%M %p')
 
       # Build the prompt from the template
+      # Use occurrence.description which returns custom_description if set, otherwise event.description
       prompt_template = SiteConfig.current.ai_reminder_prompt_with_default
       base_prompt = prompt_template
                     .gsub(/\{\{\s*event_title\s*\}\}/i, event.title)
                     .gsub(/\{\{\s*event_date\s*\}\}/i, date_str)
                     .gsub(/\{\{\s*event_time\s*\}\}/i, time_str)
-                    .gsub(/\{\{\s*event_description\s*\}\}/i, event.description.to_s)
+                    .gsub(/\{\{\s*event_description\s*\}\}/i, occurrence.description.to_s)
 
       # Add context about the timing
       timing_context = days_ahead == 7 ? "one week away" : "tomorrow"
@@ -84,7 +85,8 @@ class OllamaService
         #{base_prompt}
 
         This reminder is for an event that is #{timing_context}.
-        Keep the message concise (under 280 characters if possible), friendly, and engaging.
+        IMPORTANT: The message must be under 280 characters total (Bluesky has a 300 character limit and we need room for a link).
+        Keep the message concise, friendly, and engaging.
         Include the event name, date, time, and mention it's at PDX Hackerspace.
         Do not use hashtags or emojis unless they're already in the event description.
         Just output the reminder text, nothing else.
