@@ -165,11 +165,18 @@ class EventsController < ApplicationController
       @event.recurrence_rule = schedule.to_yaml
     end
 
-    if @event.update(event_params)
-      redirect_to @event, notice: 'Event was successfully updated.'
-    else
-      Rails.logger.error "Event update failed: #{@event.errors.full_messages.join(', ')}"
-      render :edit, status: :unprocessable_entity
+    begin
+      if @event.update(event_params)
+        redirect_to @event, notice: 'Event was successfully updated.'
+      else
+        Rails.logger.error "Event update failed. Errors: #{@event.errors.full_messages.join(', ')}"
+        Rails.logger.error "Event attributes: #{@event.attributes.slice('id', 'title', 'status', 'recurrence_type')}"
+        render :edit, status: :unprocessable_entity
+      end
+    rescue StandardError => e
+      Rails.logger.error "Event update exception: #{e.class} - #{e.message}"
+      Rails.logger.error e.backtrace.first(10).join("\n")
+      raise
     end
   end
 

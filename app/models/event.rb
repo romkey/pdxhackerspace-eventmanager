@@ -320,6 +320,10 @@ class Event < ApplicationRecord
     # This handles changes to title, description, location, and other fields
     # that should be reflected in all future occurrences
     regenerate_future_occurrences!
+  rescue StandardError => e
+    Rails.logger.error "Failed to regenerate occurrences for event #{id}: #{e.class} - #{e.message}"
+    Rails.logger.error e.backtrace.first(5).join("\n")
+    raise # Re-raise to rollback the transaction
   end
 
   def log_creation
