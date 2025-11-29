@@ -113,13 +113,14 @@ class Event < ApplicationRecord
   def hosted_by?(user)
     return false unless user
 
-    user.admin? || host_ids.include?(user.id)
+    # Use a direct query to avoid association caching issues
+    user.admin? || EventHost.exists?(event_id: id, user_id: user.id)
   end
 
   # rubocop:disable Naming/PredicateMethod
   def add_host(user)
     # Check if user is already in the hosts list (not just if they have host permissions)
-    return false if hosts.include?(user)
+    return false if host_ids.include?(user.id)
 
     hosts << user
     true
@@ -296,9 +297,14 @@ class Event < ApplicationRecord
 
   def add_creator_as_host
     # Automatically add the creator as the first host
-    return if user.nil? || hosts.include?(user)
+    return if user.nil?
+
+    # Check if already a host using a direct query to avoid caching issues
+    return if EventHost.exists?(event_id: id, user_id: user.id)
 
     EventHost.create!(event: self, user: user)
+    # Reload the hosts association to ensure it's up to date
+    hosts.reload
   end
 
   def generate_initial_occurrences
