@@ -54,46 +54,107 @@
     <% end %>
   </div>
 
-  <div class="row">
-    <div class="col-md-6 mb-3">
-      <%= f.label :start_time, "Start Date & Time", class: "form-label" %>
-      <%= f.datetime_local_field :start_time, class: "form-control", required: true %>
+  <div class="card mb-3">
+    <div class="card-header">
+      <h5 class="mb-0"><i class="bi bi-calendar-event"></i> Scheduling</h5>
     </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <%= f.label :start_time, "Start Date & Time", class: "form-label" %>
+          <%= f.datetime_local_field :start_time, class: "form-control", required: true %>
+        </div>
 
-    <div class="col-md-6 mb-3">
-      <%= f.label :duration, "Duration (minutes)", class: "form-label" %>
-      <%= f.number_field :duration, class: "form-control", value: event.duration || 60, min: 15, step: 15 %>
+        <div class="col-md-6 mb-3">
+          <%= f.label :duration, "Duration (minutes)", class: "form-label" %>
+          <%= f.number_field :duration, class: "form-control", value: event.duration || 60, min: 15, step: 15 %>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-8 mb-3">
+          <%= f.label :recurrence_type, "Recurrence Pattern", class: "form-label" %>
+          <%= f.select :recurrence_type, 
+              [['One Time Event', 'once'], 
+               ['Weekly', 'weekly'], 
+               ['Monthly', 'monthly'],
+               ['Custom', 'custom']], 
+              {}, 
+              class: "form-select", 
+              id: "recurrence_type_select" %>
+        </div>
+
+        <div class="col-md-4 mb-3" id="max_occurrences_field">
+          <%= f.label :max_occurrences, "Show Next", class: "form-label" %>
+          <%= f.number_field :max_occurrences, class: "form-control", value: event.max_occurrences || 5, min: 1, max: 20 %>
+          <small class="form-text text-muted">Number of occurrences to display</small>
+        </div>
+      </div>
+
+      <div id="weekly_options" class="mb-3" style="display: none;">
+        <label class="form-label">Repeat on days:</label>
+        <div class="d-flex flex-wrap gap-2">
+          <% weekly_days = parse_weekly_recurrence(event) %>
+          <% Date::DAYNAMES.each_with_index do |day, index| %>
+            <div class="form-check">
+              <%= check_box_tag "recurrence_days[]", index, weekly_days.include?(index), id: "day_#{index}", class: "form-check-input" %>
+              <%= label_tag "day_#{index}", day, class: "form-check-label" %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+
+      <div id="monthly_options" class="mb-3" style="display: none;">
+        <div class="alert alert-info py-2 mb-3">
+          <small>
+            <i class="bi bi-info-circle"></i>
+            <strong>Examples:</strong> Check "First" and "Third" with "Monday" for events on the 1st and 3rd Monday.
+            Check "Second" with "Sunday" for events on the 2nd Sunday of each month.
+          </small>
+        </div>
+        <div class="row">
+          <% monthly_schedule = parse_monthly_recurrence(event) %>
+          <div class="col-md-6">
+            <label class="form-label">Which week(s) of the month: <small class="text-muted">(check one or more)</small></label>
+            <div class="d-flex flex-column gap-2">
+              <% [['First', 'first'], ['Second', 'second'], ['Third', 'third'], ['Fourth', 'fourth'], ['Last', 'last']].each do |label, value| %>
+                <div class="form-check">
+                  <%= check_box_tag "recurrence_occurrences[]", value, monthly_schedule[:occurrences].include?(value), id: "occurrence_#{value}", class: "form-check-input" %>
+                  <%= label_tag "occurrence_#{value}", label, class: "form-check-label" %>
+                </div>
+              <% end %>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">On which day of the week:</label>
+            <%= select_tag :recurrence_day,
+                options_for_select([
+                  ['Monday', 'monday'],
+                  ['Tuesday', 'tuesday'],
+                  ['Wednesday', 'wednesday'],
+                  ['Thursday', 'thursday'],
+                  ['Friday', 'friday'],
+                  ['Saturday', 'saturday'],
+                  ['Sunday', 'sunday']
+                ], monthly_schedule[:day]),
+                class: "form-select" %>
+            <small class="form-text text-muted">
+              <i class="bi bi-calendar-week"></i> You can select multiple weeks above for complex schedules
+            </small>
+          </div>
+        </div>
+      </div>
+
+      <div class="mb-0">
+        <%= f.label :location_id, "Location", class: "form-label" %>
+        <%= f.collection_select :location_id, Location.alphabetical, :id, :name,
+            { prompt: "No specific location", include_blank: true },
+            class: "form-select" %>
+        <small class="form-text text-muted">
+          <i class="bi bi-geo-alt"></i> Where this event typically happens
+        </small>
+      </div>
     </div>
-  </div>
-
-  <div class="row">
-    <div class="col-md-8 mb-3">
-      <%= f.label :recurrence_type, "Recurrence Pattern", class: "form-label" %>
-      <%= f.select :recurrence_type, 
-          [['One Time Event', 'once'], 
-           ['Weekly', 'weekly'], 
-           ['Monthly', 'monthly'],
-           ['Custom', 'custom']], 
-          {}, 
-          class: "form-select", 
-          id: "recurrence_type_select" %>
-    </div>
-
-    <div class="col-md-4 mb-3" id="max_occurrences_field">
-      <%= f.label :max_occurrences, "Show Next", class: "form-label" %>
-      <%= f.number_field :max_occurrences, class: "form-control", value: event.max_occurrences || 5, min: 1, max: 20 %>
-      <small class="form-text text-muted">Number of occurrences to display</small>
-    </div>
-  </div>
-
-  <div class="mb-3">
-    <%= f.label :location_id, "Location", class: "form-label" %>
-    <%= f.collection_select :location_id, Location.alphabetical, :id, :name,
-        { prompt: "No specific location", include_blank: true },
-        class: "form-select" %>
-    <small class="form-text text-muted">
-      <i class="bi bi-geo-alt"></i> Where this event typically happens
-    </small>
   </div>
 
   <div class="row">
@@ -282,60 +343,6 @@
       </div>
     </div>
   <% end %>
-
-  <div id="weekly_options" class="mb-3" style="display: none;">
-    <label class="form-label">Repeat on days:</label>
-    <div class="d-flex flex-wrap gap-2">
-      <% weekly_days = parse_weekly_recurrence(event) %>
-      <% Date::DAYNAMES.each_with_index do |day, index| %>
-        <div class="form-check">
-          <%= check_box_tag "recurrence_days[]", index, weekly_days.include?(index), id: "day_#{index}", class: "form-check-input" %>
-          <%= label_tag "day_#{index}", day, class: "form-check-label" %>
-        </div>
-      <% end %>
-    </div>
-  </div>
-
-  <div id="monthly_options" class="mb-3" style="display: none;">
-    <div class="alert alert-info py-2 mb-3">
-      <small>
-        <i class="bi bi-info-circle"></i>
-        <strong>Examples:</strong> Check "First" and "Third" with "Monday" for events on the 1st and 3rd Monday.
-        Check "Second" with "Sunday" for events on the 2nd Sunday of each month.
-      </small>
-    </div>
-    <div class="row">
-      <% monthly_schedule = parse_monthly_recurrence(event) %>
-      <div class="col-md-6">
-        <label class="form-label">Which week(s) of the month: <small class="text-muted">(check one or more)</small></label>
-        <div class="d-flex flex-column gap-2">
-          <% [['First', 'first'], ['Second', 'second'], ['Third', 'third'], ['Fourth', 'fourth'], ['Last', 'last']].each do |label, value| %>
-            <div class="form-check">
-              <%= check_box_tag "recurrence_occurrences[]", value, monthly_schedule[:occurrences].include?(value), id: "occurrence_#{value}", class: "form-check-input" %>
-              <%= label_tag "occurrence_#{value}", label, class: "form-check-label" %>
-            </div>
-          <% end %>
-        </div>
-      </div>
-      <div class="col-md-6">
-        <label class="form-label">On which day of the week:</label>
-        <%= select_tag :recurrence_day,
-            options_for_select([
-              ['Monday', 'monday'],
-              ['Tuesday', 'tuesday'],
-              ['Wednesday', 'wednesday'],
-              ['Thursday', 'thursday'],
-              ['Friday', 'friday'],
-              ['Saturday', 'saturday'],
-              ['Sunday', 'sunday']
-            ], monthly_schedule[:day]),
-            class: "form-select" %>
-        <small class="form-text text-muted">
-          <i class="bi bi-calendar-week"></i> You can select multiple weeks above for complex schedules
-        </small>
-      </div>
-    </div>
-  </div>
 
   <div class="mt-4">
     <%= f.submit class: "btn btn-primary" %>
