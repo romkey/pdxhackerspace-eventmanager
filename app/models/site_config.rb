@@ -10,9 +10,16 @@ class SiteConfig < ApplicationRecord
   validates :website_url,
             format: { with: URI::DEFAULT_PARSER.make_regexp(%w[http https]), message: "must be a valid URL (starting with http:// or https://)" }, allow_blank: true
 
-  # Singleton pattern - only one site config should exist
+  # Singleton pattern - only one site config should exist with id = 1
   def self.instance
-    first_or_create!(organization_name: 'EventManager')
+    find_by(id: 1) || create_singleton!
+  end
+
+  def self.create_singleton!
+    # Explicitly create with id = 1 to satisfy the singleton constraint
+    config = new(id: 1, organization_name: 'EventManager')
+    config.save!
+    config
   end
 
   def self.current
