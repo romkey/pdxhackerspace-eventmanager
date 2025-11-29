@@ -1,11 +1,32 @@
 class EventOccurrencesController < ApplicationController
   include ReminderMessageBuilder
 
-  before_action :set_occurrence, only: %i[show edit update destroy postpone cancel reactivate post_slack_reminder post_social_reminder generate_ai_reminder]
+  before_action :set_occurrence, only: %i[show edit update destroy postpone cancel reactivate post_slack_reminder post_social_reminder generate_ai_reminder ical]
   before_action :authorize_occurrence, only: %i[edit update destroy postpone cancel reactivate post_slack_reminder post_social_reminder generate_ai_reminder]
 
   def show
     @event = @occurrence.event
+  end
+
+  # Generate iCal file for a single occurrence (for Apple Calendar, etc.)
+  def ical
+    event = @occurrence.event
+    cal = Icalendar::Calendar.new
+
+    cal.event do |e|
+      e.dtstart = Icalendar::Values::DateTime.new(@occurrence.occurs_at.utc)
+      e.dtend = Icalendar::Values::DateTime.new((@occurrence.occurs_at + @occurrence.duration.minutes).utc)
+      e.summary = event.title
+      e.description = build_ical_description(event, @occurrence)
+      e.location = @occurrence.event_location&.full_address
+      e.url = event_occurrence_url(@occurrence)
+      e.uid = "occurrence-#{@occurrence.id}@#{request.host}"
+    end
+
+    send_data cal.to_ical,
+              type: 'text/calendar',
+              disposition: 'attachment',
+              filename: "#{event.title.parameterize}-#{@occurrence.occurs_at.strftime('%Y-%m-%d')}.ics"
   end
 
   def edit
@@ -158,5 +179,13 @@ class EventOccurrencesController < ApplicationController
                                              :remove_banner_image, :location_id,
                                              :reminder_7d_short, :reminder_1d_short,
                                              :reminder_7d_long, :reminder_1d_long)
+  end
+
+  def build_ical_description(event, occurrence)
+    parts = []
+    parts << occurrence.description if occurrence.description.present?
+    parts << "More info: #{event.more_info_url}" if event.more_info_url.present?
+    parts << "Event page: #{event_occurrence_url(occurrence)}"
+    parts.join("\n\n")
   end
 end

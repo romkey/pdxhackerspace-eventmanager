@@ -1,7 +1,13 @@
 # frozen_string_literal: true
 
-# Helper methods for generating calendar service URLs (Google, Outlook, Yahoo, etc.)
+# Helper methods for generating calendar service URLs (Google, Outlook, Yahoo, Apple, etc.)
 module CalendarLinksHelper
+  # Generate Apple Calendar URL (downloads .ics file)
+  def apple_calendar_url(occurrence)
+    # This returns the URL to download the .ics file for the occurrence
+    Rails.application.routes.url_helpers.ical_event_occurrence_path(occurrence, format: :ics)
+  end
+
   # Generate Google Calendar URL for an event occurrence
   def google_calendar_url(occurrence)
     event = occurrence.event

@@ -66,6 +66,7 @@ Rails.application.routes.draw do
       post :post_slack_reminder
       post :post_social_reminder
       post :generate_ai_reminder
+      get :ical, defaults: { format: 'ics' }
     end
   end
 

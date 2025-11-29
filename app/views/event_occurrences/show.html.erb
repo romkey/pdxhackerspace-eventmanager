@@ -140,15 +140,20 @@
           <%= link_to google_calendar_url(@occurrence), target: "_blank", rel: "noopener", class: "btn btn-outline-primary", "aria-label": "Add to Google Calendar" do %>
             <i class="bi bi-google" aria-hidden="true"></i> Google Calendar
           <% end %>
+          <%= link_to apple_calendar_url(@occurrence), class: "btn btn-outline-dark", "aria-label": "Add to Apple Calendar (downloads .ics file)" do %>
+            <i class="bi bi-apple" aria-hidden="true"></i> Apple Calendar
+          <% end %>
           <%= link_to outlook_calendar_url(@occurrence), target: "_blank", rel: "noopener", class: "btn btn-outline-primary", "aria-label": "Add to Outlook.com Calendar" do %>
             <i class="bi bi-microsoft" aria-hidden="true"></i> Outlook.com
           <% end %>
-          <%= link_to office365_calendar_url(@occurrence), target: "_blank", rel: "noopener", class: "btn btn-outline-primary", "aria-label": "Add to Office 365 Calendar" do %>
-            <i class="bi bi-building" aria-hidden="true"></i> Office 365
-          <% end %>
-          <%= link_to yahoo_calendar_url(@occurrence), target: "_blank", rel: "noopener", class: "btn btn-outline-secondary", "aria-label": "Add to Yahoo Calendar" do %>
-            <i class="bi bi-calendar-plus" aria-hidden="true"></i> Yahoo Calendar
-          <% end %>
+          <div class="btn-group" role="group">
+            <%= link_to office365_calendar_url(@occurrence), target: "_blank", rel: "noopener", class: "btn btn-outline-secondary btn-sm", "aria-label": "Add to Office 365 Calendar" do %>
+              <i class="bi bi-building" aria-hidden="true"></i> Office 365
+            <% end %>
+            <%= link_to yahoo_calendar_url(@occurrence), target: "_blank", rel: "noopener", class: "btn btn-outline-secondary btn-sm", "aria-label": "Add to Yahoo Calendar" do %>
+              <i class="bi bi-calendar-plus" aria-hidden="true"></i> Yahoo
+            <% end %>
+          </div>
         </div>
       </div>
     </section>
