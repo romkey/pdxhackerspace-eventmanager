@@ -4,7 +4,6 @@ on:
   pull_request:
     branches: [ main ]
   push:
-    branches: [ main ]
     tags:
       - 'v*'
 
@@ -18,37 +17,7 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  # Check if we should skip this workflow run to avoid duplicates
-  # Skips when: branch push AND commit has a tag (tag trigger will handle it)
-  check-duplicate:
-    runs-on: ubuntu-latest
-    outputs:
-      should_skip: ${{ steps.check.outputs.should_skip }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0  # Need full history to check for tags
-      
-      - name: Check for duplicate workflow
-        id: check
-        run: |
-          # Skip if this is a branch push AND commit has a tag
-          if [ "${{ github.ref_type }}" == "branch" ]; then
-            if git describe --exact-match HEAD 2>/dev/null; then
-              echo "should_skip=true" >> $GITHUB_OUTPUT
-              echo "✓ Skipping: Commit has tag, will run on tag trigger instead"
-            else
-              echo "should_skip=false" >> $GITHUB_OUTPUT
-              echo "✓ Running: Branch push without tag"
-            fi
-          else
-            echo "should_skip=false" >> $GITHUB_OUTPUT
-            echo "✓ Running: Tag trigger"
-          fi
-
   lint:
-    needs: check-duplicate
-    if: needs.check-duplicate.outputs.should_skip != 'true'
     name: Lint Code
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -74,8 +43,7 @@ jobs:
     name: Run Tests
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    needs: [check-duplicate, lint]
-    if: needs.check-duplicate.outputs.should_skip != 'true'
+    needs: lint
 
     services:
       postgres:
@@ -151,13 +119,9 @@ jobs:
     name: Build Docker Image
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    # TEMPORARY: Skip test dependency for version tags to build images immediately
-    # needs: test
-    needs: [check-duplicate, lint]
-    # Only run build on PRs and version tags, not on main branch pushes
-    if: |
-      needs.check-duplicate.outputs.should_skip != 'true' && 
-      (github.event_name == 'pull_request' || startsWith(github.ref, 'refs/tags/v'))
+    needs: lint
+    # Build on PRs (no push) and version tags (push to registry)
+    if: github.event_name == 'pull_request' || startsWith(github.ref, 'refs/tags/v')
     
     steps:
       - name: Checkout code
@@ -221,10 +185,8 @@ jobs:
     name: Security Scan
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    needs: [check-duplicate, build]
-    if: |
-      needs.check-duplicate.outputs.should_skip != 'true' && 
-      startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
     
     steps:
       - name: Checkout code
@@ -272,8 +234,7 @@ jobs:
     name: Dependency Security Check
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    needs: [check-duplicate, lint]
-    if: needs.check-duplicate.outputs.should_skip != 'true'
+    needs: lint
     
     steps:
       - name: Checkout code
