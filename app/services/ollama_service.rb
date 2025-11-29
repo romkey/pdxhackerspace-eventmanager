@@ -62,64 +62,46 @@ class OllamaService
       nil
     end
 
-    # Generate a short reminder (for Bluesky)
-    # The generated text should use {{when}} as a placeholder for the date/time
+    # Generate a short reminder for an occurrence (for Bluesky)
     def generate_short_reminder(occurrence, days_ahead)
+      generate_short_reminder_for_event(occurrence.event, days_ahead, occurrence.description)
+    end
+
+    # Generate a long reminder for an occurrence (for Slack/Instagram)
+    def generate_long_reminder(occurrence, days_ahead)
+      generate_long_reminder_for_event(occurrence.event, days_ahead, occurrence.description)
+    end
+
+    # Generate a short reminder for an event (for Bluesky)
+    # Uses {{when}} as a placeholder for the date/time
+    def generate_short_reminder_for_event(event, days_ahead, description = nil)
       return nil unless configured?
 
       site_config = SiteConfig.current
       max_length = site_config.short_reminder_max_length
+      description ||= event.description
 
-      event = occurrence.event
       prompt_template = site_config.ai_reminder_prompt_with_default
-      base_prompt = build_base_prompt(prompt_template, event, occurrence)
-      timing_context = days_ahead == 7 ? 'one week away' : 'tomorrow'
+      base_prompt = build_base_prompt(prompt_template, event, description)
 
-      full_prompt = <<~PROMPT
-        #{base_prompt}
-
-        This reminder is for an event that is #{timing_context}.
-        IMPORTANT: The message must be under #{max_length - 20} characters (we need room for a link).
-        IMPORTANT: Use {{when}} as a placeholder for the date and time. Do NOT include the actual date/time.
-        Example: "Join us for Workshop {{when}} at PDX Hackerspace!"
-        Keep the message concise, friendly, and engaging.
-        Include the event name, mention it's at PDX Hackerspace, and use {{when}} for timing.
-        Do not use hashtags or emojis unless they're already in the event description.
-        Just output the reminder text, nothing else.
-      PROMPT
-
-      generate(full_prompt)
+      full_prompt = build_short_prompt(base_prompt, max_length, days_ahead)
+      clean_ai_response(generate(full_prompt))
     end
 
-    # Generate a long reminder (for Slack/Instagram)
-    # The generated text should use {{when}} as a placeholder for the date/time
-    def generate_long_reminder(occurrence, days_ahead)
+    # Generate a long reminder for an event (for Slack/Instagram)
+    # Uses {{when}} as a placeholder for the date/time
+    def generate_long_reminder_for_event(event, days_ahead, description = nil)
       return nil unless configured?
 
       site_config = SiteConfig.current
       max_length = site_config.long_reminder_max_length
+      description ||= event.description
 
-      event = occurrence.event
       prompt_template = site_config.ai_reminder_prompt_with_default
-      base_prompt = build_base_prompt(prompt_template, event, occurrence)
-      timing_context = days_ahead == 7 ? 'one week away' : 'tomorrow'
+      base_prompt = build_base_prompt(prompt_template, event, description)
 
-      full_prompt = <<~PROMPT
-        #{base_prompt}
-
-        This reminder is for an event that is #{timing_context}.
-        You can use up to #{max_length} characters for this message.
-        IMPORTANT: Use {{when}} as a placeholder for the date and time. Do NOT include the actual date/time.
-        Example: "Join us {{when}} at PDX Hackerspace for an exciting workshop!"
-        Include the event name, location, and mention it's at PDX Hackerspace.
-        Include relevant details from the event description.
-        Be friendly and engaging, encouraging people to attend.
-        You may use line breaks for readability.
-        Do not use hashtags or emojis unless they're already in the event description.
-        Just output the reminder text, nothing else.
-      PROMPT
-
-      generate(full_prompt)
+      full_prompt = build_long_prompt(base_prompt, max_length, days_ahead)
+      clean_ai_response(generate(full_prompt))
     end
 
     # Legacy method - generates short reminder for backwards compatibility
@@ -129,10 +111,68 @@ class OllamaService
 
     private
 
-    def build_base_prompt(prompt_template, event, occurrence)
+    def build_short_prompt(base_prompt, max_length, days_ahead)
+      timing = days_ahead == 7 ? 'one week away' : 'tomorrow'
+      <<~PROMPT
+        #{base_prompt}
+
+        Generate a short social media reminder for this event (#{timing}).
+
+        STRICT REQUIREMENTS:
+        - Output ONLY the reminder text. No introductions, no "Here is the reminder:", no explanations.
+        - Maximum #{max_length - 20} characters (we need room for a link).
+        - Use {{when}} as a placeholder for the date/time. Example: "Join us {{when}} at PDX Hackerspace!"
+        - Do NOT include actual dates or times - only use {{when}}.
+        - Mention the event name and PDX Hackerspace.
+        - Be friendly and engaging.
+        - No hashtags or emojis unless in the original description.
+
+        Output the reminder text only:
+      PROMPT
+    end
+
+    def build_long_prompt(base_prompt, max_length, days_ahead)
+      timing = days_ahead == 7 ? 'one week away' : 'tomorrow'
+      <<~PROMPT
+        #{base_prompt}
+
+        Generate a longer social media reminder for this event (#{timing}).
+
+        STRICT REQUIREMENTS:
+        - Output ONLY the reminder text. No introductions, no "Here is the reminder:", no explanations.
+        - Maximum #{max_length} characters.
+        - Use {{when}} as a placeholder for the date/time. Example: "Join us {{when}} at PDX Hackerspace!"
+        - Do NOT include actual dates or times - only use {{when}}.
+        - Include the event name, location, and mention PDX Hackerspace.
+        - Include relevant details from the description.
+        - Be friendly and engaging, encouraging attendance.
+        - Line breaks are OK for readability.
+        - No hashtags or emojis unless in the original description.
+
+        Output the reminder text only:
+      PROMPT
+    end
+
+    def build_base_prompt(prompt_template, event, description)
       prompt_template
         .gsub(/\{\{\s*event_title\s*\}\}/i, event.title)
-        .gsub(/\{\{\s*event_description\s*\}\}/i, occurrence.description.to_s)
+        .gsub(/\{\{\s*event_description\s*\}\}/i, description.to_s)
+    end
+
+    # Clean up common AI response artifacts
+    def clean_ai_response(response)
+      return nil if response.blank?
+
+      # Remove common AI framing phrases
+      cleaned = response
+                .gsub(/^["']|["']$/m, '') # Remove surrounding quotes
+                .gsub(/^Here(?:'s| is) (?:the |a |your )?reminder:?\s*/i, '')
+                .gsub(/^(?:Sure|OK|Okay)[,!.]?\s*(?:Here(?:'s| is)[^:]*:)?\s*/i, '')
+                .gsub(/^Reminder:?\s*/i, '')
+                .strip
+
+      # If the cleaned response is empty, return the original
+      cleaned.presence || response&.strip
     end
 
     def ollama_server

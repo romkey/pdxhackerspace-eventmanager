@@ -2,7 +2,7 @@ class EventsController < ApplicationController
   skip_before_action :verify_authenticity_token, only: [:ical]
 
   before_action :authenticate_user!, except: %i[index show ical embed rss]
-  before_action :set_event, only: %i[show embed edit update destroy postpone cancel reactivate]
+  before_action :set_event, only: %i[show embed edit update destroy postpone cancel reactivate generate_ai_reminder]
   before_action :authorize_event, only: %i[edit update destroy postpone cancel reactivate]
 
   def index
@@ -201,6 +201,31 @@ class EventsController < ApplicationController
       redirect_to @event, notice: 'Event was reactivated.'
     else
       redirect_to @event, alert: 'Failed to reactivate event.'
+    end
+  end
+
+  def generate_ai_reminder
+    authorize @event, :update?
+
+    unless OllamaService.configured?
+      render json: { success: false, message: 'AI generation is not configured.' }, status: :service_unavailable
+      return
+    end
+
+    days = params[:days].to_i
+    days = 7 unless [1, 7].include?(days)
+    message_type = params[:type] == 'long' ? :long : :short
+
+    message = if message_type == :long
+                OllamaService.generate_long_reminder_for_event(@event, days)
+              else
+                OllamaService.generate_short_reminder_for_event(@event, days)
+              end
+
+    if message.present?
+      render json: { success: true, message: message }
+    else
+      render json: { success: false, message: 'AI generation failed. Please try again.' }, status: :unprocessable_entity
     end
   end
 

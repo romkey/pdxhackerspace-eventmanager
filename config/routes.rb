@@ -42,6 +42,7 @@ Rails.application.routes.draw do
       post :postpone
       post :cancel
       post :reactivate
+      post :generate_ai_reminder
       get :embed
     end
 

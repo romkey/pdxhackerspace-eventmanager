@@ -174,7 +174,7 @@
     <% short_max = site_config.short_reminder_max_length %>
     <% long_max = site_config.long_reminder_max_length %>
     <div class="card mb-3" id="reminder-messages-section"
-         data-generate-ai-url="<%= event.persisted? && event.occurrences.any? ? generate_ai_reminder_event_occurrence_path(event.occurrences.first) : '' %>"
+         data-generate-ai-url="<%= event.persisted? ? generate_ai_reminder_event_path(event) : '' %>"
          data-ai-event-description="<%= h(event.description.to_s) %>">
       <div class="card-header">
         <h5 class="mb-0"><i class="bi bi-chat-left-text"></i> Reminder Messages</h5>
