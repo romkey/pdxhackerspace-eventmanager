@@ -3,7 +3,9 @@
 # Health check endpoint for container orchestration and monitoring
 # Returns status of the application and its dependencies
 class HealthController < ApplicationController
-  skip_before_action :authenticate_user!
+  # Skip authentication - authenticate_user! may not be defined as a before_action
+  # in ApplicationController (it's defined by Devise in specific controllers)
+  skip_before_action :authenticate_user!, raise: false
   skip_before_action :load_site_config
 
   # GET /health or /up
