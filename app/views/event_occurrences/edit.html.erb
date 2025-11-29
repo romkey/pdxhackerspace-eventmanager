@@ -168,7 +168,7 @@
             <% if @occurrence.banner_image.attached? %>
               <div class="mt-2">
                 <strong>Current custom banner:</strong><br>
-                <%= image_tag @occurrence.banner_image, class: "img-thumbnail", style: "max-width: 300px;" %>
+                <%= image_tag @occurrence.banner_image, class: "img-thumbnail", style: "max-width: 300px;", alt: "Current custom banner for #{@event.title} on #{@occurrence.occurs_at.strftime('%B %d, %Y')}" %>
                 <div class="form-check mt-2">
                   <%= f.check_box :remove_banner_image, class: "form-check-input" %>
                   <%= f.label :remove_banner_image, "Remove custom banner (use event's banner)", class: "form-check-label" %>
@@ -177,7 +177,7 @@
             <% elsif @event.banner_image.attached? %>
               <div class="mt-2">
                 <strong>Currently using event's banner:</strong><br>
-                <%= image_tag @event.banner_image, class: "img-thumbnail", style: "max-width: 300px; opacity: 0.7;" %>
+                <%= image_tag @event.banner_image, class: "img-thumbnail", style: "max-width: 300px; opacity: 0.7;", alt: "Event banner for #{@event.title}" %>
               </div>
             <% end %>
           </div>

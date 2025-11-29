@@ -10,3 +10,33 @@ Disallow: /sidekiq
 Disallow: /users
 Disallow: /site_config
 Disallow: /locations
+
+# Disallow authentication pages
+Disallow: /users/sign_in
+Disallow: /users/sign_out
+Disallow: /users/password
+Disallow: /users/edit
+
+# Disallow action endpoints (not useful for indexing)
+Disallow: /*?*
+Disallow: /*.json$
+Disallow: /*.ics$
+
+# Disallow edit and new pages
+Disallow: /*/edit
+Disallow: /*/new
+Disallow: /events/new
+
+# Disallow embedded views (duplicate content)
+Disallow: /calendar/embed
+Disallow: /events/*/embed
+
+# Allow important paths explicitly
+Allow: /events
+Allow: /calendar
+Allow: /location
+Allow: /sitemap.xml
+Allow: /events/rss
+
+# Crawl-delay for politeness (optional, not all bots respect this)
+Crawl-delay: 1

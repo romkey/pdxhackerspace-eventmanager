@@ -73,7 +73,7 @@
             </small>
             <% if @site_config.favicon.attached? %>
               <div class="mt-2">
-                <%= image_tag @site_config.favicon, class: "img-thumbnail", style: "max-width: 64px; max-height: 64px;" %>
+                <%= image_tag @site_config.favicon, class: "img-thumbnail", style: "max-width: 64px; max-height: 64px;", alt: "Current site favicon" %>
                 <div class="form-check mt-2">
                   <%= f.check_box :remove_favicon, class: "form-check-input" %>
                   <%= f.label :remove_favicon, "Remove current favicon", class: "form-check-label" %>
@@ -90,7 +90,7 @@
             </small>
             <% if @site_config.banner_image.attached? %>
               <div class="mt-2">
-                <%= image_tag @site_config.banner_image, class: "img-thumbnail", style: "max-width: 400px;" %>
+                <%= image_tag @site_config.banner_image, class: "img-thumbnail", style: "max-width: 400px;", alt: "Current site banner image" %>
                 <div class="form-check mt-2">
                   <%= f.check_box :remove_banner_image, class: "form-check-input" %>
                   <%= f.label :remove_banner_image, "Remove current banner", class: "form-check-label" %>
@@ -125,7 +125,7 @@
         <div class="border rounded p-3 bg-light">
           <% if @site_config.banner_image.attached? %>
             <div class="mb-3">
-              <%= image_tag @site_config.banner_image, class: "img-fluid rounded", style: "max-height: 200px;" %>
+              <%= image_tag @site_config.banner_image, class: "img-fluid rounded", style: "max-height: 200px;", alt: "Site banner preview for #{@site_config.organization_name || 'EventManager'}" %>
             </div>
           <% end %>
           
