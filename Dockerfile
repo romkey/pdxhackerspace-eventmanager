@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1.4
 # ========================================
 # Stage 1: Builder - Install dependencies and build assets
 # ========================================
@@ -25,17 +26,19 @@ RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - && \
 
 WORKDIR /app
 
-# Copy dependency files
+# Copy dependency files first (for better layer caching)
 COPY Gemfile Gemfile.lock ./
 COPY package.json yarn.lock* ./
 
-# Install Ruby gems
-RUN bundle config set --local deployment 'true' && \
+# Install Ruby gems with cache mount for faster rebuilds
+RUN --mount=type=cache,target=/usr/local/bundle/cache \
+    bundle config set --local deployment 'true' && \
     bundle config set --local without 'development test' && \
     bundle install --jobs 4 --retry 3
 
-# Install Node modules
-RUN yarn install --frozen-lockfile --production=false
+# Install Node modules with cache mount for faster rebuilds
+RUN --mount=type=cache,target=/app/node_modules/.cache \
+    yarn install --frozen-lockfile --production=false
 
 # Copy application code
 COPY . .
@@ -46,8 +49,8 @@ RUN if [ ! -f VERSION ]; then \
       git describe --tags --always 2>/dev/null > VERSION || echo "dev-local" > VERSION; \
     fi
 
-# Build CSS and JS
-RUN yarn build && yarn build:css
+# Build CSS and JS in parallel
+RUN yarn build & yarn build:css & wait
 
 # Precompile assets for production
 RUN SECRET_KEY_BASE=dummy RAILS_ENV=production bundle exec rake assets:precompile
