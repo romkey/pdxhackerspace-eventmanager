@@ -5,18 +5,18 @@
   ]) %></script>
 <% end %>
 
-<div class="jumbotron bg-light p-5 rounded">
-  <h1 class="display-4">Welcome to EventManager</h1>
+<header class="jumbotron bg-light p-5 rounded">
+  <h1 class="display-4">Welcome to <%= @site_config&.organization_name || 'EventManager' %></h1>
   <p class="lead">Manage and discover events at our hackerspace</p>
   <hr class="my-4">
   <p>All upcoming events are shown below in chronological order.</p>
   <% if user_signed_in? && can_create_events? %>
     <%= link_to "Create New Event", new_event_path, class: "btn btn-success btn-lg" %>
   <% end %>
-</div>
+</header>
 
-<div class="mt-5">
-  <h2>Upcoming Events</h2>
+<section class="mt-5" aria-labelledby="upcoming-events-heading">
+  <h2 id="upcoming-events-heading">Upcoming Events</h2>
   <% if @upcoming_events.any? %>
     <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
       <% @upcoming_events.each do |event| %>
@@ -28,4 +28,4 @@
   <% else %>
     <p class="text-muted">No upcoming events scheduled.</p>
   <% end %>
-</div>
+</section>

@@ -1,7 +1,7 @@
 class EventsController < ApplicationController
   skip_before_action :verify_authenticity_token, only: [:ical]
 
-  before_action :authenticate_user!, except: %i[index show ical embed]
+  before_action :authenticate_user!, except: %i[index show ical embed rss]
   before_action :set_event, only: %i[show embed edit update destroy postpone cancel reactivate]
   before_action :authorize_event, only: %i[edit update destroy postpone cancel reactivate]
 
@@ -33,6 +33,18 @@ class EventsController < ApplicationController
     respond_to do |format|
       format.html
       format.json { render json: events_json_response }
+    end
+  end
+
+  def rss
+    @events = Event.where(status: 'active', draft: false)
+                   .where(visibility: %w[public members])
+                   .includes(:user, :hosts, :occurrences)
+                   .order(updated_at: :desc)
+                   .limit(50)
+
+    respond_to do |format|
+      format.rss { render layout: false }
     end
   end
 

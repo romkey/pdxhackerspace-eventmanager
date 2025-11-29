@@ -37,6 +37,7 @@
     <% end %>
     
     <!-- RSS/Atom Feeds -->
+    <%= auto_discovery_link_tag :rss, events_rss_path, title: "#{@site_config&.organization_name || 'Events'} RSS Feed" %>
     <%= auto_discovery_link_tag :atom, events_path(format: :json), title: "Events JSON Feed" %>
     
     <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
@@ -48,13 +49,14 @@
   </head>
 
   <body>
-    <% if @site_config&.banner_image&.attached? %>
-      <div class="w-100">
-        <%= image_tag @site_config.banner_image, class: "img-fluid w-100", alt: "#{@site_config&.organization_name} Banner", style: "max-height: 300px; object-fit: cover;" %>
-      </div>
-    <% end %>
+    <header>
+      <% if @site_config&.banner_image&.attached? %>
+        <div class="w-100">
+          <%= image_tag @site_config.banner_image, class: "img-fluid w-100", alt: "#{@site_config&.organization_name} Banner", style: "max-height: 300px; object-fit: cover;", loading: "eager" %>
+        </div>
+      <% end %>
 
-    <nav class="navbar navbar-expand-lg bg-primary navbar-dark">
+      <nav class="navbar navbar-expand-lg bg-primary navbar-dark" aria-label="Main navigation">
       <div class="container-fluid">
         <% if @site_config&.website_url.present? %>
           <%= link_to (@site_config.organization_name || "EventManager"), @site_config.website_url, class: "navbar-brand" %>
@@ -116,8 +118,9 @@
         </div>
       </div>
     </nav>
+    </header>
 
-    <div class="container mt-4">
+    <main class="container mt-4" role="main">
       <% if notice %>
         <div class="alert alert-success alert-dismissible fade show" role="alert">
           <%= notice %>
@@ -141,18 +144,18 @@
       <% end %>
 
       <%= yield %>
-    </div>
+    </main>
 
-    <footer class="mt-5 py-3 bg-light">
+    <footer class="mt-5 py-3 bg-light" role="contentinfo">
       <div class="container text-center text-muted">
         <small><%= @site_config&.footer_text.presence || "© #{Time.current.year} EventManager - Hackerspace Event Management System" %></small>
         <br>
         <small>
-          <i class="bi bi-calendar-plus"></i> <%= link_to "Calendar Feed (.ics)", calendar_ical_path, class: "text-decoration-none" %>
+          <i class="bi bi-rss"></i> <%= link_to "RSS Feed", events_rss_path, class: "text-decoration-none" %>
           |
-          <i class="bi bi-filetype-json"></i> <%= link_to "Events (JSON)", events_path(format: :json), class: "text-decoration-none" %>
+          <i class="bi bi-calendar-plus"></i> <%= link_to "Calendar (.ics)", calendar_ical_path, class: "text-decoration-none" %>
           |
-          <i class="bi bi-filetype-json"></i> <%= link_to "Calendar (JSON)", calendar_path(format: :json), class: "text-decoration-none" %>
+          <i class="bi bi-filetype-json"></i> <%= link_to "JSON", events_path(format: :json), class: "text-decoration-none" %>
         </small>
         <% if current_user&.admin? %>
           <br>

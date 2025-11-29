@@ -36,6 +36,7 @@ Rails.application.routes.draw do
   get '/health/readiness', to: 'health#readiness'
 
   # Events routes
+  get 'events/rss', to: 'events#rss', as: 'events_rss', defaults: { format: 'rss' }
   resources :events do
     member do
       post :postpone

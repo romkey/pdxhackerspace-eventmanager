@@ -18,7 +18,7 @@
   ]) %></script>
 <% end %>
 
-<div class="row">
+<article class="row" itemscope itemtype="https://schema.org/Event">
   <div class="col-lg-8">
     <nav aria-label="breadcrumb">
       <ol class="breadcrumb">
@@ -29,24 +29,24 @@
     </nav>
 
     <% if @occurrence.banner.attached? %>
-      <div class="mb-4 occurrence-banner">
-        <%= image_tag @occurrence.banner, class: "img-fluid rounded", style: "width: 100%; max-height: 400px; object-fit: cover;", alt: @event.title %>
+      <figure class="mb-4 occurrence-banner">
+        <%= image_tag @occurrence.banner, class: "img-fluid rounded", style: "width: 100%; max-height: 400px; object-fit: cover;", alt: "Banner image for #{@event.title}", loading: "lazy", itemprop: "image" %>
         <% if @occurrence.banner_image.attached? %>
-          <small class="text-muted d-block mt-1"><i class="bi bi-image-fill"></i> Custom banner for this occurrence</small>
+          <figcaption class="text-muted mt-1"><small><i class="bi bi-image-fill"></i> Custom banner for this occurrence</small></figcaption>
         <% end %>
-      </div>
+      </figure>
     <% end %>
 
-    <div class="d-flex justify-content-between align-items-start mb-3">
-      <h1><%= @event.title %></h1>
+    <header class="d-flex justify-content-between align-items-start mb-3">
+      <h1 itemprop="name"><%= @event.title %></h1>
       <% if @occurrence.status != 'active' %>
         <span class="badge bg-<%= @occurrence.status == 'postponed' ? 'warning' : 'danger' %> fs-5">
           <%= @occurrence.status.titleize %>
         </span>
       <% end %>
-    </div>
+    </header>
 
-    <h5 class="text-muted mb-4"><%= @occurrence.occurs_at.strftime('%A, %B %d, %Y at %I:%M %p') %></h5>
+    <p class="h5 text-muted mb-4" itemprop="startDate" content="<%= @occurrence.occurs_at.iso8601 %>"><%= @occurrence.occurs_at.strftime('%A, %B %d, %Y at %I:%M %p') %></p>
 
     <% if @occurrence.status == 'postponed' && @occurrence.postponed_until %>
       <div class="alert alert-warning">
@@ -72,10 +72,10 @@
       </div>
     <% end %>
 
-    <div class="card mb-4">
+    <section class="card mb-4">
       <div class="card-body">
-        <h5 class="card-title">Description</h5>
-        <p class="card-text"><%= simple_format(@occurrence.description) %></p>
+        <h2 class="card-title h5">Description</h2>
+        <div class="card-text" itemprop="description"><%= simple_format(@occurrence.description) %></div>
         
         <% if @event.more_info_url.present? %>
           <div class="mt-3">
@@ -85,13 +85,13 @@
           </div>
         <% end %>
       </div>
-    </div>
+    </section>
   </div>
 
-  <div class="col-lg-4">
-    <div class="card mb-3">
+  <aside class="col-lg-4">
+    <section class="card mb-3">
       <div class="card-body">
-        <h5 class="card-title">Occurrence Details</h5>
+        <h2 class="card-title h5">Occurrence Details</h2>
         <dl class="row mb-0">
           <dt class="col-sm-5">Date:</dt>
           <dd class="col-sm-7"><%= @occurrence.occurs_at.strftime('%B %d, %Y') %></dd>
@@ -130,12 +130,12 @@
           <% end %>
         </dl>
       </div>
-    </div>
+    </section>
 
     <% if user_signed_in? && (current_user.admin? || @event.hosted_by?(current_user)) %>
-      <div class="card">
+      <section class="card">
         <div class="card-body">
-          <h5 class="card-title">Manage Occurrence</h5>
+          <h2 class="card-title h5">Manage Occurrence</h2>
           <div class="d-grid gap-2">
             <%= link_to "Edit Details", edit_event_occurrence_path(@occurrence), class: "btn btn-warning" %>
             
@@ -158,15 +158,15 @@
                 form: { data: { turbo_confirm: "Delete this occurrence? The event series will remain." } } %>
           </div>
         </div>
-      </div>
+      </section>
     <% end %>
-  </div>
-</div>
+  </aside>
+</article>
 
-<div class="mt-3">
+<nav class="mt-3" aria-label="Back navigation">
   <%= link_to "← Back to Event", event_path(@event), class: "btn btn-secondary" %>
   <%= link_to "View Calendar", calendar_path, class: "btn btn-outline-secondary" %>
-</div>
+</nav>
 
 <!-- Postpone Modal -->
 <div class="modal fade" id="postponeModal" tabindex="-1">
