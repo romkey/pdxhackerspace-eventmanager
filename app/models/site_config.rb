@@ -12,7 +12,11 @@ class SiteConfig < ApplicationRecord
 
   # Singleton pattern - only one site config should exist with id = 1
   def self.instance
+    # Use find_or_create_by with a rescue for race conditions
     find_by(id: 1) || create_singleton!
+  rescue ActiveRecord::RecordNotUnique, ActiveRecord::Deadlocked
+    # Another process created the record - just find it
+    find(1)
   end
 
   def self.create_singleton!
@@ -20,6 +24,9 @@ class SiteConfig < ApplicationRecord
     config = new(id: 1, organization_name: 'EventManager')
     config.save!
     config
+  rescue ActiveRecord::RecordNotUnique, ActiveRecord::Deadlocked
+    # Another process created the record - just find it
+    find(1)
   end
 
   def self.current
