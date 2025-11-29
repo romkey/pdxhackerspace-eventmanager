@@ -9,7 +9,11 @@ class SocialService
     def post_instagram(message, image_url: nil) # rubocop:disable Lint/UnusedMethodArgument
       token = ENV.fetch('INSTAGRAM_ACCESS_TOKEN', nil)
       page_id = ENV.fetch('INSTAGRAM_PAGE_ID', nil)
-      return false if token.blank? || page_id.blank?
+
+      if token.blank? || page_id.blank?
+        Rails.logger.info 'SocialService: Instagram not configured (missing INSTAGRAM_ACCESS_TOKEN or INSTAGRAM_PAGE_ID)'
+        return false
+      end
 
       uri = URI("https://graph.facebook.com/v17.0/#{page_id}/feed")
       request = Net::HTTP::Post.new(uri)
@@ -33,11 +37,14 @@ class SocialService
     def post_bluesky(message, image_url: nil, image_alt: 'Event banner')
       handle = ENV.fetch('BLUESKY_HANDLE', nil)
       app_password = ENV.fetch('BLUESKY_APP_PASSWORD', nil)
-      return false if handle.blank? || app_password.blank?
+
+      if handle.blank? || app_password.blank?
+        Rails.logger.info 'SocialService: Bluesky not configured (missing BLUESKY_HANDLE or BLUESKY_APP_PASSWORD)'
+        return false
+      end
 
       Rails.logger.info "SocialService: Bluesky post starting for handle #{handle}"
 
-      # First, create a session to get an access token
       session = create_bluesky_session(handle, app_password)
       return false unless session
 
@@ -45,49 +52,14 @@ class SocialService
       did = session['did']
       Rails.logger.info "SocialService: Bluesky session created for DID #{did}"
 
-      # If we have an image URL, upload it first
-      image_blob = nil
-      if image_url.present?
-        Rails.logger.info "SocialService: Bluesky image URL provided: #{image_url}"
-        image_blob = upload_bluesky_image(access_token, image_url)
-        if image_blob
-          Rails.logger.info "SocialService: Bluesky image blob obtained successfully"
-        else
-          Rails.logger.warn "SocialService: Bluesky image upload returned nil, posting without image"
-        end
-      else
-        Rails.logger.info "SocialService: No image URL provided for Bluesky post"
-      end
-
-      record = {
-        '$type': 'app.bsky.feed.post',
-        createdAt: Time.current.iso8601,
-        text: message
-      }
-
-      # Add image embed if we successfully uploaded
-      if image_blob
-        Rails.logger.info "SocialService: Adding image embed to Bluesky post"
-        record[:embed] = {
-          '$type': 'app.bsky.embed.images',
-          images: [
-            {
-              alt: image_alt,
-              image: image_blob
-            }
-          ]
-        }
-      end
+      image_blob = fetch_bluesky_image_blob(access_token, image_url)
+      record = build_bluesky_record(message, image_blob, image_alt)
 
       uri = URI('https://bsky.social/xrpc/com.atproto.repo.createRecord')
       request = Net::HTTP::Post.new(uri)
       request['Authorization'] = "Bearer #{access_token}"
       request['Content-Type'] = 'application/json'
-      request.body = {
-        repo: did,
-        collection: 'app.bsky.feed.post',
-        record: record
-      }.to_json
+      request.body = { repo: did, collection: 'app.bsky.feed.post', record: record }.to_json
 
       response = Net::HTTP.start(uri.host, uri.port, use_ssl: true) { |http| http.request(request) }
 
@@ -101,6 +73,33 @@ class SocialService
     rescue StandardError => e
       Rails.logger.error "SocialService: Bluesky error - #{e.message}"
       false
+    end
+
+    def fetch_bluesky_image_blob(access_token, image_url)
+      return nil if image_url.blank?
+
+      Rails.logger.info "SocialService: Bluesky image URL provided: #{image_url}"
+      blob = upload_bluesky_image(access_token, image_url)
+      if blob
+        Rails.logger.info "SocialService: Bluesky image blob obtained successfully"
+      else
+        Rails.logger.warn "SocialService: Bluesky image upload returned nil, posting without image"
+      end
+      blob
+    end
+
+    def build_bluesky_record(message, image_blob, image_alt)
+      record = { '$type': 'app.bsky.feed.post', createdAt: Time.current.iso8601, text: message }
+
+      if image_blob
+        Rails.logger.info "SocialService: Adding image embed to Bluesky post"
+        record[:embed] = {
+          '$type': 'app.bsky.embed.images',
+          images: [{ alt: image_alt, image: image_blob }]
+        }
+      end
+
+      record
     end
 
     def post_occurrence_reminder(occurrence, message)

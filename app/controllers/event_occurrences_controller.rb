@@ -82,15 +82,18 @@ class EventOccurrencesController < ApplicationController
   def post_social_reminder
     site_config = SiteConfig.current
     unless site_config.social_reminders_enabled? && @occurrence.event.social_reminders?
+      Rails.logger.info "post_social_reminder: Disabled - site=#{site_config.social_reminders_enabled?}, event=#{@occurrence.event.social_reminders?}"
       redirect_to @occurrence, alert: 'Social reminders are disabled for this occurrence.'
       return
     end
 
+    Rails.logger.info "post_social_reminder: Posting for occurrence #{@occurrence.id} (#{@occurrence.event.title})"
     message = reminder_message(@occurrence, 'today')
     if SocialService.post_occurrence_reminder(@occurrence, message)
       redirect_to @occurrence, notice: 'Posted reminder to social media.'
     else
-      redirect_to @occurrence, alert: 'Failed to post to social media.'
+      Rails.logger.warn "post_social_reminder: SocialService.post_occurrence_reminder returned false"
+      redirect_to @occurrence, alert: 'Failed to post to social media. Check that BLUESKY_HANDLE/BLUESKY_APP_PASSWORD or INSTAGRAM credentials are configured.'
     end
   end
 
