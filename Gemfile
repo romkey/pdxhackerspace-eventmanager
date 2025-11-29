@@ -82,7 +82,7 @@ group :development, :test do
   # Testing framework
   gem "factory_bot_rails"
   gem "faker"
-  gem "rspec-rails", "~> 6.0"
+  gem "rspec-rails", "~> 7.1"
 
   # Code quality and security
   gem "brakeman", require: false
