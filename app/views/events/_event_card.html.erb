@@ -1,18 +1,18 @@
-<article class="card h-100 <%= 'border-warning' if event.status == 'postponed' %> <%= 'border-danger' if event.status == 'cancelled' %>" aria-label="<%= event.title %>">
+<article class="card h-100 <%= 'border-warning' if event.status == 'postponed' %> <%= 'border-danger' if event.status == 'cancelled' %>" aria-labelledby="event-title-<%= event.id %>">
   <% if event.banner_image.attached? %>
-    <%= link_to event_path(event) do %>
+    <%= link_to event_path(event), "aria-label": "View #{event.title}" do %>
       <%= image_tag event.banner_image, class: "card-img-top", style: "max-height: 200px; object-fit: cover; cursor: pointer;", alt: "Banner image for #{event.title}", loading: "lazy" %>
     <% end %>
   <% end %>
   <div class="card-body">
     <div class="d-flex justify-content-between align-items-start mb-2">
-      <h2 class="card-title h5">
+      <h2 class="card-title h5" id="event-title-<%= event.id %>">
         <%= link_to event.title, event_path(event), class: "text-decoration-none text-body" %>
       </h2>
       <div>
         <% if event.draft? %>
           <span class="badge bg-secondary me-1">
-            <i class="bi bi-file-earmark-text"></i> Draft
+            <i class="bi bi-file-earmark-text" aria-hidden="true"></i> Draft
           </span>
         <% end %>
         <% if event.status != 'active' %>
@@ -40,29 +40,40 @@
       %>
       <% if next_occurrence && next_occurrence.status == 'postponed' && next_occurrence.postponed_until %>
         <p class="mb-1">
-          <i class="bi bi-calendar-x"></i> <span class="text-decoration-line-through"><%= next_occurrence.occurs_at.strftime('%B %d, %Y') %></span>
+          <i class="bi bi-calendar-x" aria-hidden="true"></i> 
+          <span class="text-decoration-line-through"><%= next_occurrence.occurs_at.strftime('%B %d, %Y') %></span>
+          <span class="visually-hidden">(original date, now postponed)</span>
         </p>
         <p class="mb-1 text-warning fw-bold">
-          <i class="bi bi-calendar-check"></i> <%= next_occurrence.postponed_until.strftime('%B %d, %Y') %> (Rescheduled)
+          <i class="bi bi-calendar-check" aria-hidden="true"></i> <%= next_occurrence.postponed_until.strftime('%B %d, %Y') %> (Rescheduled)
         </p>
         <p class="mb-1">
-          <i class="bi bi-clock"></i> <%= next_occurrence.postponed_until.strftime('%I:%M %p') %> to <%= (next_occurrence.postponed_until + display_duration.minutes).strftime('%I:%M %p') %>
+          <i class="bi bi-clock" aria-hidden="true"></i>
+          <span class="visually-hidden">Time:</span>
+          <%= next_occurrence.postponed_until.strftime('%I:%M %p') %> to <%= (next_occurrence.postponed_until + display_duration.minutes).strftime('%I:%M %p') %>
         </p>
       <% else %>
         <p class="mb-1">
-          <i class="bi bi-calendar"></i> <%= display_date.strftime('%B %d, %Y') %>
+          <i class="bi bi-calendar" aria-hidden="true"></i>
+          <span class="visually-hidden">Date:</span>
+          <%= display_date.strftime('%B %d, %Y') %>
         </p>
         <p class="mb-1">
-          <i class="bi bi-clock"></i> <%= display_date.strftime('%I:%M %p') %> to <%= (display_date + display_duration.minutes).strftime('%I:%M %p') %>
+          <i class="bi bi-clock" aria-hidden="true"></i>
+          <span class="visually-hidden">Time:</span>
+          <%= display_date.strftime('%I:%M %p') %> to <%= (display_date + display_duration.minutes).strftime('%I:%M %p') %>
         </p>
       <% end %>
       <p class="mb-1">
-        <i class="bi bi-person"></i>
+        <i class="bi bi-person" aria-hidden="true"></i>
+        <span class="visually-hidden">Hosted by:</span>
         <%= event.hosts.map { |h| h.name || h.email }.join(', ') %>
       </p>
       <% if event.recurring? %>
         <p class="mb-1">
-          <i class="bi bi-arrow-repeat"></i> <%= event.recurrence_type.titleize %>
+          <i class="bi bi-arrow-repeat" aria-hidden="true"></i>
+          <span class="visually-hidden">Recurrence:</span>
+          <%= event.recurrence_type.titleize %>
         </p>
       <% end %>
       <p class="mb-0">
@@ -74,28 +85,29 @@
         end
       %>
         <span class="badge bg-secondary">
-          <i class="bi bi-<%= event.open_to == 'public' ? 'door-open' : (event.open_to == 'members' ? 'people-fill' : 'envelope') %>"></i>
+          <i class="bi bi-<%= event.open_to == 'public' ? 'door-open' : (event.open_to == 'members' ? 'people-fill' : 'envelope') %>" aria-hidden="true"></i>
           <%= open_to_text %>
         </span>
         <% if event.requires_mask %>
           <span class="badge bg-info">
-            <i class="bi bi-shield-fill-check"></i> Masks Required
+            <i class="bi bi-shield-fill-check" aria-hidden="true"></i> Masks Required
           </span>
         <% end %>
       </p>
     </div>
   </div>
   
-  <div class="card-footer d-flex justify-content-between align-items-center">
+  <footer class="card-footer d-flex justify-content-between align-items-center">
     <div>
       <%= link_to "View Details", event_path(event), class: "btn btn-sm btn-primary" %>
       <% if event.more_info_url.present? %>
-        <%= link_to event.more_info_url, target: "_blank", rel: "noopener", class: "btn btn-sm btn-outline-info", title: "Learn More" do %>
-          <i class="bi bi-link-45deg"></i>
+        <%= link_to event.more_info_url, target: "_blank", rel: "noopener", class: "btn btn-sm btn-outline-info", "aria-label": "Learn more about #{event.title} (opens in new tab)" do %>
+          <i class="bi bi-link-45deg" aria-hidden="true"></i>
+          <span class="visually-hidden">External link</span>
         <% end %>
       <% end %>
     </div>
-    <%= link_to "iCal Feed", event_ical_path(event.ical_token, format: :ics), class: "btn btn-sm btn-outline-secondary" %>
-  </div>
+    <%= link_to "iCal Feed", event_ical_path(event.ical_token, format: :ics), class: "btn btn-sm btn-outline-secondary", "aria-label": "Subscribe to #{event.title} calendar feed" %>
+  </footer>
 </article>
 

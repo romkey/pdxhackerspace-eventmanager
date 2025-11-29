@@ -1,7 +1,7 @@
-<%= form_with(model: event, local: true, class: "needs-validation") do |f| %>
+<%= form_with(model: event, local: true, class: "needs-validation", "aria-label": "Event form") do |f| %>
   <% if event.errors.any? %>
-    <div class="alert alert-danger">
-      <h4><%= pluralize(event.errors.count, "error") %> prohibited this event from being saved:</h4>
+    <div class="alert alert-danger" role="alert" aria-live="assertive">
+      <h2 class="h4"><%= pluralize(event.errors.count, "error") %> prohibited this event from being saved:</h2>
       <ul>
         <% event.errors.full_messages.each do |message| %>
           <li><%= message %></li>
@@ -17,35 +17,35 @@
 
   <div class="mb-3">
     <%= f.label :description, class: "form-label" %>
-    <div class="alert alert-info py-2 mb-2">
+    <div class="alert alert-info py-2 mb-2" role="note">
       <small>
-        <i class="bi bi-info-circle"></i>
+        <i class="bi bi-info-circle" aria-hidden="true"></i>
         <strong>What to include in your description:</strong>
         Who is invited, what the event is about, any signup or RSVP links, what to bring, 
         skill level requirements, costs (if any), and other important details that help 
         people understand if this event is for them.
       </small>
     </div>
-    <%= f.text_area :description, class: "form-control", rows: 5, placeholder: "Describe your event..." %>
+    <%= f.text_area :description, class: "form-control", rows: 5, placeholder: "Describe your event...", "aria-describedby": "description-help" %>
   </div>
 
   <div class="mb-3">
     <%= f.label :more_info_url, "More Info URL (Optional)", class: "form-label" %>
-    <%= f.url_field :more_info_url, class: "form-control", placeholder: "https://example.com/event-details" %>
-    <small class="form-text text-muted">
-      <i class="bi bi-link-45deg"></i> Add a link where attendees can learn more (website, registration page, etc.)
+    <%= f.url_field :more_info_url, class: "form-control", placeholder: "https://example.com/event-details", "aria-describedby": "more-info-url-help" %>
+    <small class="form-text text-muted" id="more-info-url-help">
+      <i class="bi bi-link-45deg" aria-hidden="true"></i> Add a link where attendees can learn more (website, registration page, etc.)
     </small>
   </div>
 
   <div class="mb-3">
     <%= f.label :banner_image, "Banner Image (Optional)", class: "form-label" %>
-    <%= f.file_field :banner_image, class: "form-control", accept: "image/*" %>
-    <small class="form-text text-muted">
-      <i class="bi bi-image"></i> Recommended: 1200x400 pixels or similar 3:1 aspect ratio. Maximum file size: 5MB. Formats: JPG, PNG, GIF
+    <%= f.file_field :banner_image, class: "form-control", accept: "image/*", "aria-describedby": "banner-image-help" %>
+    <small class="form-text text-muted" id="banner-image-help">
+      <i class="bi bi-image" aria-hidden="true"></i> Recommended: 1200x400 pixels or similar 3:1 aspect ratio. Maximum file size: 5MB. Formats: JPG, PNG, GIF
     </small>
     <% if event.banner_image.attached? %>
       <div class="mt-2">
-        <%= image_tag event.banner_image, class: "img-thumbnail", style: "max-width: 300px;" %>
+        <%= image_tag event.banner_image, class: "img-thumbnail", style: "max-width: 300px;", alt: "Current banner image for #{event.title}" %>
         <div class="form-check mt-2">
           <%= f.check_box :remove_banner_image, class: "form-check-input" %>
           <%= f.label :remove_banner_image, "Remove current banner image", class: "form-check-label" %>

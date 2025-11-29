@@ -13,23 +13,25 @@
 
 <div class="row">
   <div class="col-lg-8 mx-auto">
-    <h1><i class="bi bi-geo-alt-fill"></i> Location</h1>
+    <h1><i class="bi bi-geo-alt-fill" aria-hidden="true"></i> Location</h1>
 
     <% if @site_config.location_info.present? || @site_config.address.present? %>
       <% if @site_config.location_info.present? %>
-        <div class="card mb-4">
+        <section class="card mb-4" aria-labelledby="about-location-heading">
           <div class="card-body">
-            <h5 class="card-title">About Our Location</h5>
+            <h2 class="card-title h5" id="about-location-heading">About Our Location</h2>
             <%= simple_format(@site_config.location_info) %>
           </div>
-        </div>
+        </section>
       <% end %>
 
       <% if @site_config.address.present? %>
-        <div class="card mb-4">
+        <section class="card mb-4" aria-labelledby="address-heading">
           <div class="card-body">
-            <h5 class="card-title">Address</h5>
-            <p class="lead"><i class="bi bi-pin-map-fill"></i> <%= @site_config.address %></p>
+            <h2 class="card-title h5" id="address-heading">Address</h2>
+            <address class="lead">
+              <i class="bi bi-pin-map-fill" aria-hidden="true"></i> <%= @site_config.address %>
+            </address>
 
             <div class="ratio ratio-16x9 mt-3">
               <iframe
@@ -39,17 +41,18 @@
                 loading="lazy"
                 allowfullscreen
                 referrerpolicy="no-referrer-when-downgrade"
+                title="Map showing location of <%= @site_config&.organization_name || 'our hackerspace' %>"
                 src="https://maps.google.com/maps?q=<%= ERB::Util.url_encode(@site_config.address) %>&t=&z=15&ie=UTF8&iwloc=&output=embed">
               </iframe>
             </div>
             <small class="text-muted d-block mt-2">
-              <%= link_to "Open in Google Maps", "https://www.google.com/maps/search/?api=1&query=#{ERB::Util.url_encode(@site_config.address)}", target: "_blank", rel: "noopener", class: "text-decoration-none" %>
+              <%= link_to "Open in Google Maps", "https://www.google.com/maps/search/?api=1&query=#{ERB::Util.url_encode(@site_config.address)}", target: "_blank", rel: "noopener noreferrer", class: "text-decoration-none", "aria-label": "Open address in Google Maps (opens in new tab)" %>
             </small>
           </div>
-        </div>
+        </section>
       <% end %>
     <% else %>
-      <div class="alert alert-info">
+      <div class="alert alert-info" role="status">
         <p class="mb-0">Location information has not been configured yet.</p>
         <% if user_signed_in? && current_user.admin? %>
           <hr>

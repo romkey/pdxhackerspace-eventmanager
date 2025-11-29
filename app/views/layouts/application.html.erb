@@ -49,6 +49,7 @@
   </head>
 
   <body>
+    <a href="#main-content" class="visually-hidden-focusable skip-link">Skip to main content</a>
     <header>
       <% if @site_config&.banner_image&.attached? %>
         <div class="w-100">
@@ -63,10 +64,11 @@
         <% else %>
           <span class="navbar-brand mb-0"><%= @site_config&.organization_name || "EventManager" %></span>
         <% end %>
-        <%= link_to root_path, class: "navbar-brand" do %>
-          <i class="bi bi-house-door-fill"></i>
+        <%= link_to root_path, class: "navbar-brand", "aria-label": "Home" do %>
+          <i class="bi bi-house-door-fill" aria-hidden="true"></i>
+          <span class="visually-hidden">Home</span>
         <% end %>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
           <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
@@ -99,10 +101,10 @@
           <ul class="navbar-nav">
             <% if user_signed_in? %>
               <li class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">
                   <%= current_user.name || current_user.email %>
                 </a>
-                <ul class="dropdown-menu dropdown-menu-end">
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
                   <li><%= link_to "My Profile", user_path(current_user), class: "dropdown-item" %></li>
                   <li><%= link_to "Edit Profile", edit_user_registration_path, class: "dropdown-item" %></li>
                   <li><hr class="dropdown-divider"></li>
@@ -120,26 +122,26 @@
     </nav>
     </header>
 
-    <main class="container mt-4" role="main">
+    <main id="main-content" class="container mt-4" role="main">
       <% if notice %>
         <div class="alert alert-success alert-dismissible fade show" role="alert">
           <%= notice %>
-          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close notification"></button>
         </div>
       <% end %>
 
       <% if alert %>
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <div class="alert alert-danger alert-dismissible fade show" role="alert" aria-live="assertive">
           <%= alert %>
-          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close alert"></button>
         </div>
       <% end %>
 
       <% if flash[:conflict] %>
-        <div class="alert alert-warning alert-dismissible fade show" role="alert" style="background-color: #dc3545; color: white; border-color: #dc3545;">
-          <h5 class="alert-heading"><i class="bi bi-exclamation-triangle-fill"></i> Scheduling Conflict Warning</h5>
+        <div class="alert alert-warning alert-dismissible fade show" role="alert" aria-live="assertive" style="background-color: #dc3545; color: white; border-color: #dc3545;">
+          <h2 class="alert-heading h5"><i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i> Scheduling Conflict Warning</h2>
           <%= flash[:conflict].html_safe %>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert"></button>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert" aria-label="Close warning"></button>
         </div>
       <% end %>
 
@@ -150,13 +152,15 @@
       <div class="container text-center text-muted">
         <small><%= @site_config&.footer_text.presence || "© #{Time.current.year} EventManager - Hackerspace Event Management System" %></small>
         <br>
-        <small>
-          <i class="bi bi-rss"></i> <%= link_to "RSS Feed", events_rss_path, class: "text-decoration-none" %>
-          |
-          <i class="bi bi-calendar-plus"></i> <%= link_to "Calendar (.ics)", calendar_ical_path, class: "text-decoration-none" %>
-          |
-          <i class="bi bi-filetype-json"></i> <%= link_to "JSON", events_path(format: :json), class: "text-decoration-none" %>
-        </small>
+        <nav aria-label="Feed links">
+          <small>
+            <i class="bi bi-rss" aria-hidden="true"></i> <%= link_to "RSS Feed", events_rss_path, class: "text-decoration-none" %>
+            <span aria-hidden="true">|</span>
+            <i class="bi bi-calendar-plus" aria-hidden="true"></i> <%= link_to "Calendar (.ics)", calendar_ical_path, class: "text-decoration-none" %>
+            <span aria-hidden="true">|</span>
+            <i class="bi bi-filetype-json" aria-hidden="true"></i> <%= link_to "JSON", events_path(format: :json), class: "text-decoration-none" %>
+          </small>
+        </nav>
         <% if current_user&.admin? %>
           <br>
           <small class="text-muted">

@@ -1,31 +1,31 @@
-<div class="calendar-navigation mb-3">
+<nav class="calendar-navigation mb-3" aria-label="Calendar navigation">
   <div class="d-flex justify-content-between align-items-center">
     <% path_helper = @embed ? :calendar_embed_path : :calendar_path %>
-    <%= link_to send(path_helper, view: 'calendar', month: (@current_month - 1.month).strftime('%Y-%m-%d')), class: "btn btn-outline-primary" do %>
-      <i class="bi bi-chevron-left"></i> <%= (@current_month - 1.month).strftime('%B %Y') %>
+    <%= link_to send(path_helper, view: 'calendar', month: (@current_month - 1.month).strftime('%Y-%m-%d')), class: "btn btn-outline-primary", "aria-label": "Previous month: #{(@current_month - 1.month).strftime('%B %Y')}" do %>
+      <i class="bi bi-chevron-left" aria-hidden="true"></i> <%= (@current_month - 1.month).strftime('%B %Y') %>
     <% end %>
     
-    <h3 class="mb-0"><%= @current_month.strftime('%B %Y') %></h3>
+    <h2 class="mb-0 h3" id="calendar-heading"><%= @current_month.strftime('%B %Y') %></h2>
     
-    <%= link_to send(path_helper, view: 'calendar', month: (@current_month + 1.month).strftime('%Y-%m-%d')), class: "btn btn-outline-primary" do %>
-      <%= (@current_month + 1.month).strftime('%B %Y') %> <i class="bi bi-chevron-right"></i>
+    <%= link_to send(path_helper, view: 'calendar', month: (@current_month + 1.month).strftime('%Y-%m-%d')), class: "btn btn-outline-primary", "aria-label": "Next month: #{(@current_month + 1.month).strftime('%B %Y')}" do %>
+      <%= (@current_month + 1.month).strftime('%B %Y') %> <i class="bi bi-chevron-right" aria-hidden="true"></i>
     <% end %>
   </div>
-</div>
+</nav>
 
-<div class="calendar-grid">
-  <div class="calendar-header">
+<div class="calendar-grid" role="grid" aria-labelledby="calendar-heading">
+  <div class="calendar-header" role="row">
     <% Date::DAYNAMES.each do |day| %>
-      <div class="calendar-day-header"><%= day %></div>
+      <div class="calendar-day-header" role="columnheader"><%= day %></div>
     <% end %>
   </div>
   
-  <div class="calendar-body">
+  <div class="calendar-body" role="rowgroup">
     <% calendar_start = @current_month.beginning_of_month.beginning_of_week(:sunday) %>
     <% calendar_end = @current_month.end_of_month.end_of_week(:sunday) %>
     <% (calendar_start..calendar_end).each do |date| %>
-      <div class="calendar-cell <%= 'other-month' unless date.month == @current_month.month %> <%= 'today' if date == Date.current %>">
-        <div class="calendar-date-number"><%= date.day %></div>
+      <div class="calendar-cell <%= 'other-month' unless date.month == @current_month.month %> <%= 'today' if date == Date.current %>" role="gridcell" aria-label="<%= date.strftime('%B %d, %Y') %><%= ', Today' if date == Date.current %>">
+        <div class="calendar-date-number" aria-hidden="true"><%= date.day %></div>
         <% if @occurrences_by_date[date].present? %>
           <div class="calendar-events">
             <% @occurrences_by_date[date].each do |occurrence| %>
@@ -36,12 +36,13 @@
                 else 'bg-primary text-white'
                 end
               %>
-              <%= link_to event_occurrence_path(occurrence), class: "calendar-event-item text-decoration-none", target: "_blank", rel: "noopener" do %>
+              <%= link_to event_occurrence_path(occurrence), class: "calendar-event-item text-decoration-none", target: "_blank", rel: "noopener", "aria-label": "#{occurrence.event.title} at #{occurrence.occurs_at.strftime('%I:%M %p')}#{occurrence.status != 'active' ? " (#{occurrence.status})" : ''}" do %>
                 <div class="calendar-event-badge <%= badge_class %>">
                   <div class="event-time"><%= occurrence.occurs_at.strftime('%I:%M %p') %></div>
                   <div class="event-title">
                     <% if occurrence.event.requires_mask %>
-                      <i class="bi bi-shield-fill-check"></i>
+                      <i class="bi bi-shield-fill-check" aria-hidden="true"></i>
+                      <span class="visually-hidden">Masks required</span>
                     <% end %>
                     <%= truncate(occurrence.event.title, length: 30) %>
                     <% if occurrence.status == 'postponed' && occurrence.postponed_until %>

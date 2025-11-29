@@ -27,10 +27,10 @@
     
     <header class="d-flex justify-content-between align-items-start mb-3">
       <h1 itemprop="name"><%= @event.title %></h1>
-      <div>
+      <div role="status" aria-live="polite">
         <% if @event.draft? %>
           <span class="badge bg-secondary fs-5 me-2">
-            <i class="bi bi-file-earmark-text"></i> Draft
+            <i class="bi bi-file-earmark-text" aria-hidden="true"></i> Draft
           </span>
         <% end %>
         <% if @event.status != 'active' %>
@@ -42,10 +42,10 @@
     </header>
 
     <% if @event.status == 'postponed' && @event.postponed_until %>
-      <div class="alert alert-warning">
-        <h5 class="alert-heading">
-          <i class="bi bi-clock-history"></i> Event Postponed
-        </h5>
+      <div class="alert alert-warning" role="alert">
+        <h2 class="alert-heading h5">
+          <i class="bi bi-clock-history" aria-hidden="true"></i> Event Postponed
+        </h2>
         <p class="mb-0"><strong>Rescheduled to:</strong> <%= @event.postponed_until.strftime('%B %d, %Y at %I:%M %p') %></p>
         <% if @event.cancellation_reason.present? %>
           <hr>
@@ -53,10 +53,10 @@
         <% end %>
       </div>
     <% elsif @event.status == 'cancelled' %>
-      <div class="alert alert-danger">
-        <h5 class="alert-heading">
-          <i class="bi bi-x-circle"></i> Event Cancelled
-        </h5>
+      <div class="alert alert-danger" role="alert">
+        <h2 class="alert-heading h5">
+          <i class="bi bi-x-circle" aria-hidden="true"></i> Event Cancelled
+        </h2>
         <% if @event.cancellation_reason.present? %>
           <p class="mb-0"><strong>Reason:</strong> <%= @event.cancellation_reason %></p>
         <% else %>
@@ -181,8 +181,10 @@
                         class: "btn btn-sm btn-outline-danger #{can_remove ? '' : 'disabled'}",
                         disabled: !can_remove,
                         form: { style: "display: inline;", data: { turbo_confirm: can_remove ? "Remove #{host.name || host.email} as a host?" : nil } },
-                        title: can_remove ? nil : "Cannot remove the only host" do %>
-                      <i class="bi bi-x"></i>
+                        title: can_remove ? nil : "Cannot remove the only host",
+                        "aria-label": "Remove #{host.name || host.email} as host" do %>
+                      <i class="bi bi-x" aria-hidden="true"></i>
+                      <span class="visually-hidden">Remove host</span>
                     <% end %>
                   <% end %>
                 </div>
@@ -194,7 +196,7 @@
           <dd class="col-sm-7"><%= @event.recurrence_type.titleize %></dd>
 
           <% if @event.location.present? %>
-            <dt class="col-sm-5"><i class="bi bi-geo-alt-fill"></i> Location:</dt>
+            <dt class="col-sm-5"><i class="bi bi-geo-alt-fill" aria-hidden="true"></i> Location:</dt>
             <dd class="col-sm-7">
               <%= @event.location.name %>
               <% if @event.location.description.present? %>
@@ -215,7 +217,7 @@
               end
               open_to_icon = @event.open_to == 'public' ? 'door-open' : (@event.open_to == 'members' ? 'people-fill' : 'envelope')
             %>
-            <i class="bi bi-<%= open_to_icon %>"></i> <%= open_to_label %>
+            <i class="bi bi-<%= open_to_icon %>" aria-hidden="true"></i> <%= open_to_label %>
           </dd>
 
           <dt class="col-sm-5">Status:</dt>
@@ -225,7 +227,7 @@
             <dt class="col-sm-5">Safety:</dt>
             <dd class="col-sm-7">
               <span class="badge bg-info">
-                <i class="bi bi-shield-fill-check"></i> Masks Required
+                <i class="bi bi-shield-fill-check" aria-hidden="true"></i> Masks Required
               </span>
             </dd>
           <% end %>
@@ -237,8 +239,8 @@
       <div class="card-body">
         <h2 class="card-title h5">Subscribe</h2>
         <p class="card-text small text-muted">Add this event to your calendar</p>
-        <%= link_to event_ical_path(@event.ical_token, format: :ics), class: "btn btn-primary w-100" do %>
-          <i class="bi bi-calendar-plus"></i> iCal Feed
+        <%= link_to event_ical_path(@event.ical_token, format: :ics), class: "btn btn-primary w-100", "aria-label": "Subscribe to #{@event.title} calendar feed" do %>
+          <i class="bi bi-calendar-plus" aria-hidden="true"></i> iCal Feed
         <% end %>
       </div>
     </section>
