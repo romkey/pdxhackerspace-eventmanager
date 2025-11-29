@@ -74,7 +74,7 @@ class EventOccurrencesController < ApplicationController
       return
     end
 
-    message = reminder_message(@occurrence, 'today')
+    message = long_reminder_message(@occurrence, 'today')
     if SlackService.post_occurrence_reminder(@occurrence, message)
       respond_to do |format|
         format.html { redirect_to @occurrence, notice: 'Posted reminder to Slack.' }
@@ -100,8 +100,9 @@ class EventOccurrencesController < ApplicationController
     end
 
     Rails.logger.info "post_social_reminder: Posting for occurrence #{@occurrence.id} (#{@occurrence.event.title})"
-    message_parts = reminder_message_with_link(@occurrence, 'today')
-    if SocialService.post_occurrence_reminder(@occurrence, message_parts)
+    short_parts = reminder_message_with_link(@occurrence, 'today', message_type: :short)
+    long_parts = reminder_message_with_link(@occurrence, 'today', message_type: :long)
+    if SocialService.post_occurrence_reminder(@occurrence, short_parts: short_parts, long_parts: long_parts)
       respond_to do |format|
         format.html { redirect_to @occurrence, notice: 'Posted reminder to social media.' }
         format.json { render json: { success: true, message: 'Posted reminder to social media.' } }
@@ -119,13 +120,18 @@ class EventOccurrencesController < ApplicationController
   def generate_ai_reminder
     days_ahead = params[:days].to_i
     days_ahead = 7 unless [1, 7].include?(days_ahead)
+    message_type = params[:type]&.to_sym || :short
 
     unless OllamaService.configured?
       render json: { success: false, message: 'Ollama server not configured.' }
       return
     end
 
-    generated_text = OllamaService.generate_reminder(@occurrence, days_ahead)
+    generated_text = if message_type == :long
+                       OllamaService.generate_long_reminder(@occurrence, days_ahead)
+                     else
+                       OllamaService.generate_short_reminder(@occurrence, days_ahead)
+                     end
 
     if generated_text.present?
       render json: { success: true, message: generated_text }
@@ -149,6 +155,8 @@ class EventOccurrencesController < ApplicationController
 
   def occurrence_params
     params.require(:event_occurrence).permit(:custom_description, :duration_override, :status, :banner_image,
-                                             :remove_banner_image, :location_id, :reminder_7d, :reminder_1d)
+                                             :remove_banner_image, :location_id,
+                                             :reminder_7d_short, :reminder_1d_short,
+                                             :reminder_7d_long, :reminder_1d_long)
   end
 end

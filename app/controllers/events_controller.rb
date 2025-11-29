@@ -245,7 +245,7 @@ class EventsController < ApplicationController
                                   :recurrence_type, :status, :visibility, :open_to,
                                   :more_info_url, :max_occurrences, :banner_image,
                                   :location_id, :requires_mask, :draft, :slack_announce, :social_reminders,
-                                  :reminder_7d, :reminder_1d)
+                                  :reminder_7d_short, :reminder_1d_short, :reminder_7d_long, :reminder_1d_long)
   end
 
   def build_recurrence_params

@@ -122,32 +122,28 @@ class SocialService # rubocop:disable Metrics/ClassLength
 
     # Post reminder with structured message parts for facet support
     # message_parts should be { text: "...", link_url: "...", link_text: "..." }
-    def post_occurrence_reminder(occurrence, message_parts)
+    # Post reminder with separate short (Bluesky) and long (Instagram) messages
+    # short_parts and long_parts should be { text: "...", link_url: "...", link_text: "..." }
+    def post_occurrence_reminder(occurrence, short_parts:, long_parts:)
       image_url = banner_url_for(occurrence)
       image_alt = occurrence.event.title
 
       Rails.logger.info "SocialService: Posting occurrence reminder for '#{occurrence.event.title}'"
       Rails.logger.info "SocialService: Banner image URL: #{image_url || 'none'}"
 
-      # Handle both old string format and new hash format for backwards compatibility
-      if message_parts.is_a?(Hash)
-        # New format with link parts - build Bluesky message with link text appended
-        bluesky_message = "#{message_parts[:text]} #{message_parts[:link_text]}"
-        instagram_message = "#{message_parts[:text]} #{message_parts[:link_url]}"
+      # Bluesky gets short message with facet link
+      bluesky_message = "#{short_parts[:text]} #{short_parts[:link_text]}"
+      success_bluesky = post_bluesky(
+        bluesky_message,
+        image_url: image_url,
+        image_alt: image_alt,
+        link_url: short_parts[:link_url],
+        link_text: short_parts[:link_text]
+      )
 
-        success_instagram = post_instagram(instagram_message, image_url: image_url)
-        success_bluesky = post_bluesky(
-          bluesky_message,
-          image_url: image_url,
-          image_alt: image_alt,
-          link_url: message_parts[:link_url],
-          link_text: message_parts[:link_text]
-        )
-      else
-        # Legacy string format
-        success_instagram = post_instagram(message_parts, image_url: image_url)
-        success_bluesky = post_bluesky(message_parts, image_url: image_url, image_alt: image_alt)
-      end
+      # Instagram gets long message with full URL
+      instagram_message = "#{long_parts[:text]}\n\n#{long_parts[:link_url]}"
+      success_instagram = post_instagram(instagram_message, image_url: image_url)
 
       success_instagram || success_bluesky
     end

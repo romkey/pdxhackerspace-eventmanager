@@ -60,36 +60,69 @@
           </div>
 
           <% ai_enabled = OllamaService.configured? %>
-          <% show_notifications = SiteConfig.current.slack_enabled? || SiteConfig.current.social_reminders_enabled? %>
+          <% site_config = SiteConfig.current %>
+          <% show_notifications = site_config.slack_enabled? || site_config.social_reminders_enabled? %>
+          <% short_max = site_config.short_reminder_max_length %>
+          <% long_max = site_config.long_reminder_max_length %>
           <% if show_notifications %>
             <div class="card mb-4 border-info" id="ai-reminder-card"
                  data-generate-url="<%= generate_ai_reminder_event_occurrence_path(@occurrence) %>">
             <div class="card-body">
                 <h5 class="card-title mb-3">Reminder Messages</h5>
+                <small class="text-muted d-block mb-3">Short = Bluesky (<%=short_max%> chars), Long = Slack/Instagram (<%=long_max%> chars). Leave blank to inherit from event.</small>
                 <div id="ai-notification" class="alert d-none mb-3" role="alert"></div>
-              <% [[7, :reminder_7d], [1, :reminder_1d]].each do |days, field| %>
-                <% default_text = @occurrence.reminder_default(days) %>
-                <div class="mb-3">
-                  <%= label_tag "#{field}", "#{days}-day reminder", class: "form-label" %>
-                  <%= text_area_tag "event_occurrence[#{field}]", @occurrence.public_send(field), id: "#{field}", class: "form-control", rows: 3, data: { default_text: default_text, days: days } %>
-                </div>
-                <div class="mb-3">
-                  <div class="btn-group btn-group-sm">
-                    <button type="button" class="btn btn-outline-secondary" data-action="set-default" data-target="<%= field %>">Use default</button>
-                    <button type="button" class="btn btn-outline-primary" data-action="generate-ai" data-target="<%= field %>" data-days="<%= days %>" <%= 'disabled' unless ai_enabled %>>
-                      <span class="btn-text">Generate with AI</span>
-                      <span class="spinner-border spinner-border-sm d-none" role="status"></span>
-                    </button>
+                
+                <% [7, 1].each do |days| %>
+                  <h6 class="text-muted mb-2"><%= days %>-Day Reminders</h6>
+                  <div class="row mb-3">
+                    <div class="col-md-6">
+                      <% field_short = "reminder_#{days}d_short".to_sym %>
+                      <%= label_tag field_short, "Short", class: "form-label" %>
+                      <%= text_area_tag "event_occurrence[#{field_short}]", @occurrence.public_send(field_short), 
+                          id: field_short.to_s, class: "form-control", rows: 2, maxlength: short_max,
+                          placeholder: @occurrence.reminder_short_default(days),
+                          data: { default_text: @occurrence.reminder_short_default(days), days: days } %>
+                      <div class="d-flex justify-content-between align-items-center mt-1">
+                        <small class="text-muted char-count" data-target="<%= field_short %>">0/<%=short_max%></small>
+                        <div class="btn-group btn-group-sm">
+                          <button type="button" class="btn btn-outline-secondary btn-sm" data-action="set-default" data-target="<%= field_short %>">Default</button>
+                          <% if ai_enabled %>
+                            <button type="button" class="btn btn-outline-primary btn-sm" data-action="generate-ai" data-target="<%= field_short %>" data-days="<%= days %>" data-type="short">
+                              <span class="btn-text"><i class="bi bi-stars"></i> AI</span>
+                              <span class="spinner-border spinner-border-sm d-none" role="status"></span>
+                            </button>
+                          <% end %>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <% field_long = "reminder_#{days}d_long".to_sym %>
+                      <%= label_tag field_long, "Long", class: "form-label" %>
+                      <%= text_area_tag "event_occurrence[#{field_long}]", @occurrence.public_send(field_long), 
+                          id: field_long.to_s, class: "form-control", rows: 2, maxlength: long_max,
+                          placeholder: @occurrence.reminder_long_default(days),
+                          data: { default_text: @occurrence.reminder_long_default(days), days: days } %>
+                      <div class="d-flex justify-content-between align-items-center mt-1">
+                        <small class="text-muted char-count" data-target="<%= field_long %>">0/<%=long_max%></small>
+                        <div class="btn-group btn-group-sm">
+                          <button type="button" class="btn btn-outline-secondary btn-sm" data-action="set-default" data-target="<%= field_long %>">Default</button>
+                          <% if ai_enabled %>
+                            <button type="button" class="btn btn-outline-primary btn-sm" data-action="generate-ai" data-target="<%= field_long %>" data-days="<%= days %>" data-type="long">
+                              <span class="btn-text"><i class="bi bi-stars"></i> AI</span>
+                              <span class="spinner-border spinner-border-sm d-none" role="status"></span>
+                            </button>
+                          <% end %>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <small class="form-text text-muted">
-                    <% if ai_enabled %>
-                      "Generate with AI" uses Ollama to create a unique reminder message.
-                    <% else %>
-                      Set <code>OLLAMA_SERVER</code> to enable AI generation.
-                    <% end %>
-                  </small>
-                </div>
-              <% end %>
+                <% end %>
+                
+                <% unless ai_enabled %>
+                  <div class="alert alert-info py-2 mb-0">
+                    <small><i class="bi bi-info-circle"></i> Set <code>OLLAMA_SERVER</code> to enable AI generation.</small>
+                  </div>
+                <% end %>
             </div>
           </div>
 
@@ -181,6 +214,7 @@
     const aiCard = document.getElementById('ai-reminder-card');
     const generateUrl = aiCard?.dataset.generateUrl;
     const days = button.dataset.days;
+    const messageType = button.dataset.type || 'short';
     
     if (!generateUrl) {
       showAiNotification('AI generation URL not found.', false);
@@ -189,22 +223,23 @@
 
     const btnText = button.querySelector('.btn-text');
     const spinner = button.querySelector('.spinner-border');
-    const originalText = btnText.textContent;
+    const originalHTML = btnText.innerHTML;
 
     // Show loading state
     button.disabled = true;
-    btnText.textContent = 'Generating...';
+    btnText.innerHTML = '';
     spinner.classList.remove('d-none');
 
     try {
       const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
-      const response = await fetch(`${generateUrl}?days=${days}`, {
+      const response = await fetch(generateUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
           'X-CSRF-Token': csrfToken
-        }
+        },
+        body: JSON.stringify({ days: parseInt(days), type: messageType })
       });
 
       const data = await response.json();
@@ -212,6 +247,7 @@
       if (data.success) {
         textarea.value = data.message;
         textarea.classList.add('border-success');
+        updateCharCount(textarea);
         setTimeout(() => textarea.classList.remove('border-success'), 2000);
         showAiNotification('AI reminder generated successfully!', true);
       } else {
@@ -222,10 +258,27 @@
       showAiNotification('An error occurred while generating. Please try again.', false);
     } finally {
       button.disabled = false;
-      btnText.textContent = originalText;
+      btnText.innerHTML = originalHTML;
       spinner.classList.add('d-none');
     }
   }
+  
+  // Character count for textareas
+  function updateCharCount(textarea) {
+    const countEl = document.querySelector(`.char-count[data-target="${textarea.id}"]`);
+    if (countEl) {
+      const max = textarea.maxLength;
+      const current = textarea.value.length;
+      countEl.textContent = `${current}/${max}`;
+      countEl.classList.toggle('text-danger', current > max * 0.9);
+    }
+  }
+
+  // Initialize character counts
+  document.querySelectorAll('textarea[maxlength]').forEach(textarea => {
+    updateCharCount(textarea);
+    textarea.addEventListener('input', () => updateCharCount(textarea));
+  });
 
   function showAiNotification(message, isSuccess) {
     const notification = document.getElementById('ai-notification');

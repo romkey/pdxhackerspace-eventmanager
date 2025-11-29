@@ -57,7 +57,9 @@ class SiteConfigsController < ApplicationController
       :slack_enabled,
       :social_reminders_enabled,
       :ai_reminder_prompt,
-      :ai_model
+      :ai_model,
+      :short_reminder_max_length,
+      :long_reminder_max_length
     )
   end
 end

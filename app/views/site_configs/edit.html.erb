@@ -167,6 +167,23 @@
             <% end %>
           </div>
 
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <%= f.label :short_reminder_max_length, "Short Reminder Max Length", class: "form-label" %>
+              <%= f.number_field :short_reminder_max_length, class: "form-control", min: 100, max: 500 %>
+              <small class="form-text text-muted">
+                <i class="bi bi-chat-square-text"></i> Maximum characters for short reminders (Bluesky). Default: 300
+              </small>
+            </div>
+            <div class="col-md-6 mb-3">
+              <%= f.label :long_reminder_max_length, "Long Reminder Max Length", class: "form-label" %>
+              <%= f.number_field :long_reminder_max_length, class: "form-control", min: 200, max: 2000 %>
+              <small class="form-text text-muted">
+                <i class="bi bi-chat-text"></i> Maximum characters for long reminders (Slack/Instagram). Default: 800
+              </small>
+            </div>
+          </div>
+
           <h5 class="border-bottom pb-2 mb-3 mt-4">Footer</h5>
 
           <div class="mb-3">

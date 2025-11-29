@@ -171,51 +171,97 @@
   <% site_config = SiteConfig.current %>
   <% if site_config.slack_enabled? || site_config.social_reminders_enabled? %>
     <% ollama_configured = ENV['OLLAMA_SERVER'].present? %>
+    <% short_max = site_config.short_reminder_max_length %>
+    <% long_max = site_config.long_reminder_max_length %>
     <div class="card mb-3" id="reminder-messages-section"
          data-generate-ai-url="<%= event.persisted? && event.occurrences.any? ? generate_ai_reminder_event_occurrence_path(event.occurrences.first) : '' %>"
          data-ai-event-description="<%= h(event.description.to_s) %>">
       <div class="card-header">
         <h5 class="mb-0"><i class="bi bi-chat-left-text"></i> Reminder Messages</h5>
-        <small class="text-muted">These messages will be used for all occurrences unless overridden on a specific occurrence</small>
+        <small class="text-muted">These messages will be used for all occurrences unless overridden. Short = Bluesky, Long = Slack/Instagram.</small>
       </div>
       <div class="card-body">
-        <div class="mb-3">
-          <%= f.label :reminder_7d, "7-Day Reminder Message", class: "form-label" %>
-          <%= f.text_area :reminder_7d, 
-              class: "form-control", 
-              rows: 3, 
-              id: "event_reminder_7d",
-              placeholder: event.reminder_default(7),
-              data: { default_text: event.reminder_default(7) } %>
-          <div class="mt-2 d-flex gap-2">
-            <button type="button" class="btn btn-sm btn-outline-secondary" data-action="set-default" data-target="event_reminder_7d">
-              Use Default
-            </button>
-            <% if ollama_configured %>
-              <button type="button" class="btn btn-sm btn-outline-primary" data-action="regenerate" data-target="event_reminder_7d">
-                <i class="bi bi-stars"></i> Generate with AI
-              </button>
-            <% end %>
+        <h6 class="text-muted mb-3">7-Day Reminders</h6>
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <%= f.label :reminder_7d_short, "Short (#{short_max} chars max)", class: "form-label" %>
+            <%= f.text_area :reminder_7d_short, 
+                class: "form-control", 
+                rows: 2, 
+                maxlength: short_max,
+                id: "event_reminder_7d_short",
+                placeholder: event.reminder_short_default(7),
+                data: { default_text: event.reminder_short_default(7) } %>
+            <div class="d-flex justify-content-between align-items-center mt-1">
+              <small class="text-muted char-count" data-target="event_reminder_7d_short">0/<%=short_max%></small>
+              <div class="btn-group btn-group-sm">
+                <button type="button" class="btn btn-outline-secondary btn-sm" data-action="set-default" data-target="event_reminder_7d_short">Default</button>
+                <% if ollama_configured %>
+                  <button type="button" class="btn btn-outline-primary btn-sm" data-action="regenerate" data-target="event_reminder_7d_short" data-type="short"><i class="bi bi-stars"></i> AI</button>
+                <% end %>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6 mb-3">
+            <%= f.label :reminder_7d_long, "Long (#{long_max} chars max)", class: "form-label" %>
+            <%= f.text_area :reminder_7d_long, 
+                class: "form-control", 
+                rows: 2, 
+                maxlength: long_max,
+                id: "event_reminder_7d_long",
+                placeholder: event.reminder_long_default(7),
+                data: { default_text: event.reminder_long_default(7) } %>
+            <div class="d-flex justify-content-between align-items-center mt-1">
+              <small class="text-muted char-count" data-target="event_reminder_7d_long">0/<%=long_max%></small>
+              <div class="btn-group btn-group-sm">
+                <button type="button" class="btn btn-outline-secondary btn-sm" data-action="set-default" data-target="event_reminder_7d_long">Default</button>
+                <% if ollama_configured %>
+                  <button type="button" class="btn btn-outline-primary btn-sm" data-action="regenerate" data-target="event_reminder_7d_long" data-type="long"><i class="bi bi-stars"></i> AI</button>
+                <% end %>
+              </div>
+            </div>
           </div>
         </div>
 
-        <div class="mb-3">
-          <%= f.label :reminder_1d, "1-Day Reminder Message", class: "form-label" %>
-          <%= f.text_area :reminder_1d, 
-              class: "form-control", 
-              rows: 3, 
-              id: "event_reminder_1d",
-              placeholder: event.reminder_default(1),
-              data: { default_text: event.reminder_default(1) } %>
-          <div class="mt-2 d-flex gap-2">
-            <button type="button" class="btn btn-sm btn-outline-secondary" data-action="set-default" data-target="event_reminder_1d">
-              Use Default
-            </button>
-            <% if ollama_configured %>
-              <button type="button" class="btn btn-sm btn-outline-primary" data-action="regenerate" data-target="event_reminder_1d">
-                <i class="bi bi-stars"></i> Generate with AI
-              </button>
-            <% end %>
+        <h6 class="text-muted mb-3">1-Day Reminders</h6>
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <%= f.label :reminder_1d_short, "Short (#{short_max} chars max)", class: "form-label" %>
+            <%= f.text_area :reminder_1d_short, 
+                class: "form-control", 
+                rows: 2, 
+                maxlength: short_max,
+                id: "event_reminder_1d_short",
+                placeholder: event.reminder_short_default(1),
+                data: { default_text: event.reminder_short_default(1) } %>
+            <div class="d-flex justify-content-between align-items-center mt-1">
+              <small class="text-muted char-count" data-target="event_reminder_1d_short">0/<%=short_max%></small>
+              <div class="btn-group btn-group-sm">
+                <button type="button" class="btn btn-outline-secondary btn-sm" data-action="set-default" data-target="event_reminder_1d_short">Default</button>
+                <% if ollama_configured %>
+                  <button type="button" class="btn btn-outline-primary btn-sm" data-action="regenerate" data-target="event_reminder_1d_short" data-type="short"><i class="bi bi-stars"></i> AI</button>
+                <% end %>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6 mb-3">
+            <%= f.label :reminder_1d_long, "Long (#{long_max} chars max)", class: "form-label" %>
+            <%= f.text_area :reminder_1d_long, 
+                class: "form-control", 
+                rows: 2, 
+                maxlength: long_max,
+                id: "event_reminder_1d_long",
+                placeholder: event.reminder_long_default(1),
+                data: { default_text: event.reminder_long_default(1) } %>
+            <div class="d-flex justify-content-between align-items-center mt-1">
+              <small class="text-muted char-count" data-target="event_reminder_1d_long">0/<%=long_max%></small>
+              <div class="btn-group btn-group-sm">
+                <button type="button" class="btn btn-outline-secondary btn-sm" data-action="set-default" data-target="event_reminder_1d_long">Default</button>
+                <% if ollama_configured %>
+                  <button type="button" class="btn btn-outline-primary btn-sm" data-action="regenerate" data-target="event_reminder_1d_long" data-type="long"><i class="bi bi-stars"></i> AI</button>
+                <% end %>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -350,9 +396,10 @@
     }
 
     const days = targetId.includes('_7d') ? 7 : 1;
-    const originalText = button.textContent;
+    const messageType = button.dataset.type || 'short';
+    const originalHTML = button.innerHTML;
     button.disabled = true;
-    button.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> Generating...';
+    button.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span>';
 
     try {
       const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
@@ -363,13 +410,14 @@
           'Accept': 'application/json',
           'X-CSRF-Token': csrfToken
         },
-        body: JSON.stringify({ days: days })
+        body: JSON.stringify({ days: days, type: messageType })
       });
 
       const data = await response.json();
       if (data.success) {
         textarea.value = data.message;
         textarea.classList.add("is-valid");
+        updateCharCount(textarea);
         setTimeout(() => textarea.classList.remove("is-valid"), 2000);
       } else {
         alert(`AI generation failed: ${data.message}`);
@@ -379,11 +427,31 @@
       alert('An error occurred during AI generation. Please try again.');
     } finally {
       button.disabled = false;
-      button.innerHTML = '<i class="bi bi-stars"></i> Generate with AI';
+      button.innerHTML = originalHTML;
     }
+  }
+
+  // Character count for textareas
+  function updateCharCount(textarea) {
+    const countEl = document.querySelector(`.char-count[data-target="${textarea.id}"]`);
+    if (countEl) {
+      const max = textarea.maxLength;
+      const current = textarea.value.length;
+      countEl.textContent = `${current}/${max}`;
+      countEl.classList.toggle('text-danger', current > max * 0.9);
+    }
+  }
+
+  function initCharCounts() {
+    document.querySelectorAll('textarea[maxlength]').forEach(textarea => {
+      updateCharCount(textarea);
+      textarea.addEventListener('input', () => updateCharCount(textarea));
+    });
   }
 
   document.addEventListener('DOMContentLoaded', initReminderButtons);
   document.addEventListener('turbo:load', initReminderButtons);
+  document.addEventListener('DOMContentLoaded', initCharCounts);
+  document.addEventListener('turbo:load', initCharCounts);
 </script>
 

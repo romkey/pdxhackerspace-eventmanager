@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_11_29_015156) do
+ActiveRecord::Schema[7.1].define(version: 2025_11_29_015626) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -78,8 +78,10 @@ ActiveRecord::Schema[7.1].define(version: 2025_11_29_015156) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.bigint "location_id"
-    t.text "reminder_7d"
-    t.text "reminder_1d"
+    t.text "reminder_7d_short"
+    t.text "reminder_1d_short"
+    t.text "reminder_7d_long"
+    t.text "reminder_1d_long"
     t.string "slug"
     t.index ["event_id", "occurs_at"], name: "index_event_occurrences_on_event_id_and_occurs_at"
     t.index ["event_id"], name: "index_event_occurrences_on_event_id"
@@ -113,8 +115,10 @@ ActiveRecord::Schema[7.1].define(version: 2025_11_29_015156) do
     t.boolean "slack_announce", default: true, null: false
     t.boolean "social_reminders", default: true, null: false
     t.string "slug"
-    t.text "reminder_7d"
-    t.text "reminder_1d"
+    t.text "reminder_7d_short"
+    t.text "reminder_1d_short"
+    t.text "reminder_7d_long"
+    t.text "reminder_1d_long"
     t.index ["ical_token"], name: "index_events_on_ical_token", unique: true
     t.index ["location_id"], name: "index_events_on_location_id"
     t.index ["open_to"], name: "index_events_on_open_to"
@@ -150,6 +154,8 @@ ActiveRecord::Schema[7.1].define(version: 2025_11_29_015156) do
     t.boolean "social_reminders_enabled", default: false, null: false
     t.text "ai_reminder_prompt", default: "Create a short, friendly reminder for {{event_title}} happening on {{event_date}} at {{event_time}} at PDX Hackerspace.", null: false
     t.string "ai_model"
+    t.integer "short_reminder_max_length", default: 300, null: false
+    t.integer "long_reminder_max_length", default: 800, null: false
   end
 
   create_table "users", force: :cascade do |t|

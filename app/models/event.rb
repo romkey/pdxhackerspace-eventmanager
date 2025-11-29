@@ -43,10 +43,18 @@ class Event < ApplicationRecord
     slug
   end
 
-  # Default reminder message for the event (used when no custom message is set)
-  def reminder_default(days_ahead)
+  # Default short reminder message (for Bluesky - limited characters)
+  def reminder_short_default(days_ahead)
     label = days_ahead == 7 ? 'One week away' : 'Tomorrow'
     "#{title} is #{label} at PDX Hackerspace. Join us!"
+  end
+
+  # Default long reminder message (for Slack/Instagram - more detail allowed)
+  def reminder_long_default(days_ahead)
+    label = days_ahead == 7 ? 'one week from now' : 'tomorrow'
+    msg = "#{title} is happening #{label} at PDX Hackerspace!"
+    msg += " #{description.truncate(400)}" if description.present?
+    msg
   end
 
   scope :active, -> { where(status: 'active') }

@@ -62,30 +62,26 @@ class OllamaService
       nil
     end
 
-    def generate_reminder(occurrence, days_ahead)
+    # Generate a short reminder (for Bluesky)
+    def generate_short_reminder(occurrence, days_ahead)
       return nil unless configured?
+
+      site_config = SiteConfig.current
+      max_length = site_config.short_reminder_max_length
 
       event = occurrence.event
       date_str = occurrence.occurs_at.strftime('%B %d, %Y')
       time_str = occurrence.occurs_at.strftime('%I:%M %p')
 
-      # Build the prompt from the template
-      # Use occurrence.description which returns custom_description if set, otherwise event.description
-      prompt_template = SiteConfig.current.ai_reminder_prompt_with_default
-      base_prompt = prompt_template
-                    .gsub(/\{\{\s*event_title\s*\}\}/i, event.title)
-                    .gsub(/\{\{\s*event_date\s*\}\}/i, date_str)
-                    .gsub(/\{\{\s*event_time\s*\}\}/i, time_str)
-                    .gsub(/\{\{\s*event_description\s*\}\}/i, occurrence.description.to_s)
-
-      # Add context about the timing
-      timing_context = days_ahead == 7 ? "one week away" : "tomorrow"
+      prompt_template = site_config.ai_reminder_prompt_with_default
+      base_prompt = build_base_prompt(prompt_template, event, occurrence, date_str, time_str)
+      timing_context = days_ahead == 7 ? 'one week away' : 'tomorrow'
 
       full_prompt = <<~PROMPT
         #{base_prompt}
 
         This reminder is for an event that is #{timing_context}.
-        IMPORTANT: The message must be under 280 characters total (Bluesky has a 300 character limit and we need room for a link).
+        IMPORTANT: The message must be under #{max_length - 20} characters (we need room for a link).
         Keep the message concise, friendly, and engaging.
         Include the event name, date, time, and mention it's at PDX Hackerspace.
         Do not use hashtags or emojis unless they're already in the event description.
@@ -95,7 +91,51 @@ class OllamaService
       generate(full_prompt)
     end
 
+    # Generate a long reminder (for Slack/Instagram)
+    def generate_long_reminder(occurrence, days_ahead)
+      return nil unless configured?
+
+      site_config = SiteConfig.current
+      max_length = site_config.long_reminder_max_length
+
+      event = occurrence.event
+      date_str = occurrence.occurs_at.strftime('%B %d, %Y')
+      time_str = occurrence.occurs_at.strftime('%I:%M %p')
+
+      prompt_template = site_config.ai_reminder_prompt_with_default
+      base_prompt = build_base_prompt(prompt_template, event, occurrence, date_str, time_str)
+      timing_context = days_ahead == 7 ? 'one week away' : 'tomorrow'
+
+      full_prompt = <<~PROMPT
+        #{base_prompt}
+
+        This reminder is for an event that is #{timing_context}.
+        You can use up to #{max_length} characters for this message.
+        Include the event name, date, time, location, and mention it's at PDX Hackerspace.
+        Include relevant details from the event description.
+        Be friendly and engaging, encouraging people to attend.
+        You may use line breaks for readability.
+        Do not use hashtags or emojis unless they're already in the event description.
+        Just output the reminder text, nothing else.
+      PROMPT
+
+      generate(full_prompt)
+    end
+
+    # Legacy method - generates short reminder for backwards compatibility
+    def generate_reminder(occurrence, days_ahead)
+      generate_short_reminder(occurrence, days_ahead)
+    end
+
     private
+
+    def build_base_prompt(prompt_template, event, occurrence, date_str, time_str)
+      prompt_template
+        .gsub(/\{\{\s*event_title\s*\}\}/i, event.title)
+        .gsub(/\{\{\s*event_date\s*\}\}/i, date_str)
+        .gsub(/\{\{\s*event_time\s*\}\}/i, time_str)
+        .gsub(/\{\{\s*event_description\s*\}\}/i, occurrence.description.to_s)
+    end
 
     def ollama_server
       ENV.fetch('OLLAMA_SERVER', nil)
