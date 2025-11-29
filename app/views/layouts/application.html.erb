@@ -46,6 +46,9 @@
     <!-- JSON-LD Structured Data -->
     <script type="application/ld+json"><%= organization_json_ld %></script>
     <%= content_for(:json_ld) %>
+    
+    <!-- Additional head content from views -->
+    <%= content_for(:head) %>
   </head>
 
   <body>

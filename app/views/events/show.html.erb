@@ -7,6 +7,11 @@
   <% og_image url_for(@event.banner_image) %>
 <% end %>
 
+<%# RSS Feed for this event %>
+<% content_for :head do %>
+  <%= auto_discovery_link_tag :rss, rss_event_path(@event, format: :rss), title: "#{@event.title} RSS Feed" %>
+<% end %>
+
 <%# JSON-LD Structured Data for Event %>
 <% content_for :json_ld do %>
   <script type="application/ld+json"><%= event_json_ld(@event) %></script>
@@ -238,9 +243,12 @@
     <section class="card mb-3">
       <div class="card-body">
         <h2 class="card-title h5">Subscribe</h2>
-        <p class="card-text small text-muted">Add this event to your calendar</p>
-        <%= link_to event_ical_path(@event.ical_token, format: :ics), class: "btn btn-primary w-100", "aria-label": "Subscribe to #{@event.title} calendar feed" do %>
+        <p class="card-text small text-muted">Add this event to your calendar or feed reader</p>
+        <%= link_to event_ical_path(@event.ical_token, format: :ics), class: "btn btn-primary w-100 mb-2", "aria-label": "Subscribe to #{@event.title} calendar feed" do %>
           <i class="bi bi-calendar-plus" aria-hidden="true"></i> iCal Feed
+        <% end %>
+        <%= link_to rss_event_path(@event, format: :rss), class: "btn btn-outline-warning w-100", "aria-label": "RSS feed for #{@event.title}" do %>
+          <i class="bi bi-rss" aria-hidden="true"></i> RSS Feed
         <% end %>
       </div>
     </section>

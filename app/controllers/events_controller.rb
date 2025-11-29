@@ -1,8 +1,8 @@
 class EventsController < ApplicationController
   skip_before_action :verify_authenticity_token, only: [:ical]
 
-  before_action :authenticate_user!, except: %i[index show ical embed rss]
-  before_action :set_event, only: %i[show embed edit update destroy postpone cancel reactivate generate_ai_reminder]
+  before_action :authenticate_user!, except: %i[index show ical embed rss event_rss]
+  before_action :set_event, only: %i[show embed edit update destroy postpone cancel reactivate generate_ai_reminder event_rss]
   before_action :authorize_event, only: %i[edit update destroy postpone cancel reactivate]
 
   def index
@@ -42,6 +42,21 @@ class EventsController < ApplicationController
                    .includes(:user, :hosts, :occurrences)
                    .order(updated_at: :desc)
                    .limit(50)
+
+    respond_to do |format|
+      format.rss { render layout: false }
+    end
+  end
+
+  def event_rss
+    # RSS feed for a single event's occurrences
+    # Only allow for public/members events that aren't drafts
+    if @event.draft? || @event.visibility == 'private'
+      head :not_found
+      return
+    end
+
+    @occurrences = @event.occurrences.upcoming.limit(20)
 
     respond_to do |format|
       format.rss { render layout: false }

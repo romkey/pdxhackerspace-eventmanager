@@ -44,6 +44,7 @@ Rails.application.routes.draw do
       post :reactivate
       post :generate_ai_reminder
       get :embed
+      get :rss, action: :event_rss, as: :rss, defaults: { format: 'rss' }
     end
 
     # Host management
