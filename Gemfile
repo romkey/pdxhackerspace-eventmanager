@@ -59,6 +59,9 @@ gem "sidekiq-scheduler"
 # Redis for Sidekiq
 gem "redis", "~> 5.0"
 
+# Rate limiting and throttling
+gem "rack-attack"
+
 # Windows does not include zoneinfo files, so bundle the tzinfo-data gem
 gem "tzinfo-data", platforms: %i[mingw mswin x64_mingw jruby]
 

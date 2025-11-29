@@ -2,6 +2,12 @@ require 'sidekiq/web'
 require 'sidekiq-scheduler/web'
 
 Rails.application.routes.draw do
+  # Health check endpoints (before authentication)
+  get 'health', to: 'health#show'
+  get 'up', to: 'health#show' # Rails 7.1+ convention
+  get 'health/live', to: 'health#live'
+  get 'health/ready', to: 'health#ready'
+
   get 'calendar/index'
   get 'event_occurrences/show'
   get 'event_occurrences/edit'
