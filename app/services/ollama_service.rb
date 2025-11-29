@@ -63,6 +63,7 @@ class OllamaService
     end
 
     # Generate a short reminder (for Bluesky)
+    # The generated text should use {{when}} as a placeholder for the date/time
     def generate_short_reminder(occurrence, days_ahead)
       return nil unless configured?
 
@@ -70,11 +71,8 @@ class OllamaService
       max_length = site_config.short_reminder_max_length
 
       event = occurrence.event
-      date_str = occurrence.occurs_at.strftime('%B %d, %Y')
-      time_str = occurrence.occurs_at.strftime('%I:%M %p')
-
       prompt_template = site_config.ai_reminder_prompt_with_default
-      base_prompt = build_base_prompt(prompt_template, event, occurrence, date_str, time_str)
+      base_prompt = build_base_prompt(prompt_template, event, occurrence)
       timing_context = days_ahead == 7 ? 'one week away' : 'tomorrow'
 
       full_prompt = <<~PROMPT
@@ -82,8 +80,10 @@ class OllamaService
 
         This reminder is for an event that is #{timing_context}.
         IMPORTANT: The message must be under #{max_length - 20} characters (we need room for a link).
+        IMPORTANT: Use {{when}} as a placeholder for the date and time. Do NOT include the actual date/time.
+        Example: "Join us for Workshop {{when}} at PDX Hackerspace!"
         Keep the message concise, friendly, and engaging.
-        Include the event name, date, time, and mention it's at PDX Hackerspace.
+        Include the event name, mention it's at PDX Hackerspace, and use {{when}} for timing.
         Do not use hashtags or emojis unless they're already in the event description.
         Just output the reminder text, nothing else.
       PROMPT
@@ -92,6 +92,7 @@ class OllamaService
     end
 
     # Generate a long reminder (for Slack/Instagram)
+    # The generated text should use {{when}} as a placeholder for the date/time
     def generate_long_reminder(occurrence, days_ahead)
       return nil unless configured?
 
@@ -99,11 +100,8 @@ class OllamaService
       max_length = site_config.long_reminder_max_length
 
       event = occurrence.event
-      date_str = occurrence.occurs_at.strftime('%B %d, %Y')
-      time_str = occurrence.occurs_at.strftime('%I:%M %p')
-
       prompt_template = site_config.ai_reminder_prompt_with_default
-      base_prompt = build_base_prompt(prompt_template, event, occurrence, date_str, time_str)
+      base_prompt = build_base_prompt(prompt_template, event, occurrence)
       timing_context = days_ahead == 7 ? 'one week away' : 'tomorrow'
 
       full_prompt = <<~PROMPT
@@ -111,7 +109,9 @@ class OllamaService
 
         This reminder is for an event that is #{timing_context}.
         You can use up to #{max_length} characters for this message.
-        Include the event name, date, time, location, and mention it's at PDX Hackerspace.
+        IMPORTANT: Use {{when}} as a placeholder for the date and time. Do NOT include the actual date/time.
+        Example: "Join us {{when}} at PDX Hackerspace for an exciting workshop!"
+        Include the event name, location, and mention it's at PDX Hackerspace.
         Include relevant details from the event description.
         Be friendly and engaging, encouraging people to attend.
         You may use line breaks for readability.
@@ -129,11 +129,9 @@ class OllamaService
 
     private
 
-    def build_base_prompt(prompt_template, event, occurrence, date_str, time_str)
+    def build_base_prompt(prompt_template, event, occurrence)
       prompt_template
         .gsub(/\{\{\s*event_title\s*\}\}/i, event.title)
-        .gsub(/\{\{\s*event_date\s*\}\}/i, date_str)
-        .gsub(/\{\{\s*event_time\s*\}\}/i, time_str)
         .gsub(/\{\{\s*event_description\s*\}\}/i, occurrence.description.to_s)
     end
 

@@ -45,16 +45,19 @@ class Event < ApplicationRecord
     slug
   end
 
+  # Placeholder for date/time that will be substituted when used for an occurrence
+  WHEN_PLACEHOLDER = '{{when}}'.freeze
+
   # Default short reminder message (for Bluesky - limited characters)
-  def reminder_short_default(days_ahead)
-    label = days_ahead == 7 ? 'One week away' : 'Tomorrow'
-    "#{title} is #{label} at PDX Hackerspace. Join us!"
+  # Uses {{when}} placeholder for date/time
+  def reminder_short_default(_days_ahead = nil)
+    "#{title} is coming up #{WHEN_PLACEHOLDER} at PDX Hackerspace. Join us!"
   end
 
   # Default long reminder message (for Slack/Instagram - more detail allowed)
-  def reminder_long_default(days_ahead)
-    label = days_ahead == 7 ? 'one week from now' : 'tomorrow'
-    msg = "#{title} is happening #{label} at PDX Hackerspace!"
+  # Uses {{when}} placeholder for date/time
+  def reminder_long_default(_days_ahead = nil)
+    msg = "#{title} is happening #{WHEN_PLACEHOLDER} at PDX Hackerspace!"
     msg += " #{description.truncate(400)}" if description.present?
     msg
   end

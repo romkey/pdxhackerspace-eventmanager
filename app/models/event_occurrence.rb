@@ -29,46 +29,59 @@ class EventOccurrence < ApplicationRecord
   scope :upcoming, -> { where('occurs_at >= ?', Time.now).order(:occurs_at) }
   scope :past, -> { where('occurs_at < ?', Time.now).order(occurs_at: :desc) }
 
-  # Default short reminder message (for Bluesky - limited characters)
-  def reminder_short_default(days_ahead)
-    label = days_ahead == 7 ? 'One week away' : 'Tomorrow'
+  # Format the date/time for this occurrence
+  def when_text
     date_str = occurs_at.strftime('%B %d, %Y')
     time_str = occurs_at.strftime('%I:%M %p')
-    "#{event.title} is #{label} at PDX Hackerspace on #{date_str} at #{time_str}. Join us!"
+    "on #{date_str} at #{time_str}"
+  end
+
+  # Substitute {{when}} placeholder with actual date/time
+  def substitute_when_placeholder(message)
+    return message if message.blank?
+
+    message.gsub(/\{\{when\}\}/i, when_text)
+  end
+
+  # Default short reminder message (for Bluesky - limited characters)
+  def reminder_short_default(_days_ahead = nil)
+    substitute_when_placeholder(event.reminder_short_default)
   end
 
   # Default long reminder message (for Slack/Instagram - more detail allowed)
-  def reminder_long_default(days_ahead)
-    label = days_ahead == 7 ? 'one week from now' : 'tomorrow'
-    date_str = occurs_at.strftime('%B %d, %Y')
-    time_str = occurs_at.strftime('%I:%M %p')
+  def reminder_long_default(_days_ahead = nil)
+    base = substitute_when_placeholder(event.reminder_long_default)
     duration_str = format_duration_text(duration)
 
-    msg = "#{event.title} is happening #{label} at PDX Hackerspace!"
-    msg += "\n📅 #{date_str} at #{time_str} (#{duration_str})"
-    msg += "\n📍 #{event_location.name}" if event_location.present?
-    msg += "\n\n#{description.truncate(400)}" if description.present?
-    msg
+    # Add occurrence-specific details
+    details = "\n📅 #{occurs_at.strftime('%B %d, %Y')} at #{occurs_at.strftime('%I:%M %p')} (#{duration_str})"
+    details += "\n📍 #{event_location.name}" if event_location.present?
+
+    "#{base}#{details}"
   end
 
-  # Get the effective 7-day short reminder (own or inherited from event)
+  # Get the effective 7-day short reminder (own or inherited from event, with {{when}} substituted)
   def effective_reminder_7d_short
-    reminder_7d_short.presence || event.reminder_7d_short
+    message = reminder_7d_short.presence || event.reminder_7d_short
+    substitute_when_placeholder(message)
   end
 
-  # Get the effective 1-day short reminder (own or inherited from event)
+  # Get the effective 1-day short reminder (own or inherited from event, with {{when}} substituted)
   def effective_reminder_1d_short
-    reminder_1d_short.presence || event.reminder_1d_short
+    message = reminder_1d_short.presence || event.reminder_1d_short
+    substitute_when_placeholder(message)
   end
 
-  # Get the effective 7-day long reminder (own or inherited from event)
+  # Get the effective 7-day long reminder (own or inherited from event, with {{when}} substituted)
   def effective_reminder_7d_long
-    reminder_7d_long.presence || event.reminder_7d_long
+    message = reminder_7d_long.presence || event.reminder_7d_long
+    substitute_when_placeholder(message)
   end
 
-  # Get the effective 1-day long reminder (own or inherited from event)
+  # Get the effective 1-day long reminder (own or inherited from event, with {{when}} substituted)
   def effective_reminder_1d_long
-    reminder_1d_long.presence || event.reminder_1d_long
+    message = reminder_1d_long.presence || event.reminder_1d_long
+    substitute_when_placeholder(message)
   end
 
   after_update :log_update

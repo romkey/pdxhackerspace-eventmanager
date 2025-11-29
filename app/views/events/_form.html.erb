@@ -181,6 +181,15 @@
         <small class="text-muted">These messages will be used for all occurrences unless overridden. Short = Bluesky, Long = Slack/Instagram.</small>
       </div>
       <div class="card-body">
+        <div class="alert alert-info py-2 mb-3" role="note">
+          <small>
+            <i class="bi bi-info-circle" aria-hidden="true"></i>
+            <strong>Tip:</strong> Use <code>{{when}}</code> as a placeholder for the date and time. 
+            It will be automatically replaced with the actual date/time for each occurrence.
+            <br>
+            <em>Example: "Join us for <%= event.title %> {{when}} at PDX Hackerspace!"</em>
+          </small>
+        </div>
         <h6 class="text-muted mb-3">7-Day Reminders</h6>
         <div class="row">
           <div class="col-md-6 mb-3">

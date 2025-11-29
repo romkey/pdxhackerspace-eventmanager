@@ -70,6 +70,13 @@
             <div class="card-body">
                 <h5 class="card-title mb-3">Reminder Messages</h5>
                 <small class="text-muted d-block mb-3">Short = Bluesky (<%=short_max%> chars), Long = Slack/Instagram (<%=long_max%> chars). Leave blank to inherit from event.</small>
+                <div class="alert alert-info py-2 mb-3" role="note">
+                  <small>
+                    <i class="bi bi-info-circle" aria-hidden="true"></i>
+                    <strong>Tip:</strong> Use <code>{{when}}</code> as a placeholder for the date and time. 
+                    It will be replaced with "<%= @occurrence.when_text %>" for this occurrence.
+                  </small>
+                </div>
                 <div id="ai-notification" class="alert d-none mb-3" role="alert"></div>
                 
                 <% [7, 1].each do |days| %>
