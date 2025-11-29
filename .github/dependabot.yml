@@ -17,6 +17,28 @@ updates:
       - "ruby"
     commit-message:
       prefix: "chore(deps)"
+    # Ignore major Rails version bumps - upgrade manually after testing
+    ignore:
+      - dependency-name: "rails"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "actioncable"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "actionmailer"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "actionpack"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "actionview"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "activejob"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "activemodel"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "activerecord"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "activestorage"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "activesupport"
+        update-types: ["version-update:semver-major"]
     groups:
       # Group minor and patch updates together
       rails:
