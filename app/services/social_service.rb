@@ -143,18 +143,14 @@ class SocialService
     def upload_bluesky_image(token, image_url)
       Rails.logger.info "SocialService: Fetching image from #{image_url}"
 
-      # Fetch the image from the URL
-      image_uri = URI.parse(image_url)
-      image_response = Net::HTTP.get_response(image_uri)
+      # Fetch the image from the URL, following redirects
+      image_data, content_type = fetch_image_with_redirects(image_url)
 
-      unless image_response.is_a?(Net::HTTPSuccess)
-        Rails.logger.error "SocialService: Failed to fetch image (#{image_response.code}) from #{image_url}"
-        Rails.logger.error "SocialService: Image fetch response: #{image_response.body.to_s.truncate(500)}"
+      unless image_data
+        Rails.logger.error "SocialService: Failed to fetch image from #{image_url}"
         return nil
       end
 
-      image_data = image_response.body
-      content_type = image_response['Content-Type'] || 'image/jpeg'
       Rails.logger.info "SocialService: Fetched image - size: #{image_data.bytesize} bytes, content-type: #{content_type}"
 
       # Upload to Bluesky
@@ -179,6 +175,35 @@ class SocialService
     rescue StandardError => e
       Rails.logger.error "SocialService: Bluesky image upload error - #{e.class}: #{e.message}"
       Rails.logger.error e.backtrace.first(5).join("\n")
+      nil
+    end
+
+    def fetch_image_with_redirects(url, redirect_limit = 5)
+      return nil if redirect_limit.zero?
+
+      uri = URI.parse(url)
+      http = Net::HTTP.new(uri.host, uri.port)
+      http.use_ssl = (uri.scheme == 'https')
+      http.open_timeout = 10
+      http.read_timeout = 30
+
+      request = Net::HTTP::Get.new(uri)
+      response = http.request(request)
+
+      case response
+      when Net::HTTPSuccess
+        content_type = response['Content-Type'] || 'image/jpeg'
+        [response.body, content_type]
+      when Net::HTTPRedirection
+        new_location = response['Location']
+        Rails.logger.info "SocialService: Following redirect to #{new_location}"
+        fetch_image_with_redirects(new_location, redirect_limit - 1)
+      else
+        Rails.logger.error "SocialService: Failed to fetch image (#{response.code}) from #{url}"
+        nil
+      end
+    rescue StandardError => e
+      Rails.logger.error "SocialService: Error fetching image: #{e.class}: #{e.message}"
       nil
     end
 
