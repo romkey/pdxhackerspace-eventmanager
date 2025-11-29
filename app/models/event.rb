@@ -268,7 +268,8 @@ class Event < ApplicationRecord
     new_slug = base_slug
     counter = 1
 
-    while Event.exists?(slug: new_slug)
+    # Check against ALL events including soft-deleted ones to avoid conflicts
+    while Event.unscoped.exists?(slug: new_slug)
       new_slug = "#{base_slug}-#{counter}"
       counter += 1
     end
