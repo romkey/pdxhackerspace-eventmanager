@@ -4,6 +4,14 @@ class ImproveSchemaIndexesAndConstraints < ActiveRecord::Migration[7.1]
   # rubocop:disable Rails/SkipsModelValidations, Rails/BulkChangeTable
   def up
     # 1. Fix event_journals.occurrence_id to be a proper bigint foreign key
+    # First, nullify any orphaned occurrence_id references (occurrences that were deleted)
+    execute <<~SQL.squish
+      UPDATE event_journals
+      SET occurrence_id = NULL
+      WHERE occurrence_id IS NOT NULL
+        AND occurrence_id NOT IN (SELECT id FROM event_occurrences)
+    SQL
+
     change_column :event_journals, :occurrence_id, :bigint
     add_foreign_key :event_journals, :event_occurrences, column: :occurrence_id, on_delete: :nullify
 
