@@ -2,7 +2,9 @@ require 'net/http'
 require 'uri'
 require 'json'
 
-class SocialService
+class SocialService # rubocop:disable Metrics/ClassLength
+  BLUESKY_MAX_IMAGE_SIZE = 950_000 # ~950KB to stay under 976.56KB limit
+
   class << self
     include Rails.application.routes.url_helpers
 
@@ -152,6 +154,15 @@ class SocialService
 
       Rails.logger.info "SocialService: Fetched image - size: #{image_data.bytesize} bytes, content-type: #{content_type}"
 
+      # Resize if too large for Bluesky
+      if image_data.bytesize > BLUESKY_MAX_IMAGE_SIZE
+        Rails.logger.info "SocialService: Image too large, resizing..."
+        image_data, content_type = resize_image_for_bluesky(image_data)
+        return nil unless image_data
+
+        Rails.logger.info "SocialService: Resized image - size: #{image_data.bytesize} bytes, content-type: #{content_type}"
+      end
+
       # Upload to Bluesky
       uri = URI('https://bsky.social/xrpc/com.atproto.repo.uploadBlob')
       request = Net::HTTP::Post.new(uri)
@@ -175,6 +186,37 @@ class SocialService
       Rails.logger.error "SocialService: Bluesky image upload error - #{e.class}: #{e.message}"
       Rails.logger.error e.backtrace.first(5).join("\n")
       nil
+    end
+
+    def resize_image_for_bluesky(image_data)
+      # Use ImageMagick/Vips via ActiveStorage to resize the image
+      tempfile = Tempfile.new(['bluesky_image', '.jpg'])
+      tempfile.binmode
+      tempfile.write(image_data)
+      tempfile.rewind
+
+      # Use MiniMagick to resize and compress
+      image = MiniMagick::Image.open(tempfile.path)
+      image.resize '1200x1200>' # Max 1200px on longest side
+      image.format 'jpeg'
+      image.quality 85
+
+      # If still too large, reduce quality further
+      while image.size > BLUESKY_MAX_IMAGE_SIZE && image.data['quality'].to_i > 50
+        current_quality = image.data['quality']&.to_i || 85
+        image.quality(current_quality - 10)
+      end
+
+      result_data = File.binread(image.path)
+      Rails.logger.info "SocialService: Resized to #{result_data.bytesize} bytes"
+
+      [result_data, 'image/jpeg']
+    rescue StandardError => e
+      Rails.logger.error "SocialService: Failed to resize image: #{e.class}: #{e.message}"
+      nil
+    ensure
+      tempfile&.close
+      tempfile&.unlink
     end
 
     def fetch_image_with_redirects(url, redirect_limit = 5)
