@@ -56,6 +56,7 @@ Rails.application.routes.draw do
       post :reactivate
       post :post_slack_reminder
       post :post_social_reminder
+      post :generate_ai_reminder
     end
   end
 

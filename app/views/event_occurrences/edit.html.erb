@@ -59,36 +59,35 @@
             </small>
           </div>
 
-          <% ai_enabled = defined?(OLLAMA_SERVER) && OLLAMA_SERVER.present? %>
+          <% ai_enabled = OllamaService.configured? %>
           <% show_notifications = SiteConfig.current.slack_enabled? || SiteConfig.current.social_reminders_enabled? %>
           <% if show_notifications %>
             <div class="card mb-4 border-info" id="ai-reminder-card"
-                 data-ai-prompt="<%= SiteConfig.current.ai_reminder_prompt_with_default %>"
-                 data-ai-event-title="<%= @event.title %>"
-                 data-ai-event-date="<%= @occurrence.occurs_at.strftime('%B %d, %Y') %>"
-                 data-ai-event-time="<%= @occurrence.occurs_at.strftime('%I:%M %p') %>"
-                 data-ai-event-description="<%= @event.description.to_s %>">
+                 data-generate-url="<%= generate_ai_reminder_event_occurrence_path(@occurrence) %>">
             <div class="card-body">
                 <h5 class="card-title mb-3">Reminder Messages</h5>
+                <div id="ai-notification" class="alert d-none mb-3" role="alert"></div>
               <% [[7, :ai_reminder_7d], [1, :ai_reminder_1d]].each do |days, field| %>
                 <% default_text = @occurrence.ai_reminder_default(days) %>
                 <div class="mb-3">
                   <%= label_tag "#{field}", "#{days}-day reminder", class: "form-label" %>
-                  <%= text_area_tag "event_occurrence[#{field}]", @occurrence.public_send(field), id: "#{field}", class: "form-control", rows: 3, data: { default_text: default_text } %>
+                  <%= text_area_tag "event_occurrence[#{field}]", @occurrence.public_send(field), id: "#{field}", class: "form-control", rows: 3, data: { default_text: default_text, days: days } %>
                 </div>
                 <div class="mb-3">
                   <div class="btn-group btn-group-sm">
-                    <button type="button" class="btn btn-outline-secondary" data-action="set-default" data-target="<%= field %>" <%= 'disabled' unless ai_enabled %>>Use default</button>
-                    <button type="button" class="btn btn-outline-primary" data-action="regenerate" data-target="<%= field %>" <%= 'disabled' unless ai_enabled %>>Generate with AI</button>
+                    <button type="button" class="btn btn-outline-secondary" data-action="set-default" data-target="<%= field %>">Use default</button>
+                    <button type="button" class="btn btn-outline-primary" data-action="generate-ai" data-target="<%= field %>" data-days="<%= days %>" <%= 'disabled' unless ai_enabled %>>
+                      <span class="btn-text">Generate with AI</span>
+                      <span class="spinner-border spinner-border-sm d-none" role="status"></span>
+                    </button>
                   </div>
                   <small class="form-text text-muted">
-                    Clicking "Regenerate" will rerun the AI prompt (placeholder for now) and "Use default" loads the standard reminder copy.
+                    <% if ai_enabled %>
+                      "Generate with AI" uses Ollama to create a unique reminder message.
+                    <% else %>
+                      Set <code>OLLAMA_SERVER</code> to enable AI generation.
+                    <% end %>
                   </small>
-                </div>
-              <% end %>
-              <% unless ai_enabled %>
-                <div class="alert alert-warning mt-3 mb-0">
-                  <strong>AI disabled:</strong> Set <code>OLLAMA_SERVER</code> in your environment to enable the AI buttons.
                 </div>
               <% end %>
             </div>
@@ -98,12 +97,23 @@
             <div class="card mb-4 border-secondary">
               <div class="card-body">
                 <h5 class="card-title mb-3">Manual Reminders</h5>
+                <div id="reminder-notification" class="alert d-none mb-3" role="alert"></div>
                 <% site_config = SiteConfig.current %>
                 <% slack_disabled = !site_config.slack_enabled? || !@event.slack_announce? %>
                 <% social_disabled = !site_config.social_reminders_enabled? || !@event.social_reminders? %>
                 <div class="mb-3">
-                  <button type="button" class="btn btn-warning me-2" data-reminder-action="post-slack-form" <%= 'disabled' if slack_disabled %>>Post to Slack now</button>
-                  <button type="button" class="btn btn-info" data-reminder-action="post-social-form" <%= 'disabled' if social_disabled %>>Post to Social Media now</button>
+                  <button type="button" class="btn btn-warning me-2" id="post-slack-btn"
+                          data-post-url="<%= post_slack_reminder_event_occurrence_path(@occurrence) %>"
+                          <%= 'disabled' if slack_disabled %>>
+                    <span class="btn-text">Post to Slack now</span>
+                    <span class="spinner-border spinner-border-sm d-none" role="status"></span>
+                  </button>
+                  <button type="button" class="btn btn-info" id="post-social-btn"
+                          data-post-url="<%= post_social_reminder_event_occurrence_path(@occurrence) %>"
+                          <%= 'disabled' if social_disabled %>>
+                    <span class="btn-text">Post to Social Media now</span>
+                    <span class="spinner-border spinner-border-sm d-none" role="status"></span>
+                  </button>
                 </div>
                 <% unless site_config.slack_enabled? %>
                   <p class="text-muted mb-0"><i class="bi bi-slack"></i> Enable Slack reminders in Site Config to post now.</p>
@@ -149,11 +159,6 @@
   </div>
 </div>
 
-<%= form_with url: post_slack_reminder_event_occurrence_path(@occurrence), method: :post, id: "post-slack-form", local: true do %>
-<% end %>
-<%= form_with url: post_social_reminder_event_occurrence_path(@occurrence), method: :post, id: "post-social-form", local: true do %>
-<% end %>
-
 <script>
   document.addEventListener("click", function(event) {
     const button = event.target.closest("[data-action]");
@@ -167,34 +172,133 @@
       textarea.value = textarea.dataset.defaultText || "";
     }
 
-    if (button.dataset.action === "regenerate") {
-      const aiCard = textarea.closest("[data-ai-prompt]");
-      const prompt = aiCard?.dataset.aiPrompt;
-      const title = aiCard?.dataset.aiEventTitle;
-      const date = aiCard?.dataset.aiEventDate;
-      const time = aiCard?.dataset.aiEventTime;
-      const description = aiCard?.dataset.aiEventDescription;
-      textarea.value = buildAiMessage(prompt, title, date, time, description, textarea.dataset.defaultText);
-      textarea.classList.add("is-warning");
-      setTimeout(() => textarea.classList.remove("is-warning"), 500);
+    if (button.dataset.action === "generate-ai") {
+      generateAiReminder(button, textarea);
     }
   });
-  document.querySelectorAll("[data-reminder-action]").forEach((trigger) => {
-    trigger.addEventListener("click", (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-      const form = document.getElementById(trigger.dataset.reminderAction);
-      if (form) form.submit();
-    });
+
+  async function generateAiReminder(button, textarea) {
+    const aiCard = document.getElementById('ai-reminder-card');
+    const generateUrl = aiCard?.dataset.generateUrl;
+    const days = button.dataset.days;
+    
+    if (!generateUrl) {
+      showAiNotification('AI generation URL not found.', false);
+      return;
+    }
+
+    const btnText = button.querySelector('.btn-text');
+    const spinner = button.querySelector('.spinner-border');
+    const originalText = btnText.textContent;
+
+    // Show loading state
+    button.disabled = true;
+    btnText.textContent = 'Generating...';
+    spinner.classList.remove('d-none');
+
+    try {
+      const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+      const response = await fetch(`${generateUrl}?days=${days}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'X-CSRF-Token': csrfToken
+        }
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        textarea.value = data.message;
+        textarea.classList.add('border-success');
+        setTimeout(() => textarea.classList.remove('border-success'), 2000);
+        showAiNotification('AI reminder generated successfully!', true);
+      } else {
+        showAiNotification(data.message || 'Failed to generate AI reminder.', false);
+      }
+    } catch (error) {
+      console.error('Error generating AI reminder:', error);
+      showAiNotification('An error occurred while generating. Please try again.', false);
+    } finally {
+      button.disabled = false;
+      btnText.textContent = originalText;
+      spinner.classList.add('d-none');
+    }
+  }
+
+  function showAiNotification(message, isSuccess) {
+    const notification = document.getElementById('ai-notification');
+    if (!notification) return;
+    
+    notification.textContent = message;
+    notification.className = `alert ${isSuccess ? 'alert-success' : 'alert-danger'} mb-3`;
+    notification.classList.remove('d-none');
+    
+    if (isSuccess) {
+      setTimeout(() => notification.classList.add('d-none'), 5000);
+    }
+  }
+
+  // Post to Slack/Social Media buttons - async with inline notification
+  function showNotification(message, isSuccess) {
+    const notification = document.getElementById('reminder-notification');
+    if (!notification) return;
+    
+    notification.textContent = message;
+    notification.className = `alert ${isSuccess ? 'alert-success' : 'alert-danger'} mb-3`;
+    notification.classList.remove('d-none');
+    
+    // Auto-hide success messages after 5 seconds
+    if (isSuccess) {
+      setTimeout(() => notification.classList.add('d-none'), 5000);
+    }
+  }
+
+  async function postReminder(button) {
+    const url = button.dataset.postUrl;
+    if (!url) return;
+
+    const btnText = button.querySelector('.btn-text');
+    const spinner = button.querySelector('.spinner-border');
+    const originalText = btnText.textContent;
+
+    // Show loading state
+    button.disabled = true;
+    btnText.textContent = 'Posting...';
+    spinner.classList.remove('d-none');
+
+    try {
+      const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'X-CSRF-Token': csrfToken
+        }
+      });
+
+      const data = await response.json();
+      showNotification(data.message, data.success);
+    } catch (error) {
+      console.error('Error posting reminder:', error);
+      showNotification('An error occurred while posting. Please try again.', false);
+    } finally {
+      // Restore button state
+      button.disabled = false;
+      btnText.textContent = originalText;
+      spinner.classList.add('d-none');
+    }
+  }
+
+  document.getElementById('post-slack-btn')?.addEventListener('click', function(e) {
+    e.preventDefault();
+    postReminder(this);
   });
 
-  function buildAiMessage(prompt, title, date, time, description, fallback) {
-    if (!prompt) return fallback || "";
-    return prompt
-      .replace(/{{\s*event_title\s*}}/gi, title || "")
-      .replace(/{{\s*event_date\s*}}/gi, date || "")
-      .replace(/{{\s*event_time\s*}}/gi, time || "")
-      .replace(/{{\s*event_description\s*}}/gi, description || "")
-      .trim() || fallback || "";
-  }
+  document.getElementById('post-social-btn')?.addEventListener('click', function(e) {
+    e.preventDefault();
+    postReminder(this);
+  });
 </script>

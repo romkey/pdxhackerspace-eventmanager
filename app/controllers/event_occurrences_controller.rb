@@ -1,8 +1,8 @@
 class EventOccurrencesController < ApplicationController
   include ReminderMessageBuilder
 
-  before_action :set_occurrence, only: %i[show edit update destroy postpone cancel reactivate post_slack_reminder post_social_reminder]
-  before_action :authorize_occurrence, only: %i[edit update destroy postpone cancel reactivate post_slack_reminder post_social_reminder]
+  before_action :set_occurrence, only: %i[show edit update destroy postpone cancel reactivate post_slack_reminder post_social_reminder generate_ai_reminder]
+  before_action :authorize_occurrence, only: %i[edit update destroy postpone cancel reactivate post_slack_reminder post_social_reminder generate_ai_reminder]
 
   def show
     @event = @occurrence.event
@@ -67,15 +67,24 @@ class EventOccurrencesController < ApplicationController
   def post_slack_reminder
     site_config = SiteConfig.current
     unless site_config.slack_enabled? && @occurrence.event.slack_announce?
-      redirect_to @occurrence, alert: 'Slack reminders are disabled for this occurrence.'
+      respond_to do |format|
+        format.html { redirect_to @occurrence, alert: 'Slack reminders are disabled for this occurrence.' }
+        format.json { render json: { success: false, message: 'Slack reminders are disabled for this occurrence.' } }
+      end
       return
     end
 
     message = reminder_message(@occurrence, 'today')
     if SlackService.post_occurrence_reminder(@occurrence, message)
-      redirect_to @occurrence, notice: 'Posted reminder to Slack.'
+      respond_to do |format|
+        format.html { redirect_to @occurrence, notice: 'Posted reminder to Slack.' }
+        format.json { render json: { success: true, message: 'Posted reminder to Slack.' } }
+      end
     else
-      redirect_to @occurrence, alert: 'Failed to post to Slack.'
+      respond_to do |format|
+        format.html { redirect_to @occurrence, alert: 'Failed to post to Slack.' }
+        format.json { render json: { success: false, message: 'Failed to post to Slack.' } }
+      end
     end
   end
 
@@ -83,17 +92,45 @@ class EventOccurrencesController < ApplicationController
     site_config = SiteConfig.current
     unless site_config.social_reminders_enabled? && @occurrence.event.social_reminders?
       Rails.logger.info "post_social_reminder: Disabled - site=#{site_config.social_reminders_enabled?}, event=#{@occurrence.event.social_reminders?}"
-      redirect_to @occurrence, alert: 'Social reminders are disabled for this occurrence.'
+      respond_to do |format|
+        format.html { redirect_to @occurrence, alert: 'Social reminders are disabled for this occurrence.' }
+        format.json { render json: { success: false, message: 'Social reminders are disabled for this occurrence.' } }
+      end
       return
     end
 
     Rails.logger.info "post_social_reminder: Posting for occurrence #{@occurrence.id} (#{@occurrence.event.title})"
     message = reminder_message(@occurrence, 'today')
     if SocialService.post_occurrence_reminder(@occurrence, message)
-      redirect_to @occurrence, notice: 'Posted reminder to social media.'
+      respond_to do |format|
+        format.html { redirect_to @occurrence, notice: 'Posted reminder to social media.' }
+        format.json { render json: { success: true, message: 'Posted reminder to social media.' } }
+      end
     else
       Rails.logger.warn "post_social_reminder: SocialService.post_occurrence_reminder returned false"
-      redirect_to @occurrence, alert: 'Failed to post to social media. Check that BLUESKY_HANDLE/BLUESKY_APP_PASSWORD or INSTAGRAM credentials are configured.'
+      error_msg = 'Failed to post to social media. Check that credentials are configured.'
+      respond_to do |format|
+        format.html { redirect_to @occurrence, alert: error_msg }
+        format.json { render json: { success: false, message: error_msg } }
+      end
+    end
+  end
+
+  def generate_ai_reminder
+    days_ahead = params[:days].to_i
+    days_ahead = 7 unless [1, 7].include?(days_ahead)
+
+    unless OllamaService.configured?
+      render json: { success: false, message: 'Ollama server not configured.' }
+      return
+    end
+
+    generated_text = OllamaService.generate_reminder(@occurrence, days_ahead)
+
+    if generated_text.present?
+      render json: { success: true, message: generated_text }
+    else
+      render json: { success: false, message: 'Failed to generate AI reminder. Check server logs.' }
     end
   end
 
