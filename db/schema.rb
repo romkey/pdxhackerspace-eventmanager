@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_11_30_164645) do
+ActiveRecord::Schema[7.2].define(version: 2025_11_30_193121) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_trgm"
   enable_extension "plpgsql"
@@ -155,6 +155,27 @@ ActiveRecord::Schema[7.2].define(version: 2025_11_30_164645) do
     t.index ["name"], name: "index_locations_on_name", unique: true
   end
 
+  create_table "reminder_postings", force: :cascade do |t|
+    t.bigint "event_id", null: false
+    t.bigint "event_occurrence_id", null: false
+    t.string "platform", null: false
+    t.string "post_uid"
+    t.string "post_url"
+    t.text "message"
+    t.string "reminder_type"
+    t.datetime "posted_at", null: false
+    t.datetime "deleted_at"
+    t.bigint "deleted_by_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["deleted_by_id"], name: "index_reminder_postings_on_deleted_by_id"
+    t.index ["event_id", "posted_at"], name: "index_reminder_postings_on_event_id_and_posted_at"
+    t.index ["event_id"], name: "index_reminder_postings_on_event_id"
+    t.index ["event_occurrence_id"], name: "index_reminder_postings_on_event_occurrence_id"
+    t.index ["platform"], name: "index_reminder_postings_on_platform"
+    t.index ["posted_at"], name: "index_reminder_postings_on_posted_at"
+  end
+
   create_table "site_configs", force: :cascade do |t|
     t.string "organization_name"
     t.string "contact_email"
@@ -212,4 +233,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_11_30_164645) do
   add_foreign_key "event_occurrences", "locations"
   add_foreign_key "events", "locations"
   add_foreign_key "events", "users"
+  add_foreign_key "reminder_postings", "event_occurrences"
+  add_foreign_key "reminder_postings", "events"
+  add_foreign_key "reminder_postings", "users", column: "deleted_by_id"
 end

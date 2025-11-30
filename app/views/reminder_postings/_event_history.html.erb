@@ -1,0 +1,92 @@
+<%# Display posting history for an event - for hosts and admins %>
+<% postings = event.reminder_postings.includes(:event_occurrence, :deleted_by).recent_first %>
+
+<% if postings.any? %>
+  <section class="card mb-3">
+    <div class="card-body">
+      <h2 class="card-title h5">
+        <i class="bi bi-clock-history"></i> Reminder Posting History
+      </h2>
+      <p class="card-text small text-muted">
+        Social media and Slack reminders posted for this event
+      </p>
+
+      <div class="table-responsive">
+        <table class="table table-sm table-striped">
+          <thead>
+            <tr>
+              <th>Posted</th>
+              <th>Platform</th>
+              <th>Occurrence</th>
+              <th>Status</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <% postings.limit(10).each do |posting| %>
+              <tr class="<%= 'text-muted' if posting.deleted? %>">
+                <td>
+                  <small><%= posting.posted_at.strftime('%b %d, %Y %I:%M %p') %></small>
+                </td>
+                <td>
+                  <%= render_platform_badge(posting.platform) %>
+                </td>
+                <td>
+                  <% if posting.event_occurrence %>
+                    <%= link_to posting.event_occurrence.occurs_at.strftime('%b %d'), 
+                        event_occurrence_path(posting.event_occurrence), 
+                        class: "text-decoration-none small" %>
+                  <% end %>
+                </td>
+                <td>
+                  <% if posting.deleted? %>
+                    <span class="badge bg-secondary"><i class="bi bi-trash"></i> Deleted</span>
+                  <% else %>
+                    <span class="badge bg-success"><i class="bi bi-check-circle"></i> Active</span>
+                  <% end %>
+                </td>
+                <td>
+                  <% unless posting.deleted? %>
+                    <div class="btn-group btn-group-sm">
+                      <% if posting.post_url.present? %>
+                        <%= link_to posting.post_url, target: "_blank", rel: "noopener", 
+                            class: "btn btn-outline-primary btn-sm py-0", title: "View" do %>
+                          <i class="bi bi-box-arrow-up-right"></i>
+                        <% end %>
+                      <% end %>
+                      <% if posting.deletable? %>
+                        <%= button_to reminder_posting_path(posting), method: :delete, 
+                            class: "btn btn-outline-danger btn-sm py-0",
+                            title: "Delete from #{posting.platform_display_name}",
+                            form: { data: { turbo_confirm: "Delete this post from #{posting.platform_display_name}?" } } do %>
+                          <i class="bi bi-trash"></i>
+                        <% end %>
+                      <% else %>
+                        <%= button_to reminder_posting_path(posting), method: :delete, 
+                            class: "btn btn-outline-warning btn-sm py-0",
+                            title: "Mark as deleted",
+                            form: { data: { turbo_confirm: "Mark this post as deleted?" } } do %>
+                          <i class="bi bi-x-circle"></i>
+                        <% end %>
+                      <% end %>
+                    </div>
+                  <% end %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+
+      <% if postings.count > 10 %>
+        <p class="small text-muted mb-0">
+          Showing 10 of <%= postings.count %> postings.
+          <% if current_user.admin? %>
+            <%= link_to "View all postings", reminder_postings_path %>
+          <% end %>
+        </p>
+      <% end %>
+    </div>
+  </section>
+<% end %>
+

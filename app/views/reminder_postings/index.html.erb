@@ -1,0 +1,100 @@
+<% page_title "Reminder Posting History" %>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h1><i class="bi bi-clock-history"></i> Reminder Posting History</h1>
+  <div>
+    <%= link_to "Back to Events", events_path, class: "btn btn-outline-secondary" %>
+  </div>
+</div>
+
+<% if @postings.any? %>
+  <div class="table-responsive">
+    <table class="table table-striped table-hover">
+      <thead class="table-dark">
+        <tr>
+          <th>Posted</th>
+          <th>Platform</th>
+          <th>Event</th>
+          <th>Occurrence</th>
+          <th>Message</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @postings.each do |posting| %>
+          <tr class="<%= 'table-secondary text-muted' if posting.deleted? %>">
+            <td>
+              <small><%= posting.posted_at.strftime('%b %d, %Y %I:%M %p') %></small>
+            </td>
+            <td>
+              <%= render_platform_badge(posting.platform) %>
+            </td>
+            <td>
+              <%= link_to posting.event.title, event_path(posting.event), class: "text-decoration-none" %>
+            </td>
+            <td>
+              <% if posting.event_occurrence %>
+                <%= link_to posting.event_occurrence.occurs_at.strftime('%b %d, %Y'), 
+                    event_occurrence_path(posting.event_occurrence), class: "text-decoration-none" %>
+              <% end %>
+            </td>
+            <td>
+              <small class="text-truncate d-inline-block" style="max-width: 300px;" title="<%= posting.message %>">
+                <%= truncate(posting.message, length: 100) %>
+              </small>
+            </td>
+            <td>
+              <% if posting.deleted? %>
+                <span class="badge bg-secondary">
+                  <i class="bi bi-trash"></i> Deleted
+                </span>
+                <small class="d-block text-muted">
+                  by <%= posting.deleted_by&.name || 'Unknown' %>
+                  <br><%= posting.deleted_at.strftime('%b %d, %Y') %>
+                </small>
+              <% else %>
+                <span class="badge bg-success">
+                  <i class="bi bi-check-circle"></i> Active
+                </span>
+              <% end %>
+            </td>
+            <td>
+              <% unless posting.deleted? %>
+                <div class="btn-group btn-group-sm">
+                  <% if posting.post_url.present? %>
+                    <%= link_to posting.post_url, target: "_blank", rel: "noopener", 
+                        class: "btn btn-outline-primary btn-sm", title: "View post" do %>
+                      <i class="bi bi-box-arrow-up-right"></i>
+                    <% end %>
+                  <% end %>
+                  <% if posting.deletable? %>
+                    <%= button_to reminder_posting_path(posting), method: :delete, 
+                        class: "btn btn-outline-danger btn-sm",
+                        title: "Delete from #{posting.platform_display_name}",
+                        form: { data: { turbo_confirm: "Delete this post from #{posting.platform_display_name}? This cannot be undone." } } do %>
+                      <i class="bi bi-trash"></i>
+                    <% end %>
+                  <% else %>
+                    <%= button_to reminder_posting_path(posting), method: :delete, 
+                        class: "btn btn-outline-warning btn-sm",
+                        title: "Mark as deleted (cannot remove from #{posting.platform_display_name})",
+                        form: { data: { turbo_confirm: "Mark this post as deleted? Note: The post cannot be automatically removed from #{posting.platform_display_name}." } } do %>
+                      <i class="bi bi-x-circle"></i>
+                    <% end %>
+                  <% end %>
+                </div>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+
+<% else %>
+  <div class="alert alert-info">
+    <i class="bi bi-info-circle"></i> No reminder postings recorded yet.
+  </div>
+<% end %>
+

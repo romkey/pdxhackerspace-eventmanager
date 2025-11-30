@@ -89,6 +89,9 @@ Rails.application.routes.draw do
   # Site configuration (admin only, singleton)
   resource :site_config, only: %i[edit update]
 
+  # Reminder postings (admin can see all, hosts can delete their own)
+  resources :reminder_postings, only: %i[index destroy]
+
   # Location information page (public)
   get 'location', to: 'site_configs#location', as: 'location_info'
 

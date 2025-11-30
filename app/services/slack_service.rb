@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'net/http'
 require 'uri'
 require 'json'
@@ -8,7 +10,7 @@ class SlackService
 
     def post_message(text, image_url: nil, image_alt: 'Event banner')
       webhook_url = ENV.fetch('SLACK_WEBHOOK_URL', nil)
-      return false if webhook_url.blank?
+      return { success: false, error: 'Webhook not configured' } if webhook_url.blank?
 
       payload = build_payload(text, image_url, image_alt)
 
@@ -24,23 +26,41 @@ class SlackService
 
       if response.code == '200'
         Rails.logger.info 'SlackService: Successfully posted message'
-        true
+        { success: true }
       else
         Rails.logger.error "SlackService: Failed to post message. Response: #{response.code} #{response.body}"
-        false
+        { success: false, error: "HTTP #{response.code}: #{response.body}" }
       end
     rescue StandardError => e
       Rails.logger.error "SlackService: Error posting message: #{e.message}"
       Rails.logger.error e.backtrace.join("\n")
-      false
+      { success: false, error: e.message }
     end
 
     def post_occurrence_reminder(occurrence, message)
       image_url = banner_url_for(occurrence)
-      post_message(message, image_url: image_url, image_alt: occurrence.event.title)
+      result = post_message(message, image_url: image_url, image_alt: occurrence.event.title)
+
+      # Record the posting if successful
+      record_posting(occurrence, message) if result[:success]
+
+      result[:success]
     end
 
     private
+
+    def record_posting(occurrence, message)
+      ReminderPosting.create!(
+        event: occurrence.event,
+        event_occurrence: occurrence,
+        platform: 'slack',
+        message: message,
+        posted_at: Time.current
+        # NOTE: Slack webhooks don't return a message ID or URL
+      )
+    rescue StandardError => e
+      Rails.logger.error "SlackService: Failed to record posting: #{e.message}"
+    end
 
     def build_payload(text, image_url, image_alt)
       if image_url.present?

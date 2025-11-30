@@ -300,6 +300,8 @@
     <% end %>
 
     <% if user_signed_in? && (current_user.admin? || @event.hosted_by?(current_user)) %>
+      <%= render 'reminder_postings/event_history', event: @event %>
+
       <section class="card mb-3">
         <div class="card-body">
           <h2 class="card-title h5">Invite Co-Host</h2>

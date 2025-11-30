@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'net/http'
 require 'uri'
 require 'json'
@@ -14,7 +16,7 @@ class SocialService # rubocop:disable Metrics/ClassLength
 
       if token.blank? || page_id.blank?
         Rails.logger.info 'SocialService: Instagram not configured (missing INSTAGRAM_ACCESS_TOKEN or INSTAGRAM_PAGE_ID)'
-        return false
+        return { success: false, error: 'Not configured' }
       end
 
       uri = URI("https://graph.facebook.com/v17.0/#{page_id}/feed")
@@ -25,15 +27,16 @@ class SocialService # rubocop:disable Metrics/ClassLength
       response = Net::HTTP.start(uri.host, uri.port, use_ssl: true) { |http| http.request(request) }
 
       if response.is_a?(Net::HTTPSuccess)
+        data = JSON.parse(response.body)
         Rails.logger.info 'SocialService: Posted reminder to Instagram'
-        true
+        { success: true, post_id: data['id'] }
       else
         Rails.logger.error "SocialService: Failed to post to Instagram (#{response.code}) #{response.body}"
-        false
+        { success: false, error: "HTTP #{response.code}" }
       end
     rescue StandardError => e
       Rails.logger.error "SocialService: Instagram error - #{e.message}"
-      false
+      { success: false, error: e.message }
     end
 
     def post_bluesky(message, image_url: nil, image_alt: 'Event banner', link_url: nil, link_text: nil)
@@ -42,13 +45,13 @@ class SocialService # rubocop:disable Metrics/ClassLength
 
       if handle.blank? || app_password.blank?
         Rails.logger.info 'SocialService: Bluesky not configured (missing BLUESKY_HANDLE or BLUESKY_APP_PASSWORD)'
-        return false
+        return { success: false, error: 'Not configured' }
       end
 
       Rails.logger.info "SocialService: Bluesky post starting for handle #{handle}"
 
       session = create_bluesky_session(handle, app_password)
-      return false unless session
+      return { success: false, error: 'Session creation failed' } unless session
 
       access_token = session['accessJwt']
       did = session['did']
@@ -66,15 +69,55 @@ class SocialService # rubocop:disable Metrics/ClassLength
       response = Net::HTTP.start(uri.host, uri.port, use_ssl: true) { |http| http.request(request) }
 
       if response.is_a?(Net::HTTPSuccess)
-        Rails.logger.info 'SocialService: Posted reminder to Bluesky'
-        true
+        data = JSON.parse(response.body)
+        post_uri = data['uri']
+        # Build web URL from AT URI: at://did:plc:xxx/app.bsky.feed.post/rkey -> https://bsky.app/profile/handle/post/rkey
+        rkey = post_uri.split('/').last
+        post_url = "https://bsky.app/profile/#{handle}/post/#{rkey}"
+        Rails.logger.info "SocialService: Posted reminder to Bluesky - #{post_url}"
+        { success: true, post_uid: post_uri, post_url: post_url }
       else
         Rails.logger.error "SocialService: Failed to post to Bluesky (#{response.code}) #{response.body}"
-        false
+        { success: false, error: "HTTP #{response.code}" }
       end
     rescue StandardError => e
       Rails.logger.error "SocialService: Bluesky error - #{e.message}"
-      false
+      { success: false, error: e.message }
+    end
+
+    def delete_bluesky_post(post_uri)
+      handle = ENV.fetch('BLUESKY_HANDLE', nil)
+      app_password = ENV.fetch('BLUESKY_APP_PASSWORD', nil)
+
+      return { success: false, error: 'Not configured' } if handle.blank? || app_password.blank?
+
+      session = create_bluesky_session(handle, app_password)
+      return { success: false, error: 'Session creation failed' } unless session
+
+      access_token = session['accessJwt']
+      did = session['did']
+
+      # Extract rkey from post URI (at://did:plc:xxx/app.bsky.feed.post/rkey)
+      rkey = post_uri.split('/').last
+
+      uri = URI('https://bsky.social/xrpc/com.atproto.repo.deleteRecord')
+      request = Net::HTTP::Post.new(uri)
+      request['Authorization'] = "Bearer #{access_token}"
+      request['Content-Type'] = 'application/json'
+      request.body = { repo: did, collection: 'app.bsky.feed.post', rkey: rkey }.to_json
+
+      response = Net::HTTP.start(uri.host, uri.port, use_ssl: true) { |http| http.request(request) }
+
+      if response.is_a?(Net::HTTPSuccess)
+        Rails.logger.info "SocialService: Deleted Bluesky post #{post_uri}"
+        { success: true }
+      else
+        Rails.logger.error "SocialService: Failed to delete Bluesky post (#{response.code}) #{response.body}"
+        { success: false, error: "HTTP #{response.code}" }
+      end
+    rescue StandardError => e
+      Rails.logger.error "SocialService: Bluesky delete error - #{e.message}"
+      { success: false, error: e.message }
     end
 
     def fetch_bluesky_image_blob(access_token, image_url)
@@ -120,8 +163,6 @@ class SocialService # rubocop:disable Metrics/ClassLength
       record
     end
 
-    # Post reminder with structured message parts for facet support
-    # message_parts should be { text: "...", link_url: "...", link_text: "..." }
     # Post reminder with separate short (Bluesky) and long (Instagram) messages
     # short_parts and long_parts should be { text: "...", link_url: "...", link_text: "..." }
     def post_occurrence_reminder(occurrence, short_parts:, long_parts:)
@@ -133,7 +174,7 @@ class SocialService # rubocop:disable Metrics/ClassLength
 
       # Bluesky gets short message with facet link
       bluesky_message = "#{short_parts[:text]} #{short_parts[:link_text]}"
-      success_bluesky = post_bluesky(
+      bluesky_result = post_bluesky(
         bluesky_message,
         image_url: image_url,
         image_alt: image_alt,
@@ -141,14 +182,37 @@ class SocialService # rubocop:disable Metrics/ClassLength
         link_text: short_parts[:link_text]
       )
 
+      # Record Bluesky posting if successful
+      if bluesky_result[:success]
+        record_posting(occurrence, bluesky_message, 'bluesky',
+                       post_uid: bluesky_result[:post_uid], post_url: bluesky_result[:post_url])
+      end
+
       # Instagram gets long message with full URL
       instagram_message = "#{long_parts[:text]}\n\n#{long_parts[:link_url]}"
-      success_instagram = post_instagram(instagram_message, image_url: image_url)
+      instagram_result = post_instagram(instagram_message, image_url: image_url)
 
-      success_instagram || success_bluesky
+      # Record Instagram posting if successful
+      record_posting(occurrence, instagram_message, 'instagram', post_uid: instagram_result[:post_id]) if instagram_result[:success]
+
+      instagram_result[:success] || bluesky_result[:success]
     end
 
     private
+
+    def record_posting(occurrence, message, platform, post_uid: nil, post_url: nil)
+      ReminderPosting.create!(
+        event: occurrence.event,
+        event_occurrence: occurrence,
+        platform: platform,
+        message: message,
+        post_uid: post_uid,
+        post_url: post_url,
+        posted_at: Time.current
+      )
+    rescue StandardError => e
+      Rails.logger.error "SocialService: Failed to record #{platform} posting: #{e.message}"
+    end
 
     def create_bluesky_session(handle, app_password)
       uri = URI('https://bsky.social/xrpc/com.atproto.server.createSession')
