@@ -1,29 +1,24 @@
 # frozen_string_literal: true
 
 class AddSlugToEventOccurrences < ActiveRecord::Migration[7.1]
-  # rubocop:disable Rails/SkipsModelValidations
   def up
     add_column :event_occurrences, :slug, :string
     add_index :event_occurrences, :slug, unique: true
 
-    # Generate slugs for existing occurrences
-    EventOccurrence.reset_column_information
-    EventOccurrence.includes(:event).find_each do |occurrence|
-      event_slug = occurrence.event.title.parameterize
-      date_slug = occurrence.occurs_at.strftime('%Y-%m-%d')
-      base_slug = "#{event_slug}-#{date_slug}"
-      slug = base_slug
-      counter = 1
-
-      while EventOccurrence.where(slug: slug).where.not(id: occurrence.id).exists?
-        slug = "#{base_slug}-#{counter}"
-        counter += 1
-      end
-
-      occurrence.update_column(:slug, slug)
-    end
+    # Generate slugs for existing occurrences using raw SQL to avoid model scope issues
+    execute <<-SQL.squish
+      UPDATE event_occurrences eo
+      SET slug = CONCAT(
+        LOWER(REGEXP_REPLACE(REGEXP_REPLACE(e.title, '[^a-zA-Z0-9\\s-]', '', 'g'), '\\s+', '-', 'g')),
+        '-',
+        TO_CHAR(eo.occurs_at, 'YYYY-MM-DD'),
+        '-',
+        eo.id
+      )
+      FROM events e
+      WHERE eo.event_id = e.id AND eo.slug IS NULL
+    SQL
   end
-  # rubocop:enable Rails/SkipsModelValidations
 
   def down
     remove_index :event_occurrences, :slug

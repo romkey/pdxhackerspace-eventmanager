@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_11_29_044547) do
+ActiveRecord::Schema[7.2].define(version: 2025_11_30_153337) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_trgm"
   enable_extension "plpgsql"
@@ -82,9 +82,9 @@ ActiveRecord::Schema[7.1].define(version: 2025_11_29_044547) do
     t.bigint "location_id"
     t.text "reminder_7d_short"
     t.text "reminder_1d_short"
+    t.string "slug"
     t.text "reminder_7d_long"
     t.text "reminder_1d_long"
-    t.string "slug"
     t.datetime "deleted_at"
     t.index ["deleted_at"], name: "index_event_occurrences_on_deleted_at"
     t.index ["event_id", "occurs_at"], name: "index_event_occurrences_on_event_id_and_occurs_at"
@@ -126,7 +126,9 @@ ActiveRecord::Schema[7.1].define(version: 2025_11_29_044547) do
     t.text "reminder_7d_long"
     t.text "reminder_1d_long"
     t.datetime "deleted_at"
+    t.integer "event_occurrences_count", default: 0, null: false
     t.index ["deleted_at"], name: "index_events_on_deleted_at"
+    t.index ["description"], name: "index_events_on_description_trgm", opclass: :gin_trgm_ops, using: :gin
     t.index ["ical_token"], name: "index_events_on_ical_token", unique: true
     t.index ["location_id"], name: "index_events_on_location_id"
     t.index ["open_to"], name: "index_events_on_open_to"
@@ -136,6 +138,7 @@ ActiveRecord::Schema[7.1].define(version: 2025_11_29_044547) do
     t.index ["status", "start_time"], name: "index_events_on_status_and_start_time"
     t.index ["status", "visibility"], name: "index_events_on_status_and_visibility"
     t.index ["status"], name: "index_events_on_status"
+    t.index ["title"], name: "index_events_on_title_trgm", opclass: :gin_trgm_ops, using: :gin
     t.index ["user_id"], name: "index_events_on_user_id"
     t.index ["visibility"], name: "index_events_on_visibility"
     t.check_constraint "open_to::text = ANY (ARRAY['public'::character varying, 'members'::character varying, 'private'::character varying]::text[])", name: "events_open_to_check"
