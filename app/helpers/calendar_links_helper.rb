@@ -19,7 +19,7 @@ module CalendarLinksHelper
       text: event.title,
       dates: "#{format_gcal_time(start_time)}/#{format_gcal_time(end_time)}",
       details: build_calendar_description(event, occurrence),
-      location: occurrence.event_location&.full_address || '',
+      location: occurrence.event_location&.name || '',
       sf: 'true'
     }
 
@@ -49,7 +49,7 @@ module CalendarLinksHelper
       st: start_time.strftime('%Y%m%dT%H%M%SZ'),
       dur: format('%<hours>02d%<mins>02d', hours: duration_hours, mins: duration_mins),
       desc: build_calendar_description(event, occurrence),
-      in_loc: occurrence.event_location&.full_address || ''
+      in_loc: occurrence.event_location&.name || ''
     }
 
     "https://calendar.yahoo.com/?#{params.to_query}"
@@ -69,7 +69,7 @@ module CalendarLinksHelper
       startdt: start_time.iso8601,
       enddt: end_time.iso8601,
       body: build_calendar_description(event, occurrence),
-      location: occurrence.event_location&.full_address || ''
+      location: occurrence.event_location&.name || ''
     }
 
     "#{base_url}/calendar/0/deeplink/compose?#{params.to_query}"

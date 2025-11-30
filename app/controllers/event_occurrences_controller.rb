@@ -18,7 +18,7 @@ class EventOccurrencesController < ApplicationController
       e.dtend = Icalendar::Values::DateTime.new((@occurrence.occurs_at + @occurrence.duration.minutes).utc)
       e.summary = event.title
       e.description = build_ical_description(event, @occurrence)
-      e.location = @occurrence.event_location&.full_address
+      e.location = @occurrence.event_location&.name
       e.url = event_occurrence_url(@occurrence)
       e.uid = "occurrence-#{@occurrence.id}@#{request.host}"
     end
