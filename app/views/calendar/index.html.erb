@@ -17,9 +17,11 @@
     <%= link_to calendar_ical_path, class: "btn btn-outline-primary me-2", title: "Subscribe to Calendar" do %>
       <i class="bi bi-calendar-plus"></i> Subscribe (.ics)
     <% end %>
-    <button type="button" class="btn btn-outline-info me-2" data-bs-toggle="modal" data-bs-target="#embedModal">
-      <i class="bi bi-code-square"></i> Embed
-    </button>
+    <% if user_signed_in? && current_user.admin? %>
+      <button type="button" class="btn btn-outline-info me-2" data-bs-toggle="modal" data-bs-target="#embedModal">
+        <i class="bi bi-code-square"></i> Embed
+      </button>
+    <% end %>
     <%= link_to "Events View", events_path, class: "btn btn-outline-secondary" %>
   </div>
 </div>
@@ -117,45 +119,47 @@
   </div>
 <% end %>
 
-<!-- Embed Modal -->
-<div class="modal fade" id="embedModal" tabindex="-1" aria-labelledby="embedModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="embedModalLabel"><i class="bi bi-code-square"></i> Embed Calendar</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <p>Embed the event calendar on your website using the code below:</p>
-
-        <div class="mb-3">
-          <label class="form-label fw-bold">HTML Embed Code:</label>
-          <textarea class="form-control font-monospace small" rows="4" readonly onclick="this.select()"><iframe src="<%= calendar_embed_url %>" width="100%" height="800" frameborder="0" style="border: 1px solid #dee2e6; border-radius: 0.25rem;"></iframe></textarea>
-          <small class="form-text text-muted">Click to select all, then copy and paste into your website</small>
+<% if user_signed_in? && current_user.admin? %>
+  <!-- Embed Modal -->
+  <div class="modal fade" id="embedModal" tabindex="-1" aria-labelledby="embedModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="embedModalLabel"><i class="bi bi-code-square"></i> Embed Calendar</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
+        <div class="modal-body">
+          <p>Embed the event calendar on your website using the code below:</p>
 
-        <div class="mb-3">
-          <label class="form-label fw-bold">Direct Link:</label>
-          <div class="input-group">
-            <input type="text" class="form-control font-monospace small" value="<%= calendar_embed_url %>" readonly onclick="this.select()">
-            <%= link_to "Open", calendar_embed_path, class: "btn btn-outline-primary", target: "_blank" %>
+          <div class="mb-3">
+            <label class="form-label fw-bold">HTML Embed Code:</label>
+            <textarea class="form-control font-monospace small" rows="4" readonly onclick="this.select()"><iframe src="<%= calendar_embed_url %>" width="100%" height="800" frameborder="0" style="border: 1px solid #dee2e6; border-radius: 0.25rem;"></iframe></textarea>
+            <small class="form-text text-muted">Click to select all, then copy and paste into your website</small>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-bold">Direct Link:</label>
+            <div class="input-group">
+              <input type="text" class="form-control font-monospace small" value="<%= calendar_embed_url %>" readonly onclick="this.select()">
+              <%= link_to "Open", calendar_embed_path, class: "btn btn-outline-primary", target: "_blank" %>
+            </div>
+          </div>
+
+          <div class="alert alert-info small">
+            <strong>Features:</strong>
+            <ul class="mb-0">
+              <li>Default view: Calendar grid</li>
+              <li>Users can toggle between Calendar and List views</li>
+              <li>Shows all public events</li>
+              <li>Responsive design works on all devices</li>
+            </ul>
           </div>
         </div>
-
-        <div class="alert alert-info small">
-          <strong>Features:</strong>
-          <ul class="mb-0">
-            <li>Default view: Calendar grid</li>
-            <li>Users can toggle between Calendar and List views</li>
-            <li>Shows all public events</li>
-            <li>Responsive design works on all devices</li>
-          </ul>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <%= link_to "Preview Embed", calendar_embed_path, class: "btn btn-primary", target: "_blank" %>
         </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-        <%= link_to "Preview Embed", calendar_embed_path, class: "btn btn-primary", target: "_blank" %>
       </div>
     </div>
   </div>
-</div>
+<% end %>
