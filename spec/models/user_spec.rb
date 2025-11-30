@@ -133,6 +133,98 @@ RSpec.describe User, type: :model do
         expect(user.id).to eq(existing_user.id)
       end
     end
+
+    context 'role assignment (security-critical)' do
+      it 'defaults to user role when event_manager_admin is false' do
+        user = described_class.from_omniauth(auth)
+        expect(user.role).to eq('user')
+        expect(user.admin?).to be false
+      end
+
+      it 'defaults to user role when event_manager_admin claim is missing' do
+        auth_without_admin = OmniAuth::AuthHash.new(
+          provider: 'authentik',
+          uid: '99999',
+          info: { email: 'new_user@example.com', name: 'New User' },
+          extra: { raw_info: { sub: '99999', email: 'new_user@example.com' } }
+        )
+        user = described_class.from_omniauth(auth_without_admin)
+        expect(user.role).to eq('user')
+        expect(user.admin?).to be false
+      end
+
+      it 'defaults to user role when extra is nil' do
+        auth_no_extra = OmniAuth::AuthHash.new(
+          provider: 'authentik',
+          uid: '88888',
+          info: { email: 'noextra@example.com', name: 'No Extra' }
+        )
+        user = described_class.from_omniauth(auth_no_extra)
+        expect(user.role).to eq('user')
+        expect(user.admin?).to be false
+      end
+
+      it 'defaults to user role when raw_info is nil' do
+        auth_no_raw = OmniAuth::AuthHash.new(
+          provider: 'authentik',
+          uid: '77777',
+          info: { email: 'noraw@example.com', name: 'No Raw' },
+          extra: {}
+        )
+        user = described_class.from_omniauth(auth_no_raw)
+        expect(user.role).to eq('user')
+        expect(user.admin?).to be false
+      end
+
+      it 'sets admin role only when event_manager_admin is boolean true' do
+        auth_admin = OmniAuth::AuthHash.new(
+          provider: 'authentik',
+          uid: '66666',
+          info: { email: 'admin@example.com', name: 'Admin User' },
+          extra: { raw_info: { event_manager_admin: true } }
+        )
+        user = described_class.from_omniauth(auth_admin)
+        expect(user.role).to eq('admin')
+        expect(user.admin?).to be true
+      end
+
+      it 'sets admin role when event_manager_admin is string "true"' do
+        auth_admin_string = OmniAuth::AuthHash.new(
+          provider: 'authentik',
+          uid: '55555',
+          info: { email: 'admin_str@example.com', name: 'Admin String' },
+          extra: { raw_info: { event_manager_admin: 'true' } }
+        )
+        user = described_class.from_omniauth(auth_admin_string)
+        expect(user.role).to eq('admin')
+        expect(user.admin?).to be true
+      end
+
+      it 'does NOT set admin role for other truthy values' do
+        # Security: only explicit true/\"true\" should grant admin
+        auth_truthy = OmniAuth::AuthHash.new(
+          provider: 'authentik',
+          uid: '44444',
+          info: { email: 'truthy@example.com', name: 'Truthy User' },
+          extra: { raw_info: { event_manager_admin: 1 } }
+        )
+        user = described_class.from_omniauth(auth_truthy)
+        expect(user.role).to eq('user')
+        expect(user.admin?).to be false
+      end
+
+      it 'does NOT set admin role for string "yes"' do
+        auth_yes = OmniAuth::AuthHash.new(
+          provider: 'authentik',
+          uid: '33333',
+          info: { email: 'yes@example.com', name: 'Yes User' },
+          extra: { raw_info: { event_manager_admin: 'yes' } }
+        )
+        user = described_class.from_omniauth(auth_yes)
+        expect(user.role).to eq('user')
+        expect(user.admin?).to be false
+      end
+    end
   end
 
   describe 'default role' do
