@@ -1,0 +1,42 @@
+Event Reminder Notification
+===========================
+
+Hi <%= @user.name || @user.email %>,
+
+This is a reminder that a <%= @reminder_type == 'slack' ? 'Slack' : 'social media' %> post will be automatically sent TOMORROW for your event:
+
+EVENT: <%= @event.title %>
+DATE: <%= @occurrence.occurs_at.strftime('%A, %B %d, %Y at %I:%M %p') %> (<%= pluralize(@days_until_event, 'day') %> away)
+<% if @event.location.present? %>
+LOCATION: <%= @event.location.name %>
+<% end %>
+
+CURRENT REMINDER MESSAGES
+-------------------------
+
+<% if @reminder_type == 'slack' %>
+Slack Message (Long format):
+<%= @occurrence.effective_reminder_7d_long.presence || @occurrence.reminder_long_default || 'No custom message set - default will be used' %>
+<% else %>
+Short Message (Bluesky):
+<%= @occurrence.effective_reminder_7d_short.presence || @occurrence.reminder_short_default || 'No custom message set - default will be used' %>
+
+Long Message (Instagram/Slack):
+<%= @occurrence.effective_reminder_7d_long.presence || @occurrence.reminder_long_default || 'No custom message set - default will be used' %>
+<% end %>
+
+WANT TO CUSTOMIZE THE REMINDER?
+-------------------------------
+
+If you'd like to update the reminder message before it's posted, edit it here:
+<%= edit_event_occurrence_url(@occurrence) %>
+
+Or view the full event:
+<%= event_url(@event) %>
+
+---
+
+You're receiving this because you're a host for "<%= @event.title %>".
+To stop receiving these notifications, update your notification preferences:
+<%= edit_user_registration_url %>
+

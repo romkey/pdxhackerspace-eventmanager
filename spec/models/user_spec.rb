@@ -234,6 +234,23 @@ RSpec.describe User, type: :model do
     end
   end
 
+  describe 'email_reminders_enabled' do
+    it 'defaults to true' do
+      user = create(:user)
+      expect(user.email_reminders_enabled).to be true
+    end
+
+    it 'can be set to false' do
+      user = create(:user, email_reminders_enabled: false)
+      expect(user.email_reminders_enabled).to be false
+    end
+
+    it 'has trait for disabled' do
+      user = create(:user, :email_reminders_disabled)
+      expect(user.email_reminders_enabled).to be false
+    end
+  end
+
   describe 'factory' do
     it 'creates a valid user' do
       user = build(:user)

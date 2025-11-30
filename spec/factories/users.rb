@@ -20,5 +20,9 @@ FactoryBot.define do
       provider { "authentik" }
       sequence(:uid) { |n| "authentik-#{n}" }
     end
+
+    trait :email_reminders_disabled do
+      email_reminders_enabled { false }
+    end
   end
 end

@@ -36,13 +36,33 @@ Rails.application.configure do
   # Store uploaded files on the local file system (see config/storage.yml for options).
   config.active_storage.service = :local
 
-  # Don't care if the mailer can't send.
-  config.action_mailer.raise_delivery_errors = false
+  # Email configuration for development
+  # Use :letter_opener or :smtp depending on environment variables
+  if ENV['SMTP_ADDRESS'].present?
+    config.action_mailer.delivery_method = :smtp
+    config.action_mailer.raise_delivery_errors = true
+    config.action_mailer.smtp_settings = {
+      address: ENV.fetch('SMTP_ADDRESS', 'localhost'),
+      port: ENV.fetch('SMTP_PORT', 587).to_i,
+      domain: ENV.fetch('SMTP_DOMAIN', 'localhost'),
+      user_name: ENV.fetch('SMTP_USERNAME', nil),
+      password: ENV.fetch('SMTP_PASSWORD', nil),
+      authentication: ENV.fetch('SMTP_AUTHENTICATION', 'plain').to_sym,
+      enable_starttls_auto: ENV.fetch('SMTP_ENABLE_STARTTLS', 'true') == 'true'
+    }
+  else
+    # Default to :test in development (emails logged, not sent)
+    config.action_mailer.delivery_method = :test
+    config.action_mailer.raise_delivery_errors = false
+  end
 
   config.action_mailer.perform_caching = false
 
-  # Devise mailer configuration
-  config.action_mailer.default_url_options = { host: 'localhost', port: 3000 }
+  # Default URL host for mailer links
+  config.action_mailer.default_url_options = {
+    host: ENV.fetch('RAILS_HOST', 'localhost'),
+    port: ENV.fetch('RAILS_PORT', 3000).to_i
+  }
 
   # Print deprecation notices to the Rails logger.
   config.active_support.deprecation = :log

@@ -220,7 +220,43 @@ OLLAMA_SERVER=http://localhost:11434
 
 This server is queried to generate AI text a week or a day before each event, using the event description, time, and the fact that it's at PDX Hackerspace.
 
-#### 9. Start the Application
+#### 9. Configure Host Email Reminders (Optional)
+
+Event hosts can receive email notifications the day before Slack or social media reminders are scheduled to be posted. This gives them a chance to review and customize the reminder message.
+
+1. **Set SMTP environment variables:**
+
+   ```bash
+   export SMTP_ADDRESS=smtp.example.com
+   export SMTP_PORT=587
+   export SMTP_DOMAIN=example.com
+   export SMTP_USERNAME=your_smtp_username
+   export SMTP_PASSWORD=your_smtp_password
+   export SMTP_AUTHENTICATION=plain
+   export SMTP_ENABLE_STARTTLS=true
+   export MAILER_FROM_EMAIL=noreply@example.com
+   ```
+
+   Or add them to your `.env` file:
+
+   ```
+   SMTP_ADDRESS=smtp.example.com
+   SMTP_PORT=587
+   SMTP_DOMAIN=example.com
+   SMTP_USERNAME=your_smtp_username
+   SMTP_PASSWORD=your_smtp_password
+   SMTP_AUTHENTICATION=plain
+   SMTP_ENABLE_STARTTLS=true
+   MAILER_FROM_EMAIL=noreply@example.com
+   ```
+
+2. **Host URL configuration:** Ensure `RAILS_HOST` and `RAILS_PROTOCOL` are set so email links work correctly.
+
+3. **User opt-out:** Event hosts can disable email reminders in their profile settings (Edit Profile → Notification Preferences).
+
+**Note:** The host reminder job runs daily at 8 AM via Sidekiq, one hour before the Slack reminder job.
+
+#### 10. Start the Application
 
 Development mode with asset compilation:
 
@@ -239,7 +275,7 @@ yarn build
 yarn watch:css
 ```
 
-#### 9. Access the Application
+#### 11. Access the Application
 
 Open your browser and navigate to:
 

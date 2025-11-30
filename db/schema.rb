@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_11_30_153337) do
+ActiveRecord::Schema[7.2].define(version: 2025_11_30_155713) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_trgm"
   enable_extension "plpgsql"
@@ -94,7 +94,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_11_30_153337) do
     t.index ["slug"], name: "index_event_occurrences_on_slug", unique: true
     t.index ["status", "occurs_at"], name: "index_event_occurrences_on_status_and_occurs_at"
     t.index ["status"], name: "index_event_occurrences_on_status"
-    t.check_constraint "status::text = ANY (ARRAY['active'::character varying, 'postponed'::character varying, 'cancelled'::character varying]::text[])", name: "event_occurrences_status_check"
+    t.check_constraint "status::text = ANY (ARRAY['active'::character varying::text, 'postponed'::character varying::text, 'cancelled'::character varying::text])", name: "event_occurrences_status_check"
   end
 
   create_table "events", force: :cascade do |t|
@@ -141,10 +141,10 @@ ActiveRecord::Schema[7.2].define(version: 2025_11_30_153337) do
     t.index ["title"], name: "index_events_on_title_trgm", opclass: :gin_trgm_ops, using: :gin
     t.index ["user_id"], name: "index_events_on_user_id"
     t.index ["visibility"], name: "index_events_on_visibility"
-    t.check_constraint "open_to::text = ANY (ARRAY['public'::character varying, 'members'::character varying, 'private'::character varying]::text[])", name: "events_open_to_check"
-    t.check_constraint "recurrence_type::text = ANY (ARRAY['once'::character varying, 'weekly'::character varying, 'monthly'::character varying, 'custom'::character varying]::text[])", name: "events_recurrence_type_check"
-    t.check_constraint "status::text = ANY (ARRAY['active'::character varying, 'postponed'::character varying, 'cancelled'::character varying]::text[])", name: "events_status_check"
-    t.check_constraint "visibility::text = ANY (ARRAY['public'::character varying, 'members'::character varying, 'private'::character varying]::text[])", name: "events_visibility_check"
+    t.check_constraint "open_to::text = ANY (ARRAY['public'::character varying::text, 'members'::character varying::text, 'private'::character varying::text])", name: "events_open_to_check"
+    t.check_constraint "recurrence_type::text = ANY (ARRAY['once'::character varying::text, 'weekly'::character varying::text, 'monthly'::character varying::text, 'custom'::character varying::text])", name: "events_recurrence_type_check"
+    t.check_constraint "status::text = ANY (ARRAY['active'::character varying::text, 'postponed'::character varying::text, 'cancelled'::character varying::text])", name: "events_status_check"
+    t.check_constraint "visibility::text = ANY (ARRAY['public'::character varying::text, 'members'::character varying::text, 'private'::character varying::text])", name: "events_visibility_check"
   end
 
   create_table "locations", force: :cascade do |t|
@@ -190,11 +190,12 @@ ActiveRecord::Schema[7.2].define(version: 2025_11_30_153337) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.boolean "can_create_events", default: false, null: false
+    t.boolean "email_reminders_enabled", default: true, null: false
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["provider", "uid"], name: "index_users_on_provider_and_uid", unique: true, where: "((provider IS NOT NULL) AND (uid IS NOT NULL))"
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
     t.index ["role"], name: "index_users_on_role"
-    t.check_constraint "role::text = ANY (ARRAY['user'::character varying, 'admin'::character varying]::text[])", name: "users_role_check"
+    t.check_constraint "role::text = ANY (ARRAY['user'::character varying::text, 'admin'::character varying::text])", name: "users_role_check"
   end
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"

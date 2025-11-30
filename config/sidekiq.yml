@@ -12,6 +12,10 @@
     cron: '0 2 * * *'  # Daily at 2 AM
     class: RegenerateEventOccurrencesJob
     description: "Regenerate event occurrences for recurring events"
+  host_reminder_notifications:
+    cron: '0 8 * * *'  # Daily at 8 AM (before Slack/social reminders)
+    class: HostReminderNotificationJob
+    description: "Email event hosts about upcoming Slack/social media reminders"
   slack_event_reminders:
     cron: '0 9 * * *'  # Daily at 9 AM
     class: SlackEventReminderJob

@@ -1,0 +1,63 @@
+<h1>Event Reminder Notification</h1>
+
+<p>Hi <%= @user.name || @user.email %>,</p>
+
+<p>
+  This is a reminder that a <%= @reminder_type == 'slack' ? 'Slack' : 'social media' %> 
+  post will be automatically sent <strong>tomorrow</strong> for your event:
+</p>
+
+<div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
+  <h2 style="margin-top: 0;"><%= @event.title %></h2>
+  <p>
+    <strong>Event Date:</strong> <%= @occurrence.occurs_at.strftime('%A, %B %d, %Y at %I:%M %p') %>
+    (<%= pluralize(@days_until_event, 'day') %> away)
+  </p>
+  <% if @event.location.present? %>
+    <p><strong>Location:</strong> <%= @event.location.name %></p>
+  <% end %>
+</div>
+
+<h3>Current Reminder Messages</h3>
+
+<% if @reminder_type == 'slack' %>
+  <p><strong>Slack Message (Long format):</strong></p>
+  <blockquote style="background-color: #e9ecef; padding: 10px; border-left: 4px solid #0d6efd; margin: 10px 0;">
+    <%= @occurrence.effective_reminder_7d_long.presence || @occurrence.reminder_long_default || 'No custom message set - default will be used' %>
+  </blockquote>
+<% else %>
+  <p><strong>Short Message (Bluesky):</strong></p>
+  <blockquote style="background-color: #e9ecef; padding: 10px; border-left: 4px solid #0d6efd; margin: 10px 0;">
+    <%= @occurrence.effective_reminder_7d_short.presence || @occurrence.reminder_short_default || 'No custom message set - default will be used' %>
+  </blockquote>
+
+  <p><strong>Long Message (Instagram/Slack):</strong></p>
+  <blockquote style="background-color: #e9ecef; padding: 10px; border-left: 4px solid #0d6efd; margin: 10px 0;">
+    <%= @occurrence.effective_reminder_7d_long.presence || @occurrence.reminder_long_default || 'No custom message set - default will be used' %>
+  </blockquote>
+<% end %>
+
+<h3>Want to Customize the Reminder?</h3>
+
+<p>
+  If you'd like to update the reminder message before it's posted, you can edit it here:
+</p>
+
+<p>
+  <%= link_to 'Edit Event Occurrence', edit_event_occurrence_url(@occurrence), style: 'background-color: #0d6efd; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;' %>
+</p>
+
+<p>
+  Or view the full event:
+  <%= link_to 'View Event', event_url(@event), style: 'color: #0d6efd;' %>
+</p>
+
+<hr style="margin: 30px 0;">
+
+<p style="color: #6c757d; font-size: 0.9em;">
+  You're receiving this because you're a host for "<%= @event.title %>".
+  <br>
+  To stop receiving these notifications, update your 
+  <%= link_to 'notification preferences', edit_user_registration_url, style: 'color: #6c757d;' %>.
+</p>
+
