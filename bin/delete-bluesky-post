@@ -1,0 +1,88 @@
+#!/bin/bash
+#
+# Delete a Bluesky post given its URL
+#
+# Usage: delete-bluesky-post <post-url>
+#
+# Example: delete-bluesky-post https://bsky.app/profile/myhandle.bsky.social/post/3abc123xyz
+#
+# Requires environment variables:
+#   BLUESKY_HANDLE - Your Bluesky handle (e.g., myhandle.bsky.social)
+#   BLUESKY_APP_PASSWORD - Your Bluesky app password
+#
+
+set -e
+
+if [ -z "$1" ]; then
+  echo "Usage: $0 <bluesky-post-url>"
+  echo ""
+  echo "Example: $0 https://bsky.app/profile/myhandle.bsky.social/post/3abc123xyz"
+  exit 1
+fi
+
+POST_URL="$1"
+
+# Check for required environment variables
+if [ -z "$BLUESKY_HANDLE" ]; then
+  echo "Error: BLUESKY_HANDLE environment variable is not set"
+  exit 1
+fi
+
+if [ -z "$BLUESKY_APP_PASSWORD" ]; then
+  echo "Error: BLUESKY_APP_PASSWORD environment variable is not set"
+  exit 1
+fi
+
+# Extract rkey from URL (last path segment)
+# URL format: https://bsky.app/profile/handle/post/rkey
+RKEY=$(echo "$POST_URL" | sed -E 's|.*/post/([^/]+)$|\1|')
+
+if [ -z "$RKEY" ] || [ "$RKEY" = "$POST_URL" ]; then
+  echo "Error: Could not extract post ID from URL"
+  echo "Expected format: https://bsky.app/profile/handle/post/POSTID"
+  exit 1
+fi
+
+echo "Deleting Bluesky post: $RKEY"
+
+# Step 1: Create session to get access token and DID
+echo "Authenticating with Bluesky..."
+SESSION_RESPONSE=$(curl -s -X POST "https://bsky.social/xrpc/com.atproto.server.createSession" \
+  -H "Content-Type: application/json" \
+  -d "{\"identifier\": \"$BLUESKY_HANDLE\", \"password\": \"$BLUESKY_APP_PASSWORD\"}")
+
+# Check for error
+if echo "$SESSION_RESPONSE" | grep -q '"error"'; then
+  echo "Error: Failed to authenticate"
+  echo "$SESSION_RESPONSE" | jq -r '.message // .error' 2>/dev/null || echo "$SESSION_RESPONSE"
+  exit 1
+fi
+
+# Extract access token and DID
+ACCESS_TOKEN=$(echo "$SESSION_RESPONSE" | jq -r '.accessJwt')
+DID=$(echo "$SESSION_RESPONSE" | jq -r '.did')
+
+if [ -z "$ACCESS_TOKEN" ] || [ "$ACCESS_TOKEN" = "null" ]; then
+  echo "Error: Failed to get access token"
+  echo "$SESSION_RESPONSE"
+  exit 1
+fi
+
+echo "Authenticated as: $DID"
+
+# Step 2: Delete the record
+echo "Deleting post..."
+DELETE_RESPONSE=$(curl -s -X POST "https://bsky.social/xrpc/com.atproto.repo.deleteRecord" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d "{\"repo\": \"$DID\", \"collection\": \"app.bsky.feed.post\", \"rkey\": \"$RKEY\"}")
+
+# Check for error
+if echo "$DELETE_RESPONSE" | grep -q '"error"'; then
+  echo "Error: Failed to delete post"
+  echo "$DELETE_RESPONSE" | jq -r '.message // .error' 2>/dev/null || echo "$DELETE_RESPONSE"
+  exit 1
+fi
+
+echo "✓ Post deleted successfully!"
+
