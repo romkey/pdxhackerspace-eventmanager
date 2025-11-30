@@ -97,29 +97,33 @@
             <li class="nav-item">
               <%= link_to "Events", events_path, class: "nav-link" %>
             </li>
+            <li class="nav-item text-muted d-none d-md-block px-1">|</li>
             <li class="nav-item">
               <%= link_to "Calendar", calendar_path, class: "nav-link" %>
             </li>
+            <li class="nav-item text-muted d-none d-md-block px-1">|</li>
             <li class="nav-item">
               <%= link_to "Location", location_info_path, class: "nav-link" %>
             </li>
             <% if can_create_events? %>
+              <li class="nav-item text-muted d-none d-md-block px-1">|</li>
               <li class="nav-item">
                 <%= link_to "New Event", new_event_path, class: "nav-link" %>
               </li>
             <% end %>
-            <% if user_signed_in? %>
-              <% if current_user.admin? %>
-                <li class="nav-item">
-                  <%= link_to "Users", users_path, class: "nav-link" %>
-                </li>
-                <li class="nav-item">
-                  <%= link_to "Postings", reminder_postings_path, class: "nav-link" %>
-                </li>
-                <li class="nav-item">
-                  <%= link_to "Site Config", edit_site_config_path, class: "nav-link" %>
-                </li>
-              <% end %>
+            <% if user_signed_in? && current_user.admin? %>
+              <li class="nav-item text-muted d-none d-md-block px-2">||</li>
+              <li class="nav-item">
+                <%= link_to "Users", users_path, class: "nav-link" %>
+              </li>
+              <li class="nav-item text-muted d-none d-md-block px-1">|</li>
+              <li class="nav-item">
+                <%= link_to "Reminder Postings", reminder_postings_path, class: "nav-link" %>
+              </li>
+              <li class="nav-item text-muted d-none d-md-block px-1">|</li>
+              <li class="nav-item">
+                <%= link_to "Site Config", edit_site_config_path, class: "nav-link" %>
+              </li>
             <% end %>
           </ul>
           <ul class="navbar-nav">

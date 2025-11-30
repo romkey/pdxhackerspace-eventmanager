@@ -11,75 +11,71 @@
         Social media and Slack reminders posted for this event
       </p>
 
-      <div class="table-responsive">
-        <table class="table table-sm table-striped">
-          <thead>
-            <tr>
-              <th>Posted</th>
-              <th>Platform</th>
-              <th>Occurrence</th>
-              <th>Status</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            <% postings.limit(10).each do |posting| %>
-              <tr class="<%= 'text-muted' if posting.deleted? %>">
-                <td>
-                  <small><%= posting.posted_at.strftime('%b %d, %Y %I:%M %p') %></small>
-                </td>
-                <td>
+      <div class="accordion accordion-flush" id="postingsAccordion">
+        <% postings.limit(10).each_with_index do |posting, index| %>
+          <div class="accordion-item">
+            <h2 class="accordion-header">
+              <button class="accordion-button collapsed py-2" type="button" 
+                      data-bs-toggle="collapse" 
+                      data-bs-target="#posting<%= posting.id %>" 
+                      aria-expanded="false">
+                <span class="d-flex align-items-center gap-2 flex-wrap">
                   <%= render_platform_badge(posting.platform) %>
-                </td>
-                <td>
+                  <small class="text-muted"><%= posting.posted_at.strftime('%b %d, %Y %I:%M %p') %></small>
                   <% if posting.event_occurrence %>
-                    <%= link_to posting.event_occurrence.occurs_at.strftime('%b %d'), 
-                        event_occurrence_path(posting.event_occurrence), 
-                        class: "text-decoration-none small" %>
+                    <small class="text-muted">
+                      → <%= posting.event_occurrence.occurs_at.strftime('%b %d') %>
+                    </small>
                   <% end %>
-                </td>
-                <td>
                   <% if posting.deleted? %>
                     <span class="badge bg-secondary"><i class="bi bi-trash"></i> Deleted</span>
-                  <% else %>
-                    <span class="badge bg-success"><i class="bi bi-check-circle"></i> Active</span>
                   <% end %>
-                </td>
-                <td>
+                </span>
+              </button>
+            </h2>
+            <div id="posting<%= posting.id %>" class="accordion-collapse collapse">
+              <div class="accordion-body pt-2 pb-3">
+                <p class="mb-2" style="white-space: pre-wrap;"><%= posting.message %></p>
+                <div class="d-flex justify-content-between align-items-center">
+                  <small class="text-muted">
+                    <% if posting.deleted? %>
+                      Deleted by <%= posting.deleted_by&.name || 'Unknown' %> on <%= posting.deleted_at.strftime('%b %d, %Y') %>
+                    <% end %>
+                  </small>
                   <% unless posting.deleted? %>
                     <div class="btn-group btn-group-sm">
                       <% if posting.post_url.present? %>
                         <%= link_to posting.post_url, target: "_blank", rel: "noopener", 
-                            class: "btn btn-outline-primary btn-sm py-0", title: "View" do %>
-                          <i class="bi bi-box-arrow-up-right"></i>
+                            class: "btn btn-outline-primary btn-sm", title: "View" do %>
+                          <i class="bi bi-box-arrow-up-right"></i> View
                         <% end %>
                       <% end %>
                       <% if posting.deletable? %>
                         <%= button_to reminder_posting_path(posting), method: :delete, 
-                            class: "btn btn-outline-danger btn-sm py-0",
+                            class: "btn btn-outline-danger btn-sm",
                             title: "Delete from #{posting.platform_display_name}",
                             form: { data: { turbo_confirm: "Delete this post from #{posting.platform_display_name}?" } } do %>
-                          <i class="bi bi-trash"></i>
+                          <i class="bi bi-trash"></i> Delete
                         <% end %>
                       <% else %>
                         <%= button_to reminder_posting_path(posting), method: :delete, 
-                            class: "btn btn-outline-warning btn-sm py-0",
+                            class: "btn btn-outline-warning btn-sm",
                             title: "Mark as deleted",
                             form: { data: { turbo_confirm: "Mark this post as deleted?" } } do %>
-                          <i class="bi bi-x-circle"></i>
+                          <i class="bi bi-x-circle"></i> Remove
                         <% end %>
                       <% end %>
                     </div>
                   <% end %>
-                </td>
-              </tr>
-            <% end %>
-          </tbody>
-        </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        <% end %>
       </div>
 
       <% if postings.count > 10 %>
-        <p class="small text-muted mb-0">
+        <p class="small text-muted mb-0 mt-2">
           Showing 10 of <%= postings.count %> postings.
           <% if current_user.admin? %>
             <%= link_to "View all postings", reminder_postings_path %>
@@ -89,4 +85,3 @@
     </div>
   </section>
 <% end %>
-
