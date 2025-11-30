@@ -18,6 +18,12 @@ class HostReminderNotificationJob < ApplicationJob
   def perform
     site_config = SiteConfig.current
 
+    # Check if host email reminders are enabled at the site level
+    unless site_config.host_email_reminders_enabled?
+      Rails.logger.info 'HostReminderNotificationJob: Host email reminders disabled in site config'
+      return
+    end
+
     # Check if either Slack or social reminders are enabled
     slack_enabled = site_config.slack_enabled? && ENV['SLACK_WEBHOOK_URL'].present?
     social_enabled = site_config.social_reminders_enabled?

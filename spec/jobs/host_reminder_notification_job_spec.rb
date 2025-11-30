@@ -3,7 +3,9 @@
 require 'rails_helper'
 
 RSpec.describe HostReminderNotificationJob, type: :job do
-  let!(:site_config) { create(:site_config, slack_enabled: true, social_reminders_enabled: true) }
+  let!(:site_config) do
+    create(:site_config, slack_enabled: true, social_reminders_enabled: true, host_email_reminders_enabled: true)
+  end
   let(:host) { create(:user, email_reminders_enabled: true) }
   let(:event) do
     create(:event,
@@ -25,6 +27,19 @@ RSpec.describe HostReminderNotificationJob, type: :job do
   end
 
   describe '#perform' do
+    context 'when host email reminders are disabled at site level' do
+      before do
+        site_config.update!(host_email_reminders_enabled: false)
+        event.occurrences.destroy_all
+        create(:event_occurrence, event: event, occurs_at: 8.days.from_now.beginning_of_day + 14.hours)
+      end
+
+      it 'does not send any notifications' do
+        expect(HostReminderMailer).not_to receive(:upcoming_reminder_notification)
+        described_class.perform_now
+      end
+    end
+
     context 'when no reminders are enabled' do
       before do
         site_config.update!(slack_enabled: false, social_reminders_enabled: false)
