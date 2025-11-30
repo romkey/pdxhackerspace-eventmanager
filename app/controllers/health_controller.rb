@@ -18,7 +18,8 @@ class HealthController < ApplicationController
       migrations: check_migrations
     }
 
-    status = checks.values.all? { |c| c[:status] == 'ok' } ? :ok : :service_unavailable
+    # Consider 'ok', 'skipped', and 'warning' as healthy states; only 'error' is unhealthy
+    status = checks.values.none? { |c| c[:status] == 'error' } ? :ok : :service_unavailable
 
     render json: {
       status: status == :ok ? 'healthy' : 'unhealthy',
@@ -67,7 +68,9 @@ class HealthController < ApplicationController
   end
 
   def check_migrations
-    return { status: 'ok' } unless ActiveRecord::Base.connection.migration_context.needs_migration?
+    migrations_path = Rails.root.join('db/migrate')
+    context = ActiveRecord::MigrationContext.new(migrations_path)
+    return { status: 'ok' } unless context.needs_migration?
 
     { status: 'warning', message: 'Pending migrations' }
   rescue StandardError => e

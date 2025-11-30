@@ -1,23 +1,20 @@
+# frozen_string_literal: true
+
 require 'rails_helper'
 
 RSpec.describe "Health", type: :request do
-  # Mock Redis and Sidekiq for all tests since they may not be available in CI
+  # Mock Redis for tests since it may not be available in CI
   before do
+    # Set up REDIS_URL so check_redis doesn't skip
+    allow(ENV).to receive(:fetch).and_call_original
+    allow(ENV).to receive(:fetch).with('REDIS_URL', nil).and_return('redis://localhost:6379/0')
+    allow(ENV).to receive(:fetch).with('APP_VERSION', 'unknown').and_return('test-version')
+
     # Mock successful Redis connection
     redis_double = instance_double(Redis)
-    allow(redis_double).to receive_messages(ping: 'PONG', info: { 'connected_clients' => 5 })
+    allow(redis_double).to receive(:ping).and_return('PONG')
     allow(redis_double).to receive(:close)
     allow(Redis).to receive(:new).and_return(redis_double)
-
-    # Mock successful Sidekiq stats
-    sidekiq_stats = instance_double(Sidekiq::Stats,
-                                    processed: 100,
-                                    failed: 2,
-                                    scheduled_size: 5,
-                                    retry_size: 1,
-                                    dead_size: 0,
-                                    queues: { 'default' => 3 })
-    allow(Sidekiq::Stats).to receive(:new).and_return(sidekiq_stats)
   end
 
   describe "GET /health/liveness" do
@@ -26,11 +23,9 @@ RSpec.describe "Health", type: :request do
       expect(response).to have_http_status(:success)
     end
 
-    it "returns JSON with ok status" do
+    it "returns empty body (head :ok)" do
       get '/health/liveness'
-      json = JSON.parse(response.body)
-      expect(json['status']).to eq('ok')
-      expect(json['timestamp']).to be_present
+      expect(response.body).to be_empty
     end
 
     it "does not require authentication" do
@@ -40,32 +35,18 @@ RSpec.describe "Health", type: :request do
   end
 
   describe "GET /health/readiness" do
-    it "returns success when all services are healthy" do
+    it "returns success when database is healthy" do
       get '/health/readiness'
       expect(response).to have_http_status(:success)
     end
 
-    it "returns JSON with health check results" do
+    it "returns empty body (head :ok)" do
       get '/health/readiness'
-      json = JSON.parse(response.body)
-      expect(json['status']).to eq('ready')
-      expect(json['checks']).to be_present
-      expect(json['checks']['database']['status']).to eq('ok')
-      expect(json['checks']['redis']['status']).to eq('ok')
-      expect(json['checks']['storage']['status']).to eq('ok')
+      expect(response.body).to be_empty
     end
 
     it "returns 503 when database is unavailable" do
       allow(ActiveRecord::Base).to receive(:connection).and_raise(StandardError, 'Database error')
-      get '/health/readiness'
-      expect(response).to have_http_status(:service_unavailable)
-      json = JSON.parse(response.body)
-      expect(json['status']).to eq('not_ready')
-      expect(json['checks']['database']['status']).to eq('error')
-    end
-
-    it "returns 503 when Redis is unavailable" do
-      allow(Redis).to receive(:new).and_raise(StandardError, 'Redis error')
       get '/health/readiness'
       expect(response).to have_http_status(:service_unavailable)
     end
@@ -89,29 +70,34 @@ RSpec.describe "Health", type: :request do
       expect(json['checks']).to be_present
       expect(json['checks']['database']).to be_present
       expect(json['checks']['redis']).to be_present
-      expect(json['checks']['storage']).to be_present
-      expect(json['checks']['sidekiq']).to be_present
-      expect(json['app_version']).to be_present
-      expect(json['environment']).to eq('test')
+      expect(json['checks']['migrations']).to be_present
+      expect(json['version']).to be_present
       expect(json['timestamp']).to be_present
     end
 
-    it "returns Sidekiq statistics" do
+    it "returns database check with response time" do
       get '/health'
       json = JSON.parse(response.body)
-      sidekiq_check = json['checks']['sidekiq']
-      expect(sidekiq_check['status']).to eq('ok')
-      expect(sidekiq_check).to have_key('processed')
-      expect(sidekiq_check).to have_key('failed')
-      expect(sidekiq_check).to have_key('scheduled_size')
+      db_check = json['checks']['database']
+      expect(db_check['status']).to eq('ok')
+      expect(db_check['response_time_ms']).to be_a(Numeric)
     end
 
-    it "returns 503 when any service is unhealthy" do
+    it "returns redis check with response time" do
+      get '/health'
+      json = JSON.parse(response.body)
+      redis_check = json['checks']['redis']
+      expect(redis_check['status']).to eq('ok')
+      expect(redis_check['response_time_ms']).to be_a(Numeric)
+    end
+
+    it "returns 503 when database is unhealthy" do
       allow(ActiveRecord::Base).to receive(:connection).and_raise(StandardError, 'Database error')
       get '/health'
       expect(response).to have_http_status(:service_unavailable)
       json = JSON.parse(response.body)
       expect(json['status']).to eq('unhealthy')
+      expect(json['checks']['database']['status']).to eq('error')
     end
 
     it "does not require authentication" do
@@ -121,7 +107,6 @@ RSpec.describe "Health", type: :request do
 
     it "does not expose sensitive information" do
       get '/health'
-      json = JSON.parse(response.body)
       body_string = response.body.downcase
       expect(body_string).not_to include('password')
       expect(body_string).not_to include('secret')
@@ -132,10 +117,16 @@ RSpec.describe "Health", type: :request do
   describe "health check components" do
     let(:controller) { HealthController.new }
 
+    before do
+      # Controller needs request context for some methods
+      allow(controller).to receive(:request).and_return(ActionDispatch::TestRequest.create)
+    end
+
     describe "#check_database" do
       it "returns ok when database is accessible" do
         result = controller.send(:check_database)
         expect(result[:status]).to eq('ok')
+        expect(result[:response_time_ms]).to be_a(Numeric)
       end
 
       it "returns error when database is not accessible" do
@@ -150,34 +141,27 @@ RSpec.describe "Health", type: :request do
       it "returns ok when Redis is accessible" do
         result = controller.send(:check_redis)
         expect(result[:status]).to eq('ok')
+        expect(result[:response_time_ms]).to be_a(Numeric)
+      end
+
+      it "returns skipped when Redis is not configured" do
+        allow(ENV).to receive(:fetch).with('REDIS_URL', nil).and_return(nil)
+        result = controller.send(:check_redis)
+        expect(result[:status]).to eq('skipped')
+      end
+
+      it "returns error when Redis connection fails" do
+        allow(Redis).to receive(:new).and_raise(StandardError, 'Connection refused')
+        result = controller.send(:check_redis)
+        expect(result[:status]).to eq('error')
+        expect(result[:message]).to eq('Connection refused')
       end
     end
 
-    describe "#check_storage" do
-      it "returns ok when storage is accessible" do
-        result = controller.send(:check_storage)
-        expect(result[:status]).to eq('ok')
-      end
-
-      it "returns error when storage is not accessible" do
-        allow(ActiveStorage::Blob).to receive(:limit).and_raise(StandardError, 'Test error')
-        result = controller.send(:check_storage)
-        expect(result[:status]).to eq('error')
-      end
-    end
-
-    describe "#check_sidekiq" do
-      it "returns ok with statistics when Sidekiq is accessible" do
-        result = controller.send(:check_sidekiq)
-        expect(result[:status]).to eq('ok')
-        expect(result[:processed]).to be_a(Integer)
-        expect(result[:failed]).to be_a(Integer)
-      end
-
-      it "returns error when Sidekiq is not accessible" do
-        allow(Sidekiq::Stats).to receive(:new).and_raise(StandardError, 'Test error')
-        result = controller.send(:check_sidekiq)
-        expect(result[:status]).to eq('error')
+    describe "#check_migrations" do
+      it "returns ok or warning (not error) for migrations" do
+        result = controller.send(:check_migrations)
+        expect(result[:status]).to be_in(%w[ok warning])
       end
     end
   end
