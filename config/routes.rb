@@ -3,10 +3,13 @@ require 'sidekiq-scheduler/web'
 
 Rails.application.routes.draw do
   # Health check endpoints (before authentication)
+  # Multiple aliases for compatibility with different monitoring systems
   get 'health', to: 'health#show'
   get 'up', to: 'health#show' # Rails 7.1+ convention
   get 'health/live', to: 'health#live'
+  get 'health/liveness', to: 'health#live' # Kubernetes-style alias
   get 'health/ready', to: 'health#ready'
+  get 'health/readiness', to: 'health#ready' # Kubernetes-style alias
 
   get 'calendar/index'
   get 'event_occurrences/show'
@@ -35,11 +38,6 @@ Rails.application.routes.draw do
 
   # Root path
   root 'home#index'
-
-  # Health check endpoints (for monitoring and load balancers)
-  get '/health', to: 'health#health'
-  get '/health/liveness', to: 'health#liveness'
-  get '/health/readiness', to: 'health#readiness'
 
   # Events routes
   get 'events/rss', to: 'events#rss', as: 'events_rss', defaults: { format: 'rss' }
