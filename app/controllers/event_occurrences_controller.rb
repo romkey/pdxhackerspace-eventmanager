@@ -1,8 +1,9 @@
 class EventOccurrencesController < ApplicationController
   include ReminderMessageBuilder
 
-  before_action :set_occurrence, only: %i[show edit update destroy postpone cancel reactivate post_slack_reminder post_social_reminder generate_ai_reminder ical]
+  before_action :set_occurrence, only: %i[show edit update destroy postpone cancel reactivate post_slack_reminder post_social_reminder generate_ai_reminder send_host_reminder ical]
   before_action :authorize_occurrence, only: %i[edit update destroy postpone cancel reactivate post_slack_reminder post_social_reminder generate_ai_reminder]
+  before_action :authorize_admin, only: %i[send_host_reminder]
 
   def show
     @event = @occurrence.event
@@ -161,6 +162,31 @@ class EventOccurrencesController < ApplicationController
     end
   end
 
+  def send_host_reminder
+    site_config = SiteConfig.current
+    @event = @occurrence.event
+
+    return redirect_to @occurrence, alert: 'Host email reminders are disabled.' unless site_config.host_email_reminders_enabled?
+
+    hosts = @event.hosts.where(email_reminders_enabled: true)
+    return redirect_to @occurrence, alert: 'No hosts with email reminders enabled.' if hosts.empty?
+
+    reminder_type = determine_reminder_type(@event, site_config)
+    days_until = (@occurrence.occurs_at.to_date - Date.current).to_i
+    test_email = site_config.email_test_mode_enabled? ? site_config.email_test_mode_address : nil
+
+    hosts.each do |host|
+      HostReminderMailer.upcoming_reminder_notification(
+        user: host, occurrence: @occurrence, reminder_type: reminder_type,
+        days_until_event: days_until, recipient_email: test_email || host.email
+      ).deliver_now
+    end
+
+    notice = "Host reminder sent to #{hosts.count} #{'host'.pluralize(hosts.count)}"
+    notice += " (test mode: #{test_email})" if test_email.present?
+    redirect_to @occurrence, notice: notice
+  end
+
   private
 
   def set_occurrence
@@ -172,6 +198,12 @@ class EventOccurrencesController < ApplicationController
     return if current_user && (current_user.admin? || @event.hosted_by?(current_user))
 
     redirect_to @occurrence, alert: "You are not authorized to manage this occurrence."
+  end
+
+  def authorize_admin
+    return if current_user&.admin?
+
+    redirect_to @occurrence, alert: "You must be an admin to perform this action."
   end
 
   def occurrence_params
@@ -187,5 +219,12 @@ class EventOccurrencesController < ApplicationController
     parts << "More info: #{event.more_info_url}" if event.more_info_url.present?
     parts << "Event page: #{event_occurrence_url(occurrence)}"
     parts.join("\n\n")
+  end
+
+  def determine_reminder_type(event, site_config)
+    return 'slack' if event.slack_announce? && site_config.slack_enabled?
+    return 'social' if event.social_reminders? && site_config.social_reminders_enabled?
+
+    'general'
   end
 end

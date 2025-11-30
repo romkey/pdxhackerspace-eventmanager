@@ -185,6 +185,22 @@
           </div>
         </div>
       </section>
+
+      <% if current_user.admin? %>
+        <section class="card mt-3">
+          <div class="card-body">
+            <h2 class="card-title h5">Admin Actions</h2>
+            <div class="d-grid gap-2">
+              <%= button_to send_host_reminder_event_occurrence_path(@occurrence),
+                  method: :post,
+                  class: "btn btn-outline-info",
+                  form: { data: { turbo_confirm: "Send host reminder email now for this occurrence?" } } do %>
+                <i class="bi bi-envelope-arrow-up" aria-hidden="true"></i> Send Host Reminder Now
+              <% end %>
+            </div>
+          </div>
+        </section>
+      <% end %>
     <% end %>
   </aside>
 </article>
