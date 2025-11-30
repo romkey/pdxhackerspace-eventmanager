@@ -1,12 +1,13 @@
 class SlackEventReminderJob < ApplicationJob
-  include ReminderMessageBuilder
-
   queue_as :default
 
   REMINDER_OFFSETS = {
     7 => '1 week',
     1 => '1 day'
   }.freeze
+
+  # Delay between posts to prevent Slack from merging messages
+  POST_DELAY_MINUTES = 5
 
   def perform
     site_config = SiteConfig.current
@@ -15,14 +16,15 @@ class SlackEventReminderJob < ApplicationJob
     webhook_url = ENV.fetch('SLACK_WEBHOOK_URL', nil)
     return if webhook_url.blank?
 
+    post_index = 0
     REMINDER_OFFSETS.each do |days_ahead, label|
-      post_reminders_for_days(days_ahead, label)
+      post_index = schedule_reminders_for_days(days_ahead, label, post_index)
     end
   end
 
   private
 
-  def post_reminders_for_days(days_ahead, label)
+  def schedule_reminders_for_days(days_ahead, label, start_index)
     target_date = Date.current + days_ahead.days
     start_time = target_date.beginning_of_day
     end_time = target_date.end_of_day
@@ -37,18 +39,18 @@ class SlackEventReminderJob < ApplicationJob
                   .where(events: { slack_announce: true })
                   .includes(:event)
 
-    return if occurrences.empty?
+    return start_index if occurrences.empty?
 
-    Rails.logger.info "SlackEventReminderJob: Found #{occurrences.count} events #{label} away"
+    Rails.logger.info "SlackEventReminderJob: Scheduling #{occurrences.count} reminders for #{label}"
 
+    current_index = start_index
     occurrences.each do |occurrence|
-      event = occurrence.event
-      next unless event.slack_announce?
-
-      message = long_reminder_message(occurrence, label, days_ahead: days_ahead)
-      SlackService.post_occurrence_reminder(occurrence, message)
+      delay_minutes = current_index * POST_DELAY_MINUTES
+      SlackPostReminderJob.set(wait: delay_minutes.minutes).perform_later(occurrence.id, label, days_ahead)
+      current_index += 1
     end
 
-    Rails.logger.info "SlackEventReminderJob: Completed posting #{occurrences.count} reminders for #{label}"
+    Rails.logger.info "SlackEventReminderJob: Scheduled #{occurrences.count} reminders for #{label} (staggered over #{(occurrences.count - 1) * POST_DELAY_MINUTES} minutes)"
+    current_index
   end
 end
