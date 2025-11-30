@@ -150,6 +150,24 @@
           </div>
 
           <div class="mb-3">
+            <div class="form-check">
+              <%= f.check_box :email_test_mode_enabled, class: "form-check-input", id: "email_test_mode_enabled" %>
+              <%= f.label :email_test_mode_enabled, "Email Test Mode", class: "form-check-label" %>
+              <div class="form-text">
+                <i class="bi bi-bug"></i> When enabled, all host reminder emails are sent to the test address below instead of the actual event hosts. Useful for testing email delivery without notifying real users.
+              </div>
+            </div>
+          </div>
+
+          <div class="mb-3" id="email-test-mode-address">
+            <%= f.label :email_test_mode_address, "Test Mode Email Address", class: "form-label" %>
+            <%= f.email_field :email_test_mode_address, class: "form-control", placeholder: "test@example.com" %>
+            <small class="form-text text-muted">
+              <i class="bi bi-envelope-at"></i> All host reminder emails will be sent to this address when test mode is enabled.
+            </small>
+          </div>
+
+          <div class="mb-3">
             <%= f.label :ai_reminder_prompt, "AI reminder prompt", class: "form-label" %>
             <%= f.text_area :ai_reminder_prompt, class: "form-control", rows: 3, placeholder: SiteConfig::DEFAULT_AI_REMINDER_PROMPT %>
             <small class="form-text text-muted">

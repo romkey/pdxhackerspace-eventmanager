@@ -1,3 +1,9 @@
+<% if @test_mode %>
+*** TEST MODE ***
+This email was redirected from <%= @user.email %> to the test address.
+******************
+
+<% end %>
 Event Reminder Notification
 ===========================
 

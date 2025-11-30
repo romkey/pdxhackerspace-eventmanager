@@ -16,20 +16,21 @@ class HostReminderNotificationJob < ApplicationJob
   }.freeze
 
   def perform
-    site_config = SiteConfig.current
+    @site_config = SiteConfig.current
 
     # Check if host email reminders are enabled at the site level
-    unless site_config.host_email_reminders_enabled?
+    unless @site_config.host_email_reminders_enabled?
       Rails.logger.info 'HostReminderNotificationJob: Host email reminders disabled in site config'
       return
     end
 
     # Check if either Slack or social reminders are enabled
-    slack_enabled = site_config.slack_enabled? && ENV['SLACK_WEBHOOK_URL'].present?
-    social_enabled = site_config.social_reminders_enabled?
+    slack_enabled = @site_config.slack_enabled? && ENV['SLACK_WEBHOOK_URL'].present?
+    social_enabled = @site_config.social_reminders_enabled?
 
     return unless slack_enabled || social_enabled
 
+    log_test_mode_status
     Rails.logger.info 'HostReminderNotificationJob: Starting host reminder notifications'
 
     REMINDER_SCHEDULE.each do |days_until_event, info|
@@ -91,16 +92,43 @@ class HostReminderNotificationJob < ApplicationJob
   end
 
   def send_notification(host, occurrence, reminder_type, days_until_event)
+    recipient_email = determine_recipient_email(host)
+
     HostReminderMailer.upcoming_reminder_notification(
       user: host,
       occurrence: occurrence,
       reminder_type: reminder_type,
-      days_until_event: days_until_event
+      days_until_event: days_until_event,
+      recipient_email: recipient_email
     ).deliver_later
 
-    Rails.logger.info "HostReminderNotificationJob: Queued #{reminder_type} notification " \
-                      "for #{host.email} about #{occurrence.event.title}"
+    log_notification_queued(host, occurrence, reminder_type, recipient_email)
   rescue StandardError => e
     Rails.logger.error "HostReminderNotificationJob: Failed to send notification to #{host.email}: #{e.message}"
+  end
+
+  def determine_recipient_email(host)
+    if @site_config.email_test_mode_enabled? && @site_config.email_test_mode_address.present?
+      @site_config.email_test_mode_address
+    else
+      host.email
+    end
+  end
+
+  def log_test_mode_status
+    return unless @site_config.email_test_mode_enabled?
+
+    Rails.logger.info "HostReminderNotificationJob: TEST MODE ENABLED - " \
+                      "all emails will be sent to #{@site_config.email_test_mode_address}"
+  end
+
+  def log_notification_queued(host, occurrence, reminder_type, recipient_email)
+    if recipient_email == host.email
+      Rails.logger.info "HostReminderNotificationJob: Queued #{reminder_type} notification " \
+                        "for #{host.email} about #{occurrence.event.title}"
+    else
+      Rails.logger.info "HostReminderNotificationJob: Queued #{reminder_type} notification " \
+                        "for #{host.email} (TEST MODE: sent to #{recipient_email}) about #{occurrence.event.title}"
+    end
   end
 end

@@ -212,6 +212,47 @@ RSpec.describe HostReminderNotificationJob, type: :job do
         described_class.perform_now
       end
     end
+
+    context 'with email test mode enabled' do
+      let(:test_email) { 'test-recipient@example.com' }
+
+      before do
+        site_config.update!(email_test_mode_enabled: true, email_test_mode_address: test_email)
+        event.occurrences.destroy_all
+        create(:event_occurrence, event: event, occurs_at: 8.days.from_now.beginning_of_day + 14.hours)
+        allow(HostReminderMailer).to receive(:upcoming_reminder_notification).and_return(mock_mail)
+      end
+
+      it 'sends notification to test address instead of host email' do
+        expect(HostReminderMailer).to receive(:upcoming_reminder_notification).with(
+          hash_including(recipient_email: test_email)
+        ).at_least(:once).and_return(mock_mail)
+        described_class.perform_now
+      end
+
+      it 'still includes correct user in notification' do
+        expect(HostReminderMailer).to receive(:upcoming_reminder_notification).with(
+          hash_including(user: host, recipient_email: test_email)
+        ).at_least(:once).and_return(mock_mail)
+        described_class.perform_now
+      end
+    end
+
+    context 'with email test mode enabled but no address set' do
+      before do
+        site_config.update!(email_test_mode_enabled: true, email_test_mode_address: nil)
+        event.occurrences.destroy_all
+        create(:event_occurrence, event: event, occurs_at: 8.days.from_now.beginning_of_day + 14.hours)
+        allow(HostReminderMailer).to receive(:upcoming_reminder_notification).and_return(mock_mail)
+      end
+
+      it 'sends notification to host email as fallback' do
+        expect(HostReminderMailer).to receive(:upcoming_reminder_notification).with(
+          hash_including(recipient_email: host.email)
+        ).at_least(:once).and_return(mock_mail)
+        described_class.perform_now
+      end
+    end
   end
 
   describe 'job configuration' do

@@ -6,16 +6,18 @@ class HostReminderMailer < ApplicationMailer
   # @param occurrence [EventOccurrence] The occurrence that will be reminded about
   # @param reminder_type [String] "slack" or "social"
   # @param days_until_event [Integer] Days until the event occurs
-  def upcoming_reminder_notification(user:, occurrence:, reminder_type:, days_until_event:)
+  # @param recipient_email [String] Optional override email address (for test mode)
+  def upcoming_reminder_notification(user:, occurrence:, reminder_type:, days_until_event:, recipient_email: nil)
     @user = user
     @occurrence = occurrence
     @event = occurrence.event
     @reminder_type = reminder_type
     @days_until_event = days_until_event
     @site_config = SiteConfig.current
+    @test_mode = recipient_email.present? && recipient_email != user.email
 
     subject = build_subject
-    mail(to: @user.email, subject: subject)
+    mail(to: recipient_email || @user.email, subject: subject)
   end
 
   private

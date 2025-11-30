@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_11_30_164303) do
+ActiveRecord::Schema[7.2].define(version: 2025_11_30_164645) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_trgm"
   enable_extension "plpgsql"
@@ -175,6 +175,8 @@ ActiveRecord::Schema[7.2].define(version: 2025_11_30_164303) do
     t.string "matomo_url"
     t.string "matomo_site_id"
     t.boolean "host_email_reminders_enabled", default: true, null: false
+    t.boolean "email_test_mode_enabled", default: false, null: false
+    t.string "email_test_mode_address"
     t.check_constraint "id = 1", name: "site_configs_singleton"
   end
 

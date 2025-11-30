@@ -1,3 +1,9 @@
+<% if @test_mode %>
+<div style="background-color: #ffc107; color: #000; padding: 10px 15px; border-radius: 5px; margin-bottom: 20px;">
+  <strong>⚠️ TEST MODE:</strong> This email was redirected from <%= @user.email %> to the test address.
+</div>
+<% end %>
+
 <h1>Event Reminder Notification</h1>
 
 <p>Hi <%= @user.name || @user.email %>,</p>

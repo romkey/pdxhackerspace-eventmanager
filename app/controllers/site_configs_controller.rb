@@ -57,6 +57,8 @@ class SiteConfigsController < ApplicationController
       :slack_enabled,
       :social_reminders_enabled,
       :host_email_reminders_enabled,
+      :email_test_mode_enabled,
+      :email_test_mode_address,
       :ai_reminder_prompt,
       :ai_model,
       :short_reminder_max_length,

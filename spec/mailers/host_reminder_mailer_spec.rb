@@ -110,5 +110,52 @@ RSpec.describe HostReminderMailer, type: :mailer do
         expect(text_part).to include('Event Host')
       end
     end
+
+    context 'with test mode (recipient_email override)' do
+      let(:test_email) { 'test-address@example.com' }
+      let(:mail) do
+        described_class.upcoming_reminder_notification(
+          user: host,
+          occurrence: occurrence,
+          reminder_type: 'slack',
+          days_until_event: 8,
+          recipient_email: test_email
+        )
+      end
+
+      it 'sends to the test email address' do
+        expect(mail.to).to eq([test_email])
+      end
+
+      it 'still addresses the original host in the greeting' do
+        expect(mail.body.encoded).to include('Event Host')
+      end
+
+      it 'includes test mode banner in HTML' do
+        expect(mail.body.encoded).to include('TEST MODE')
+        expect(mail.body.encoded).to include('host@example.com')
+      end
+
+      it 'includes test mode notice in plain text' do
+        text_part = mail.text_part.body.decoded
+        expect(text_part).to include('TEST MODE')
+        expect(text_part).to include('host@example.com')
+      end
+    end
+
+    context 'without test mode' do
+      let(:mail) do
+        described_class.upcoming_reminder_notification(
+          user: host,
+          occurrence: occurrence,
+          reminder_type: 'slack',
+          days_until_event: 8
+        )
+      end
+
+      it 'does not include test mode banner' do
+        expect(mail.body.encoded).not_to include('TEST MODE')
+      end
+    end
   end
 end
