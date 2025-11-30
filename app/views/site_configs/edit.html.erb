@@ -159,9 +159,9 @@
             </div>
           </div>
 
-          <div class="mb-3" id="email-test-mode-address">
+          <div class="mb-3" id="email-test-mode-address-container">
             <%= f.label :email_test_mode_address, "Test Mode Email Address", class: "form-label" %>
-            <%= f.email_field :email_test_mode_address, class: "form-control", placeholder: "test@example.com" %>
+            <%= f.email_field :email_test_mode_address, class: "form-control", placeholder: "test@example.com", id: "email_test_mode_address" %>
             <small class="form-text text-muted">
               <i class="bi bi-envelope-at"></i> All host reminder emails will be sent to this address when test mode is enabled.
             </small>
@@ -302,4 +302,28 @@
     </div>
   </div>
 </div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const testModeCheckbox = document.getElementById('email_test_mode_enabled');
+    const testModeAddressContainer = document.getElementById('email-test-mode-address-container');
+    const testModeAddressField = document.getElementById('email_test_mode_address');
+
+    function toggleTestModeAddress() {
+      if (testModeCheckbox.checked) {
+        testModeAddressContainer.style.opacity = '1';
+        testModeAddressField.disabled = false;
+      } else {
+        testModeAddressContainer.style.opacity = '0.5';
+        testModeAddressField.disabled = true;
+      }
+    }
+
+    // Set initial state
+    toggleTestModeAddress();
+
+    // Listen for changes
+    testModeCheckbox.addEventListener('change', toggleTestModeAddress);
+  });
+</script>
 
