@@ -97,7 +97,7 @@
     </div>
   </div>
   
-  <footer class="card-footer d-flex justify-content-between align-items-center">
+  <footer class="card-footer d-flex justify-content-between align-items-center flex-wrap gap-2">
     <div>
       <%= link_to "View Details", event_path(event), class: "btn btn-sm btn-primary" %>
       <% if event.more_info_url.present? %>
@@ -107,13 +107,28 @@
         <% end %>
       <% end %>
     </div>
-    <div class="btn-group" role="group" aria-label="Subscribe options for <%= event.title %>">
-      <%= link_to rss_event_path(event, format: :rss), class: "btn btn-sm btn-outline-warning", "aria-label": "RSS feed for #{event.title}" do %>
-        <i class="bi bi-rss" aria-hidden="true"></i>
+    <div class="d-flex gap-1">
+      <% if next_occurrence %>
+        <div class="btn-group" role="group" aria-label="Add to calendar for <%= event.title %>">
+          <%= link_to google_calendar_url(next_occurrence), target: "_blank", rel: "noopener", class: "btn btn-sm btn-outline-primary", title: "Add to Google Calendar", "aria-label": "Add #{event.title} to Google Calendar" do %>
+            <i class="bi bi-google" aria-hidden="true"></i>
+          <% end %>
+          <%= link_to apple_calendar_url(next_occurrence), class: "btn btn-sm btn-outline-secondary", title: "Add to Apple Calendar", "aria-label": "Add #{event.title} to Apple Calendar" do %>
+            <i class="bi bi-apple" aria-hidden="true"></i>
+          <% end %>
+          <%= link_to outlook_calendar_url(next_occurrence), target: "_blank", rel: "noopener", class: "btn btn-sm btn-outline-primary", title: "Add to Outlook", "aria-label": "Add #{event.title} to Outlook Calendar" do %>
+            <i class="bi bi-microsoft" aria-hidden="true"></i>
+          <% end %>
+        </div>
       <% end %>
-      <%= link_to event_ical_path(event.ical_token, format: :ics), class: "btn btn-sm btn-outline-secondary", "aria-label": "iCal feed for #{event.title}" do %>
-        <i class="bi bi-calendar-plus" aria-hidden="true"></i>
-      <% end %>
+      <div class="btn-group" role="group" aria-label="Subscribe options for <%= event.title %>">
+        <%= link_to rss_event_path(event, format: :rss), class: "btn btn-sm btn-outline-warning", title: "RSS Feed", "aria-label": "RSS feed for #{event.title}" do %>
+          <i class="bi bi-rss" aria-hidden="true"></i>
+        <% end %>
+        <%= link_to event_ical_path(event.ical_token, format: :ics), class: "btn btn-sm btn-outline-secondary", title: "iCal Feed", "aria-label": "iCal feed for #{event.title}" do %>
+          <i class="bi bi-calendar-plus" aria-hidden="true"></i>
+        <% end %>
+      </div>
     </div>
   </footer>
 </article>
