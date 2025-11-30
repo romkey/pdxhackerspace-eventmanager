@@ -1,0 +1,71 @@
+version: '3.8'
+
+# Test configuration
+# Usage:
+#   Run migrations:  docker compose -f docker-compose.test.yml run --rm app bin/rails db:migrate
+#   Run rubocop:     docker compose -f docker-compose.test.yml run --rm app bin/rubocop
+#   Run tests:       docker compose -f docker-compose.test.yml run --rm app bin/rspec
+#   Run specific test: docker compose -f docker-compose.test.yml run --rm app bin/rspec spec/models/event_spec.rb
+#   Rails console:   docker compose -f docker-compose.test.yml run --rm app bin/rails console
+#   Cleanup:         docker compose -f docker-compose.test.yml down -v
+
+services:
+  db:
+    image: postgres:14-alpine
+    container_name: eventmanager_test_db
+    volumes:
+      - test_postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: eventmanager
+      POSTGRES_PASSWORD: eventmanager_password
+      POSTGRES_DB: EventManager_test
+    ports:
+      - "5433:5432"  # Different port to avoid conflict with dev db
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U eventmanager"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: eventmanager_test_redis
+    ports:
+      - "6380:6379"  # Different port to avoid conflict with dev redis
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    container_name: eventmanager_test_app
+    volumes:
+      - .:/app
+      - test_bundle_cache:/usr/local/bundle
+      - test_node_modules:/app/node_modules
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      DATABASE_HOST: db
+      DATABASE_USER: eventmanager
+      DATABASE_PASSWORD: eventmanager_password
+      DATABASE_NAME: EventManager_test
+      REDIS_URL: redis://redis:6379/0
+      RAILS_ENV: test
+      # Disable spring for cleaner test runs
+      DISABLE_SPRING: 1
+    stdin_open: true
+    tty: true
+
+volumes:
+  test_postgres_data:
+  test_bundle_cache:
+  test_node_modules:
+

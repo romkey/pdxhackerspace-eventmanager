@@ -1,0 +1,50 @@
+# syntax=docker/dockerfile:1.4
+# ========================================
+# Dockerfile for running tests, rubocop, and migrations
+# Includes development and test gems (unlike production Dockerfile)
+# ========================================
+FROM ruby:3.2.2
+
+# Install build dependencies
+RUN apt-get update -qq && apt-get install -y \
+    build-essential \
+    libpq-dev \
+    curl \
+    gnupg \
+    git \
+    imagemagick \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Node.js 20.x LTS
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
+    apt-get install -y nodejs && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install Yarn
+RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - && \
+    echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list && \
+    apt-get update && apt-get install -y yarn && \
+    rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Copy dependency files first (for better layer caching)
+COPY Gemfile Gemfile.lock ./
+COPY package.json yarn.lock* ./
+
+# Install ALL Ruby gems (including development and test)
+RUN bundle config set --local without '' && \
+    bundle install --jobs 4 --retry 3
+
+# Install Node modules
+RUN yarn install --frozen-lockfile
+
+# Copy application code
+COPY . .
+
+# Build assets
+RUN yarn build && yarn build:css
+
+# Default command
+CMD ["bin/rails", "console"]
+
