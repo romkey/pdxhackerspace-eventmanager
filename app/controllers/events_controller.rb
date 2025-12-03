@@ -352,103 +352,84 @@ class EventsController < ApplicationController
   def events_json_response
     now = Time.current
 
-    # Get all published active events (including non-public)
-    # Non-public events will be shown as "Private Event"
-    all_events = Event.published
-                      .active
-                      .includes(:hosts, :occurrences, :location, banner_image_attachment: :blob)
-                      .order(start_time: :asc)
+    # Get all upcoming occurrences from published active events
+    # Include occurrences that haven't ended yet (in progress or future)
+    occurrences = EventOccurrence
+                  .joins(:event)
+                  .where(events: { draft: false, status: 'active' })
+                  .includes(event: [:hosts, :location, { banner_image_attachment: :blob }])
+                  .order(occurs_at: :asc)
 
-    events_data = all_events.filter_map do |event|
-      # Get occurrences that haven't ended yet (in progress or upcoming)
-      # An occurrence hasn't ended if: occurs_at + duration >= now
-      active_occurrences = event.occurrences
-                                .where(status: 'active')
-                                .select { |occ| occ.occurs_at + occ.duration.minutes >= now }
-                                .sort_by(&:occurs_at)
-                                .first(event.max_occurrences || 5)
+    # Filter to occurrences that haven't ended yet and build response
+    occurrences_data = occurrences.filter_map do |occ|
+      # Skip if occurrence has already ended
+      next if occ.occurs_at + occ.duration.minutes < now
 
-      # Skip events with no current/future occurrences
-      next if active_occurrences.empty?
-
-      # Public events get full details, non-public events show as "Private Event"
-      if event.visibility == 'public'
-        build_public_event_json(event, active_occurrences)
-      else
-        build_private_event_json(event, active_occurrences)
-      end
+      build_occurrence_json(occ)
     end
 
     {
-      events: events_data,
+      occurrences: occurrences_data,
       generated_at: Time.current.iso8601,
-      count: events_data.count
+      count: occurrences_data.count
     }
   end
 
-  def build_private_event_json(event, occurrences)
+  def build_occurrence_json(occurrence)
+    event = occurrence.event
+    is_private = event.visibility != 'public'
+
     {
-      id: event.id,
-      slug: event.slug,
-      title: 'Private Event',
-      description: nil,
-      status: event.status,
-      start_time: nil,
-      duration: nil,
-      recurrence_type: nil,
-      more_info_url: nil,
-      location: nil,
-      hosts: [],
-      banner_url: nil,
-      occurrences: occurrences.map do |occ|
-        {
-          id: occ.id,
-          slug: occ.slug,
-          occurs_at: occ.occurs_at.iso8601,
-          status: occ.status,
-          duration: nil,
-          description: nil,
-          postponed_until: nil,
-          cancellation_reason: nil,
-          location: nil,
-          has_custom_location: false,
-          banner_url: nil,
-          has_custom_banner: false
-        }
-      end
+      id: occurrence.id,
+      slug: occurrence.slug,
+      occurs_at: occurrence.occurs_at.iso8601,
+      duration: is_private ? nil : occurrence.duration,
+      is_cancelled: occurrence.status == 'cancelled',
+      is_postponed: occurrence.status == 'postponed',
+      postponed_until: occurrence.postponed_until&.iso8601,
+      event: build_event_info(event, is_private),
+      location: is_private ? nil : occurrence_location(occurrence),
+      description: is_private ? nil : occurrence.description,
+      banner_url: is_private ? nil : occurrence_banner_url(occurrence)
     }
   end
 
-  def build_public_event_json(event, occurrences)
-    {
-      id: event.id,
-      slug: event.slug,
-      title: event.title,
-      description: event.description,
-      status: event.status,
-      start_time: event.start_time.iso8601,
-      duration: event.duration,
-      recurrence_type: event.recurrence_type,
-      more_info_url: event.more_info_url,
-      location: event.location ? { id: event.location.id, name: event.location.name, description: event.location.description } : nil,
-      hosts: event.hosts.map { |h| h.name || h.email },
-      banner_url: event.banner_image.attached? ? url_for(event.banner_image) : nil,
-      occurrences: occurrences.map do |occ|
-        {
-          id: occ.id,
-          slug: occ.slug,
-          occurs_at: occ.occurs_at.iso8601,
-          status: occ.status,
-          duration: occ.duration,
-          description: occ.description,
-          postponed_until: occ.postponed_until&.iso8601,
-          cancellation_reason: occ.cancellation_reason,
-          location: occ.event_location ? { id: occ.event_location.id, name: occ.event_location.name } : nil,
-          has_custom_location: occ.location_id.present?,
-          banner_url: occ.banner.attached? ? url_for(occ.banner) : nil,
-          has_custom_banner: occ.banner_image.attached?
-        }
-      end
-    }
+  def build_event_info(event, is_private)
+    if is_private
+      {
+        id: event.id,
+        slug: event.slug,
+        title: 'Private Event',
+        description: nil,
+        more_info_url: nil,
+        hosts: [],
+        location: nil,
+        banner_url: nil
+      }
+    else
+      {
+        id: event.id,
+        slug: event.slug,
+        title: event.title,
+        description: event.description,
+        more_info_url: event.more_info_url,
+        hosts: event.hosts.map { |h| h.name || h.email },
+        location: event.location ? { id: event.location.id, name: event.location.name } : nil,
+        banner_url: event.banner_image.attached? ? url_for(event.banner_image) : nil
+      }
+    end
+  end
+
+  def occurrence_location(occurrence)
+    loc = occurrence.event_location
+    return nil unless loc
+
+    { id: loc.id, name: loc.name }
+  end
+
+  def occurrence_banner_url(occurrence)
+    return url_for(occurrence.banner) if occurrence.banner.attached?
+
+    nil
   end
 end

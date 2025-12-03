@@ -18,18 +18,27 @@ RSpec.describe "JSON API", type: :request do
       expect(response).to have_http_status(:success)
     end
 
+    it "returns occurrences ordered chronologically" do
+      get events_path, headers: { 'Accept' => 'application/json' }
+      json = JSON.parse(response.body)
+
+      expect(json).to have_key('occurrences')
+      dates = json['occurrences'].map { |o| Time.parse(o['occurs_at']) }
+      expect(dates).to eq(dates.sort)
+    end
+
     it "returns public events with full details and non-public events as 'Private Event'" do
       get events_path, headers: { 'Accept' => 'application/json' }
       json = JSON.parse(response.body)
 
-      event_titles = json['events'].pluck('title')
+      event_titles = json['occurrences'].map { |o| o['event']['title'] }
       # Public event should show its actual title
       expect(event_titles).to include('Public Event')
       # Non-public events should show as 'Private Event'
       expect(event_titles).to include('Private Event')
       # Should not show the actual titles of non-public events
       expect(event_titles).not_to include('Members Event')
-      # Cancelled events should not appear at all
+      # Cancelled events should not appear (event is cancelled)
       expect(event_titles).not_to include('Cancelled Event')
     end
 
@@ -37,52 +46,46 @@ RSpec.describe "JSON API", type: :request do
       get events_path, headers: { 'Accept' => 'application/json' }
       json = JSON.parse(response.body)
 
-      # Find the private event entries (both members and private visibility map to "Private Event")
-      private_events = json['events'].select { |e| e['title'] == 'Private Event' }
-      expect(private_events.length).to eq(2) # members_event and private_event
+      # Find occurrences where event title is "Private Event" (both members and private visibility)
+      private_occs = json['occurrences'].select { |o| o['event']['title'] == 'Private Event' }
+      expect(private_occs.length).to eq(2) # one each for members_event and private_event
     end
 
     it "hides details for non-public events" do
       get events_path, headers: { 'Accept' => 'application/json' }
       json = JSON.parse(response.body)
 
-      private_event_json = json['events'].find { |e| e['title'] == 'Private Event' }
-      expect(private_event_json['description']).to be_nil
-      expect(private_event_json['start_time']).to be_nil
-      expect(private_event_json['duration']).to be_nil
-      expect(private_event_json['hosts']).to eq([])
-      expect(private_event_json['location']).to be_nil
-      expect(private_event_json['banner_url']).to be_nil
+      private_occ = json['occurrences'].find { |o| o['event']['title'] == 'Private Event' }
+      expect(private_occ['event']['description']).to be_nil
+      expect(private_occ['event']['hosts']).to eq([])
+      expect(private_occ['event']['location']).to be_nil
+      expect(private_occ['event']['banner_url']).to be_nil
+      expect(private_occ['duration']).to be_nil
+      expect(private_occ['description']).to be_nil
     end
 
     it "shows occurrence times for non-public events (for scheduling)" do
       get events_path, headers: { 'Accept' => 'application/json' }
       json = JSON.parse(response.body)
 
-      private_event_json = json['events'].find { |e| e['title'] == 'Private Event' }
-      expect(private_event_json['occurrences']).to be_an(Array)
-      return if private_event_json['occurrences'].empty?
-
-      occ = private_event_json['occurrences'].first
-      expect(occ['occurs_at']).to be_present
-      expect(occ['description']).to be_nil
+      private_occ = json['occurrences'].find { |o| o['event']['title'] == 'Private Event' }
+      expect(private_occ['occurs_at']).to be_present
     end
 
-    it "excludes events that have already passed" do
+    it "excludes occurrences that have already passed" do
       # Create an event with only past occurrences
       past_event = create(:event, visibility: 'public', title: 'Past Event', start_time: 2.weeks.ago)
-      # Manually create a past occurrence
       past_event.occurrences.destroy_all
       create(:event_occurrence, event: past_event, occurs_at: 1.week.ago)
 
       get events_path, headers: { 'Accept' => 'application/json' }
       json = JSON.parse(response.body)
 
-      event_titles = json['events'].pluck('title')
+      event_titles = json['occurrences'].map { |o| o['event']['title'] }
       expect(event_titles).not_to include('Past Event')
     end
 
-    it "includes events currently in progress" do
+    it "includes occurrences currently in progress" do
       # Create an event that started 30 minutes ago with 2 hour duration (so still in progress)
       in_progress_event = create(:event, visibility: 'public', title: 'In Progress Event', start_time: 30.minutes.ago, duration: 120)
       in_progress_event.occurrences.destroy_all
@@ -91,32 +94,48 @@ RSpec.describe "JSON API", type: :request do
       get events_path, headers: { 'Accept' => 'application/json' }
       json = JSON.parse(response.body)
 
-      event_titles = json['events'].pluck('title')
+      event_titles = json['occurrences'].map { |o| o['event']['title'] }
       expect(event_titles).to include('In Progress Event')
     end
 
-    it "includes event metadata" do
+    it "includes response metadata" do
       get events_path, headers: { 'Accept' => 'application/json' }
       json = JSON.parse(response.body)
 
-      expect(json).to have_key('events')
+      expect(json).to have_key('occurrences')
       expect(json).to have_key('generated_at')
       expect(json).to have_key('count')
     end
 
-    it "includes event details" do
+    it "includes occurrence details with is_cancelled and is_postponed flags" do
       get events_path, headers: { 'Accept' => 'application/json' }
       json = JSON.parse(response.body)
-      event = json['events'].first
+      return if json['occurrences'].empty?
 
-      expect(event).to have_key('id')
-      expect(event).to have_key('title')
-      expect(event).to have_key('description')
-      expect(event).to have_key('start_time')
-      expect(event).to have_key('duration')
-      expect(event).to have_key('recurrence_type')
-      expect(event).to have_key('hosts')
-      expect(event).to have_key('occurrences')
+      occ = json['occurrences'].first
+      expect(occ).to have_key('id')
+      expect(occ).to have_key('slug')
+      expect(occ).to have_key('occurs_at')
+      expect(occ).to have_key('duration')
+      expect(occ).to have_key('is_cancelled')
+      expect(occ).to have_key('is_postponed')
+      expect(occ).to have_key('event')
+      expect(occ).to have_key('location')
+      expect(occ).to have_key('description')
+    end
+
+    it "includes event info for each occurrence" do
+      get events_path, headers: { 'Accept' => 'application/json' }
+      json = JSON.parse(response.body)
+      return if json['occurrences'].empty?
+
+      event_info = json['occurrences'].first['event']
+      expect(event_info).to have_key('id')
+      expect(event_info).to have_key('slug')
+      expect(event_info).to have_key('title')
+      expect(event_info).to have_key('description')
+      expect(event_info).to have_key('hosts')
+      expect(event_info).to have_key('location')
     end
 
     it "includes hosts as simple array of names" do
@@ -125,28 +144,11 @@ RSpec.describe "JSON API", type: :request do
 
       get events_path, headers: { 'Accept' => 'application/json' }
       json = JSON.parse(response.body)
-      event_json = json['events'].find { |e| e['id'] == event.id }
+      occ = json['occurrences'].find { |o| o['event']['id'] == event.id }
 
-      expect(event_json['hosts']).to be_an(Array)
-      expect(event_json['hosts']).to include('John Doe')
-      # Ensure no email addresses are exposed
-      expect(event_json['hosts'].to_s).not_to include('@')
-    end
-
-    it "includes upcoming occurrences" do
-      get events_path, headers: { 'Accept' => 'application/json' }
-      json = JSON.parse(response.body)
-      event = json['events'].first
-
-      expect(event['occurrences']).to be_an(Array)
-      if event['occurrences'].any?
-        occurrence = event['occurrences'].first
-        expect(occurrence).to have_key('id')
-        expect(occurrence).to have_key('occurs_at')
-        expect(occurrence).to have_key('status')
-        expect(occurrence).to have_key('duration')
-        expect(occurrence).to have_key('description')
-      end
+      expect(occ['event']['hosts']).to be_an(Array)
+      expect(occ['event']['hosts']).to include('John Doe')
+      expect(occ['event']['hosts'].to_s).not_to include('@')
     end
 
     it "includes banner URLs when present" do
@@ -154,18 +156,41 @@ RSpec.describe "JSON API", type: :request do
 
       get events_path, headers: { 'Accept' => 'application/json' }
       json = JSON.parse(response.body)
-      event_json = json['events'].find { |e| e['id'] == event_with_banner.id }
+      occ = json['occurrences'].find { |o| o['event']['id'] == event_with_banner.id }
 
-      expect(event_json['banner_url']).to be_present
-      expect(event_json['banner_url']).to include('rails/active_storage')
+      expect(occ['event']['banner_url']).to be_present
+      expect(occ['event']['banner_url']).to include('rails/active_storage')
     end
 
     it "sets banner_url to null when no banner" do
       get events_path, headers: { 'Accept' => 'application/json' }
       json = JSON.parse(response.body)
-      event = json['events'].find { |e| e['id'] == public_event.id }
+      occ = json['occurrences'].find { |o| o['event']['id'] == public_event.id }
 
-      expect(event['banner_url']).to be_nil
+      expect(occ['event']['banner_url']).to be_nil
+    end
+
+    it "shows is_cancelled true for cancelled occurrences" do
+      public_event.occurrences.first.update!(status: 'cancelled')
+
+      get events_path, headers: { 'Accept' => 'application/json' }
+      json = JSON.parse(response.body)
+      occ = json['occurrences'].find { |o| o['event']['id'] == public_event.id }
+
+      expect(occ['is_cancelled']).to be true
+      expect(occ['is_postponed']).to be false
+    end
+
+    it "shows is_postponed true for postponed occurrences" do
+      public_event.occurrences.first.update!(status: 'postponed', postponed_until: 2.weeks.from_now)
+
+      get events_path, headers: { 'Accept' => 'application/json' }
+      json = JSON.parse(response.body)
+      occ = json['occurrences'].find { |o| o['event']['id'] == public_event.id }
+
+      expect(occ['is_postponed']).to be true
+      expect(occ['is_cancelled']).to be false
+      expect(occ['postponed_until']).to be_present
     end
 
     it "does not require authentication" do
