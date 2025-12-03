@@ -31,7 +31,7 @@ RSpec.describe HostReminderNotificationJob, type: :job do
       before do
         site_config.update!(host_email_reminders_enabled: false)
         event.occurrences.destroy_all
-        create(:event_occurrence, event: event, occurs_at: 8.days.from_now.beginning_of_day + 14.hours)
+        create(:event_occurrence, event: event, occurs_at: 7.days.from_now.beginning_of_day + 14.hours)
       end
 
       it 'does not send any notifications' do
@@ -51,23 +51,23 @@ RSpec.describe HostReminderNotificationJob, type: :job do
       end
     end
 
-    context 'with event 8 days away (7-day reminder tomorrow)' do
+    context 'with event 7 days away (6-day reminder tomorrow)' do
       before do
         event.occurrences.destroy_all
-        create(:event_occurrence, event: event, occurs_at: 8.days.from_now.beginning_of_day + 14.hours)
+        create(:event_occurrence, event: event, occurs_at: 7.days.from_now.beginning_of_day + 14.hours)
         allow(HostReminderMailer).to receive(:upcoming_reminder_notification).and_return(mock_mail)
       end
 
       it 'sends notification to host for Slack reminder' do
         expect(HostReminderMailer).to receive(:upcoming_reminder_notification).with(
-          hash_including(user: host, reminder_type: 'slack', days_until_event: 8)
+          hash_including(user: host, reminder_type: 'slack', days_until_event: 7)
         ).and_call_original
         described_class.perform_now
       end
 
       it 'sends notification to host for social reminder' do
         expect(HostReminderMailer).to receive(:upcoming_reminder_notification).with(
-          hash_including(user: host, reminder_type: 'social', days_until_event: 8)
+          hash_including(user: host, reminder_type: 'social', days_until_event: 7)
         ).and_call_original
         described_class.perform_now
       end
@@ -102,7 +102,7 @@ RSpec.describe HostReminderNotificationJob, type: :job do
       before do
         host.update!(email_reminders_enabled: false)
         event.occurrences.destroy_all
-        create(:event_occurrence, event: event, occurs_at: 8.days.from_now.beginning_of_day + 14.hours)
+        create(:event_occurrence, event: event, occurs_at: 7.days.from_now.beginning_of_day + 14.hours)
       end
 
       it 'does not send notification' do
@@ -117,7 +117,7 @@ RSpec.describe HostReminderNotificationJob, type: :job do
       before do
         event.add_host(host2)
         event.occurrences.destroy_all
-        create(:event_occurrence, event: event, occurs_at: 8.days.from_now.beginning_of_day + 14.hours)
+        create(:event_occurrence, event: event, occurs_at: 7.days.from_now.beginning_of_day + 14.hours)
         allow(HostReminderMailer).to receive(:upcoming_reminder_notification).and_return(mock_mail)
       end
 
@@ -134,7 +134,7 @@ RSpec.describe HostReminderNotificationJob, type: :job do
       before do
         event.add_host(host2)
         event.occurrences.destroy_all
-        create(:event_occurrence, event: event, occurs_at: 8.days.from_now.beginning_of_day + 14.hours)
+        create(:event_occurrence, event: event, occurs_at: 7.days.from_now.beginning_of_day + 14.hours)
         allow(HostReminderMailer).to receive(:upcoming_reminder_notification).and_return(mock_mail)
       end
 
@@ -151,7 +151,7 @@ RSpec.describe HostReminderNotificationJob, type: :job do
       before do
         event.update!(visibility: 'private')
         event.occurrences.destroy_all
-        create(:event_occurrence, event: event, occurs_at: 8.days.from_now.beginning_of_day + 14.hours)
+        create(:event_occurrence, event: event, occurs_at: 7.days.from_now.beginning_of_day + 14.hours)
       end
 
       it 'does not send notification' do
@@ -164,7 +164,7 @@ RSpec.describe HostReminderNotificationJob, type: :job do
       before do
         event.update!(draft: true)
         event.occurrences.destroy_all
-        create(:event_occurrence, event: event, occurs_at: 8.days.from_now.beginning_of_day + 14.hours)
+        create(:event_occurrence, event: event, occurs_at: 7.days.from_now.beginning_of_day + 14.hours)
       end
 
       it 'does not send notification' do
@@ -177,7 +177,7 @@ RSpec.describe HostReminderNotificationJob, type: :job do
       before do
         event.update!(slack_announce: false, social_reminders: false)
         event.occurrences.destroy_all
-        create(:event_occurrence, event: event, occurs_at: 8.days.from_now.beginning_of_day + 14.hours)
+        create(:event_occurrence, event: event, occurs_at: 7.days.from_now.beginning_of_day + 14.hours)
       end
 
       it 'does not send notification' do
@@ -189,7 +189,7 @@ RSpec.describe HostReminderNotificationJob, type: :job do
     context 'with cancelled occurrence' do
       before do
         event.occurrences.destroy_all
-        create(:event_occurrence, :cancelled, event: event, occurs_at: 8.days.from_now.beginning_of_day + 14.hours)
+        create(:event_occurrence, :cancelled, event: event, occurs_at: 7.days.from_now.beginning_of_day + 14.hours)
       end
 
       it 'does not send notification' do
@@ -204,7 +204,7 @@ RSpec.describe HostReminderNotificationJob, type: :job do
         allow(ENV).to receive(:[]).with('SLACK_WEBHOOK_URL').and_return(nil)
         site_config.update!(social_reminders_enabled: false)
         event.occurrences.destroy_all
-        create(:event_occurrence, event: event, occurs_at: 8.days.from_now.beginning_of_day + 14.hours)
+        create(:event_occurrence, event: event, occurs_at: 7.days.from_now.beginning_of_day + 14.hours)
       end
 
       it 'does not send notification when only slack is enabled but not configured' do
@@ -219,7 +219,7 @@ RSpec.describe HostReminderNotificationJob, type: :job do
       before do
         site_config.update!(email_test_mode_enabled: true, email_test_mode_address: test_email)
         event.occurrences.destroy_all
-        create(:event_occurrence, event: event, occurs_at: 8.days.from_now.beginning_of_day + 14.hours)
+        create(:event_occurrence, event: event, occurs_at: 7.days.from_now.beginning_of_day + 14.hours)
         allow(HostReminderMailer).to receive(:upcoming_reminder_notification).and_return(mock_mail)
       end
 
@@ -242,7 +242,7 @@ RSpec.describe HostReminderNotificationJob, type: :job do
       before do
         site_config.update!(email_test_mode_enabled: true, email_test_mode_address: nil)
         event.occurrences.destroy_all
-        create(:event_occurrence, event: event, occurs_at: 8.days.from_now.beginning_of_day + 14.hours)
+        create(:event_occurrence, event: event, occurs_at: 7.days.from_now.beginning_of_day + 14.hours)
         allow(HostReminderMailer).to receive(:upcoming_reminder_notification).and_return(mock_mail)
       end
 

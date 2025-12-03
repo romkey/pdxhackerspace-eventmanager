@@ -2,7 +2,7 @@ class SlackEventReminderJob < ApplicationJob
   queue_as :default
 
   REMINDER_OFFSETS = {
-    7 => '1 week',
+    6 => '6 days',
     1 => '1 day'
   }.freeze
 

@@ -243,7 +243,7 @@ class EventsController < ApplicationController
     end
 
     days = params[:days].to_i
-    days = 7 unless [1, 7].include?(days)
+    days = 6 unless [1, 6].include?(days)
     message_type = params[:type] == 'long' ? :long : :short
 
     message = if message_type == :long

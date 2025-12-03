@@ -112,7 +112,7 @@ class OllamaService
     private
 
     def build_short_prompt(base_prompt, max_length, days_ahead)
-      timing = days_ahead == 7 ? 'one week away' : 'tomorrow'
+      timing = days_ahead > 1 ? '6 days away' : 'tomorrow'
       <<~PROMPT
         #{base_prompt}
 
@@ -132,7 +132,7 @@ class OllamaService
     end
 
     def build_long_prompt(base_prompt, max_length, days_ahead)
-      timing = days_ahead == 7 ? 'one week away' : 'tomorrow'
+      timing = days_ahead > 1 ? '6 days away' : 'tomorrow'
       <<~PROMPT
         #{base_prompt}
 

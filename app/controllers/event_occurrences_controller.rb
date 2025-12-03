@@ -141,7 +141,7 @@ class EventOccurrencesController < ApplicationController
 
   def generate_ai_reminder
     days_ahead = params[:days].to_i
-    days_ahead = 7 unless [1, 7].include?(days_ahead)
+    days_ahead = 6 unless [1, 6].include?(days_ahead)
     message_type = params[:type]&.to_sym || :short
 
     unless OllamaService.configured?

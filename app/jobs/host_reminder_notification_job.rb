@@ -4,14 +4,14 @@
 # are scheduled to go out, giving them a chance to update the reminder message.
 #
 # This job runs daily and checks for events that will have reminders posted:
-# - Tomorrow for 7-day reminders (event is 8 days away)
+# - Tomorrow for 6-day reminders (event is 7 days away)
 # - Tomorrow for 1-day reminders (event is 2 days away)
 class HostReminderNotificationJob < ApplicationJob
   queue_as :mailers
 
   # Maps days until reminder posts -> days until event
   REMINDER_SCHEDULE = {
-    8 => { reminder_days: 7, label: '1 week' },  # Tomorrow's 7-day reminder
+    7 => { reminder_days: 6, label: '6 days' },  # Tomorrow's 6-day reminder
     2 => { reminder_days: 1, label: '1 day' }    # Tomorrow's 1-day reminder
   }.freeze
 

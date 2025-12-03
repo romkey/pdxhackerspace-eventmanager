@@ -4,10 +4,10 @@ module ReminderMessageBuilder
 
   # Returns { text: "...", link_url: "...", link_text: "More info →" }
   # message_type: :short (for Bluesky) or :long (for Slack/Instagram)
-  # days_ahead: 7 for 1-week reminder, 1 for 1-day reminder
+  # days_ahead: 6 for 6-day reminder, 1 for 1-day reminder
   def reminder_message_with_link(occurrence, label, days_ahead: nil, message_type: :short)
     # Determine days_ahead from label if not provided
-    days_ahead ||= label.include?('week') ? 7 : 1
+    days_ahead ||= label.include?('day') && label.exclude?('1 day') ? 6 : 1
 
     case occurrence.status
     when 'cancelled'
@@ -44,10 +44,11 @@ module ReminderMessageBuilder
   end
 
   def get_custom_message(occurrence, days_ahead, message_type)
+    # Use the "7d" (now 6-day) reminder for advance notices, "1d" for day-before
     if message_type == :short
-      days_ahead == 7 ? occurrence.effective_reminder_7d_short : occurrence.effective_reminder_1d_short
+      days_ahead > 1 ? occurrence.effective_reminder_7d_short : occurrence.effective_reminder_1d_short
     else
-      days_ahead == 7 ? occurrence.effective_reminder_7d_long : occurrence.effective_reminder_1d_long
+      days_ahead > 1 ? occurrence.effective_reminder_7d_long : occurrence.effective_reminder_1d_long
     end
   end
 
