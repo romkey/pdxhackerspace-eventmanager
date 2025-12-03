@@ -1,3 +1,4 @@
+# rubocop:disable Metrics/ModuleLength
 module ReminderMessageBuilder
   LINK_TEXT = 'More info →'.freeze
 
@@ -56,13 +57,16 @@ module ReminderMessageBuilder
     time_str = occurrence.occurs_at.strftime('%I:%M %p')
     duration_str = format_duration(occurrence.duration)
 
+    # Format the timing phrase: "in 1 week", "in 1 day", but "today" or "tomorrow" without "in"
+    timing = format_timing_phrase(label)
+
     if message_type == :short
       # Short message for Bluesky
-      message = "#{event.title} is #{label} at PDX Hackerspace on #{date_str} at #{time_str}."
+      message = "#{event.title} is #{timing} at PDX Hackerspace on #{date_str} at #{time_str}."
       message += " Join us!" if message.length < 200
     else
       # Long message for Slack/Instagram
-      message = "📅 #{event.title} is #{label} at PDX Hackerspace!\n"
+      message = "📅 #{event.title} is #{timing} at PDX Hackerspace!\n"
       message += "🕐 #{date_str} at #{time_str} (#{duration_str})\n"
       message += "📍 #{occurrence.event_location.name}\n" if occurrence.event_location.present?
       if event.description.present?
@@ -72,6 +76,14 @@ module ReminderMessageBuilder
     end
 
     message
+  end
+
+  def format_timing_phrase(label)
+    # Labels like "today" and "tomorrow" don't need "in" prefix
+    # Labels like "1 week" and "1 day" should become "in 1 week" and "in 1 day"
+    return label if %w[today tomorrow].include?(label.downcase)
+
+    "in #{label}"
   end
 
   def cancelled_message_parts(occurrence, message_type)
@@ -131,3 +143,4 @@ module ReminderMessageBuilder
     end
   end
 end
+# rubocop:enable Metrics/ModuleLength
