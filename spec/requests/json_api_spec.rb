@@ -18,13 +18,81 @@ RSpec.describe "JSON API", type: :request do
       expect(response).to have_http_status(:success)
     end
 
-    it "returns only public and active events" do
+    it "returns public events with full details and non-public events as 'Private Event'" do
       get events_path, headers: { 'Accept' => 'application/json' }
       json = JSON.parse(response.body)
 
       event_titles = json['events'].pluck('title')
+      # Public event should show its actual title
       expect(event_titles).to include('Public Event')
-      expect(event_titles).not_to include('Members Event', 'Private Event', 'Cancelled Event')
+      # Non-public events should show as 'Private Event'
+      expect(event_titles).to include('Private Event')
+      # Should not show the actual titles of non-public events
+      expect(event_titles).not_to include('Members Event')
+      # Cancelled events should not appear at all
+      expect(event_titles).not_to include('Cancelled Event')
+    end
+
+    it "includes both members and private events as 'Private Event'" do
+      get events_path, headers: { 'Accept' => 'application/json' }
+      json = JSON.parse(response.body)
+
+      # Find the private event entries (both members and private visibility map to "Private Event")
+      private_events = json['events'].select { |e| e['title'] == 'Private Event' }
+      expect(private_events.length).to eq(2) # members_event and private_event
+    end
+
+    it "hides details for non-public events" do
+      get events_path, headers: { 'Accept' => 'application/json' }
+      json = JSON.parse(response.body)
+
+      private_event_json = json['events'].find { |e| e['title'] == 'Private Event' }
+      expect(private_event_json['description']).to be_nil
+      expect(private_event_json['start_time']).to be_nil
+      expect(private_event_json['duration']).to be_nil
+      expect(private_event_json['hosts']).to eq([])
+      expect(private_event_json['location']).to be_nil
+      expect(private_event_json['banner_url']).to be_nil
+    end
+
+    it "shows occurrence times for non-public events (for scheduling)" do
+      get events_path, headers: { 'Accept' => 'application/json' }
+      json = JSON.parse(response.body)
+
+      private_event_json = json['events'].find { |e| e['title'] == 'Private Event' }
+      expect(private_event_json['occurrences']).to be_an(Array)
+      return if private_event_json['occurrences'].empty?
+
+      occ = private_event_json['occurrences'].first
+      expect(occ['occurs_at']).to be_present
+      expect(occ['description']).to be_nil
+    end
+
+    it "excludes events that have already passed" do
+      # Create an event with only past occurrences
+      past_event = create(:event, visibility: 'public', title: 'Past Event', start_time: 2.weeks.ago)
+      # Manually create a past occurrence
+      past_event.occurrences.destroy_all
+      create(:event_occurrence, event: past_event, occurs_at: 1.week.ago)
+
+      get events_path, headers: { 'Accept' => 'application/json' }
+      json = JSON.parse(response.body)
+
+      event_titles = json['events'].pluck('title')
+      expect(event_titles).not_to include('Past Event')
+    end
+
+    it "includes events currently in progress" do
+      # Create an event that started 30 minutes ago with 2 hour duration (so still in progress)
+      in_progress_event = create(:event, visibility: 'public', title: 'In Progress Event', start_time: 30.minutes.ago, duration: 120)
+      in_progress_event.occurrences.destroy_all
+      create(:event_occurrence, event: in_progress_event, occurs_at: 30.minutes.ago)
+
+      get events_path, headers: { 'Accept' => 'application/json' }
+      json = JSON.parse(response.body)
+
+      event_titles = json['events'].pluck('title')
+      expect(event_titles).to include('In Progress Event')
     end
 
     it "includes event metadata" do
