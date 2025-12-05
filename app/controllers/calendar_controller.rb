@@ -67,50 +67,7 @@ class CalendarController < ApplicationController
 
     respond_to do |format|
       format.html
-      format.json do
-        # For JSON, only return published public event occurrences
-        public_occurrences = EventOccurrence
-                             .joins(:event)
-                             .where(events: { visibility: 'public', draft: false })
-                             .upcoming
-                             .includes(event: [:hosts,
-                                               { banner_image_attachment: :blob }], banner_image_attachment: :blob)
-                             .limit(100)
-
-        occurrences_data = public_occurrences.map do |occ|
-          {
-            id: occ.id,
-            slug: occ.slug,
-            occurs_at: occ.occurs_at.iso8601,
-            status: occ.status,
-            duration: occ.duration,
-            description: occ.description,
-            postponed_until: occ.postponed_until&.iso8601,
-            cancellation_reason: occ.cancellation_reason,
-            location: occ.event_location ? { id: occ.event_location.id, name: occ.event_location.name } : nil,
-            has_custom_location: occ.location_id.present?,
-            banner_url: occ.banner.attached? ? url_for(occ.banner) : nil,
-            has_custom_banner: occ.banner_image.attached?,
-            event: {
-              id: occ.event.id,
-              slug: occ.event.slug,
-              title: occ.event.title,
-              recurrence_type: occ.event.recurrence_type,
-              more_info_url: occ.event.more_info_url,
-              visibility: occ.event.visibility,
-              open_to: occ.event.open_to,
-              location: occ.event.location ? { id: occ.event.location.id, name: occ.event.location.name } : nil,
-              hosts: occ.event.hosts.map { |h| h.name || h.email }
-            }
-          }
-        end
-
-        render json: {
-          occurrences: occurrences_data,
-          generated_at: Time.now.iso8601,
-          count: occurrences_data.count
-        }
-      end
+      format.json { render json: calendar_json_response }
     end
   end
 
@@ -201,5 +158,62 @@ class CalendarController < ApplicationController
 
   def allow_iframe
     response.headers.delete('X-Frame-Options')
+  end
+
+  def calendar_json_response
+    now = Time.current
+    public_occurrences = EventOccurrence
+                         .joins(:event)
+                         .where(events: { visibility: 'public', draft: false })
+                         .includes(event: [:hosts, { banner_image_attachment: :blob }], banner_image_attachment: :blob)
+                         .order(:occurs_at)
+                         .limit(100)
+
+    occurrences_data = public_occurrences.filter_map do |occ|
+      build_calendar_occurrence_json(occ, now)
+    end
+
+    {
+      occurrences: occurrences_data,
+      generated_at: Time.current.iso8601,
+      count: occurrences_data.count
+    }
+  end
+
+  def build_calendar_occurrence_json(occ, now)
+    occurrence_end = occ.occurs_at + occ.duration.minutes
+    return nil if occurrence_end < now
+
+    {
+      id: occ.id,
+      slug: occ.slug,
+      occurs_at: occ.occurs_at.iso8601,
+      status: occ.status,
+      duration: occ.duration,
+      description: occ.description,
+      postponed_until: occ.postponed_until&.iso8601,
+      cancellation_reason: occ.cancellation_reason,
+      in_progress: now >= occ.occurs_at && now < occurrence_end,
+      open_to: occ.event.open_to,
+      location: occ.event_location ? { id: occ.event_location.id, name: occ.event_location.name } : nil,
+      has_custom_location: occ.location_id.present?,
+      banner_url: occ.banner.attached? ? url_for(occ.banner) : nil,
+      has_custom_banner: occ.banner_image.attached?,
+      event: build_calendar_event_info(occ.event)
+    }
+  end
+
+  def build_calendar_event_info(event)
+    {
+      id: event.id,
+      slug: event.slug,
+      title: event.title,
+      recurrence_type: event.recurrence_type,
+      more_info_url: event.more_info_url,
+      visibility: event.visibility,
+      open_to: event.open_to,
+      location: event.location ? { id: event.location.id, name: event.location.name } : nil,
+      hosts: event.hosts.map { |h| h.name || h.email }
+    }
   end
 end

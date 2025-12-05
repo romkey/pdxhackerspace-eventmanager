@@ -98,6 +98,48 @@ RSpec.describe "JSON API", type: :request do
       expect(event_titles).to include('In Progress Event')
     end
 
+    it "shows in_progress true for occurrences currently happening" do
+      # Create an event that started 30 minutes ago with 2 hour duration (so still in progress)
+      in_progress_event = create(:event, visibility: 'public', title: 'In Progress Event', start_time: 30.minutes.ago, duration: 120)
+      in_progress_event.occurrences.destroy_all
+      create(:event_occurrence, event: in_progress_event, occurs_at: 30.minutes.ago)
+
+      get events_path, headers: { 'Accept' => 'application/json' }
+      json = JSON.parse(response.body)
+
+      occ = json['occurrences'].find { |o| o['event']['title'] == 'In Progress Event' }
+      expect(occ['in_progress']).to be true
+    end
+
+    it "shows in_progress false for future occurrences" do
+      get events_path, headers: { 'Accept' => 'application/json' }
+      json = JSON.parse(response.body)
+
+      occ = json['occurrences'].find { |o| o['event']['title'] == 'Public Event' }
+      expect(occ['in_progress']).to be false
+    end
+
+    it "includes open_to for public events" do
+      public_event.update!(open_to: 'members')
+
+      get events_path, headers: { 'Accept' => 'application/json' }
+      json = JSON.parse(response.body)
+
+      occ = json['occurrences'].find { |o| o['event']['title'] == 'Public Event' }
+      expect(occ['open_to']).to eq('members')
+    end
+
+    it "hides open_to for non-public events" do
+      get events_path, headers: { 'Accept' => 'application/json' }
+      json = JSON.parse(response.body)
+
+      # Find a private event occurrence (shows as 'Private Event')
+      private_occs = json['occurrences'].select { |o| o['event']['title'] == 'Private Event' }
+      private_occs.each do |occ|
+        expect(occ['open_to']).to be_nil
+      end
+    end
+
     it "includes response metadata" do
       get events_path, headers: { 'Accept' => 'application/json' }
       json = JSON.parse(response.body)
@@ -107,7 +149,7 @@ RSpec.describe "JSON API", type: :request do
       expect(json).to have_key('count')
     end
 
-    it "includes occurrence details with is_cancelled and is_postponed flags" do
+    it "includes standard occurrence details" do
       get events_path, headers: { 'Accept' => 'application/json' }
       json = JSON.parse(response.body)
       return if json['occurrences'].empty?
@@ -117,11 +159,21 @@ RSpec.describe "JSON API", type: :request do
       expect(occ).to have_key('slug')
       expect(occ).to have_key('occurs_at')
       expect(occ).to have_key('duration')
-      expect(occ).to have_key('is_cancelled')
-      expect(occ).to have_key('is_postponed')
       expect(occ).to have_key('event')
       expect(occ).to have_key('location')
       expect(occ).to have_key('description')
+    end
+
+    it "includes status and progress flags" do
+      get events_path, headers: { 'Accept' => 'application/json' }
+      json = JSON.parse(response.body)
+      return if json['occurrences'].empty?
+
+      occ = json['occurrences'].first
+      expect(occ).to have_key('is_cancelled')
+      expect(occ).to have_key('is_postponed')
+      expect(occ).to have_key('in_progress')
+      expect(occ).to have_key('open_to')
     end
 
     it "includes event info for each occurrence" do
@@ -255,6 +307,8 @@ RSpec.describe "JSON API", type: :request do
       expect(occurrence).to have_key('status')
       expect(occurrence).to have_key('duration')
       expect(occurrence).to have_key('description')
+      expect(occurrence).to have_key('in_progress')
+      expect(occurrence).to have_key('open_to')
       expect(occurrence).to have_key('event')
     end
 
@@ -347,6 +401,39 @@ RSpec.describe "JSON API", type: :request do
     it "does not require authentication" do
       get calendar_path, headers: { 'Accept' => 'application/json' }
       expect(response).to have_http_status(:success)
+    end
+
+    it "shows in_progress true for occurrences currently happening" do
+      # Create an event that started 30 minutes ago with 2 hour duration (so still in progress)
+      in_progress_event = create(:event, visibility: 'public', title: 'In Progress Event', start_time: 30.minutes.ago, duration: 120)
+      in_progress_event.occurrences.destroy_all
+      create(:event_occurrence, event: in_progress_event, occurs_at: 30.minutes.ago)
+
+      get calendar_path, headers: { 'Accept' => 'application/json' }
+      json = JSON.parse(response.body)
+
+      occ = json['occurrences'].find { |o| o['event']['title'] == 'In Progress Event' }
+      expect(occ['in_progress']).to be true
+    end
+
+    it "shows in_progress false for future occurrences" do
+      get calendar_path, headers: { 'Accept' => 'application/json' }
+      json = JSON.parse(response.body)
+
+      return if json['occurrences'].empty?
+
+      occ = json['occurrences'].first
+      expect(occ['in_progress']).to be false
+    end
+
+    it "includes open_to at the occurrence level" do
+      public_event.update!(open_to: 'members')
+
+      get calendar_path, headers: { 'Accept' => 'application/json' }
+      json = JSON.parse(response.body)
+
+      occ = json['occurrences'].find { |o| o['event']['id'] == public_event.id }
+      expect(occ['open_to']).to eq('members')
     end
   end
 end

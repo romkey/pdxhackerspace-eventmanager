@@ -378,6 +378,8 @@ class EventsController < ApplicationController
   def build_occurrence_json(occurrence)
     event = occurrence.event
     is_private = event.visibility != 'public'
+    now = Time.current
+    occurrence_end = occurrence.occurs_at + occurrence.duration.minutes
 
     {
       id: occurrence.id,
@@ -386,7 +388,9 @@ class EventsController < ApplicationController
       duration: is_private ? nil : occurrence.duration,
       is_cancelled: occurrence.status == 'cancelled',
       is_postponed: occurrence.status == 'postponed',
+      in_progress: now >= occurrence.occurs_at && now < occurrence_end,
       postponed_until: occurrence.postponed_until&.iso8601,
+      open_to: is_private ? nil : event.open_to,
       event: build_event_info(event, is_private),
       location: is_private ? nil : occurrence_location(occurrence),
       description: is_private ? nil : occurrence.description,
