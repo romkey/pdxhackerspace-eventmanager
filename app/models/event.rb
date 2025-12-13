@@ -23,6 +23,7 @@ class Event < ApplicationRecord
   after_update :log_update
   after_update :regenerate_occurrences_if_needed
   after_save :log_banner_change
+  after_commit :queue_spectra6_processing, if: :banner_image_attached_recently?
 
   attr_accessor :current_user_for_journal
 
@@ -397,5 +398,15 @@ class Event < ApplicationRecord
         }
       }
     )
+  end
+
+  def banner_image_attached_recently?
+    banner_image.attached? && banner_image.blob.created_at > 10.seconds.ago
+  end
+
+  def queue_spectra6_processing
+    return unless banner_image.attached?
+
+    Spectra6BannerJob.perform_later(banner_image.blob.id)
   end
 end
