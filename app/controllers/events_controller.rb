@@ -385,6 +385,8 @@ class EventsController < ApplicationController
       id: occurrence.id,
       slug: occurrence.slug,
       occurs_at: occurrence.occurs_at.iso8601,
+      occurs_at_unix: occurrence.occurs_at.to_i,
+      ends_at_unix: occurrence_end.to_i,
       duration: is_private ? nil : occurrence.duration,
       is_cancelled: occurrence.status == 'cancelled',
       is_postponed: occurrence.status == 'postponed',
