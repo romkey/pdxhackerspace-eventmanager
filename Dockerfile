@@ -11,6 +11,7 @@ RUN apt-get update -qq && apt-get install -y \
     curl \
     gnupg \
     git \
+    imagemagick \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Node.js 20.x LTS
