@@ -41,6 +41,7 @@ Rails.application.routes.draw do
 
   # Events routes
   get 'events/rss', to: 'events#rss', as: 'events_rss', defaults: { format: 'rss' }
+  get 'events/eink', to: 'events#eink', as: 'events_eink', defaults: { format: 'json' }
   resources :events do
     member do
       post :postpone

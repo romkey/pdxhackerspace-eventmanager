@@ -1,7 +1,7 @@
 class EventsController < ApplicationController
   skip_before_action :verify_authenticity_token, only: [:ical]
 
-  before_action :authenticate_user!, except: %i[index show ical embed rss event_rss]
+  before_action :authenticate_user!, except: %i[index show ical embed rss event_rss eink]
   before_action :set_event, only: %i[show embed edit update destroy postpone cancel reactivate generate_ai_reminder event_rss]
   before_action :authorize_event, only: %i[edit update destroy postpone cancel reactivate]
 
@@ -67,6 +67,12 @@ class EventsController < ApplicationController
     respond_to do |format|
       format.rss { render layout: false }
     end
+  end
+
+  def eink
+    # Minimal JSON feed for e-ink signs
+    # Returns only the next 5 occurrences with essential data
+    render json: eink_json_response
   end
 
   def show
@@ -373,6 +379,41 @@ class EventsController < ApplicationController
       generated_at: Time.current.iso8601,
       count: occurrences_data.count
     }
+  end
+
+  def eink_json_response
+    now = Time.current
+
+    # Get next 5 upcoming occurrences from published public/members events
+    occurrences = EventOccurrence
+                  .joins(:event)
+                  .where(events: { draft: false, status: 'active' })
+                  .where(events: { visibility: %w[public members] })
+                  .where('event_occurrences.occurs_at > ?', now)
+                  .includes(:event)
+                  .order(occurs_at: :asc)
+                  .limit(5)
+
+    occurrences.map do |occ|
+      event = occ.event
+      entry = {
+        t: occ.occurs_at.to_i,
+        d: occ.duration,
+        n: event.title,
+        o: event.open_to[0] # First letter: p/m/r for public/members/private
+      }
+
+      # Only include status info if not active
+      if occ.status == 'cancelled'
+        entry[:x] = true
+        entry[:r] = occ.cancellation_reason if occ.cancellation_reason.present?
+      elsif occ.status == 'postponed'
+        entry[:p] = true
+        entry[:u] = occ.postponed_until.to_i if occ.postponed_until
+      end
+
+      entry
+    end
   end
 
   def build_occurrence_json(occurrence)
