@@ -397,19 +397,19 @@ class EventsController < ApplicationController
     occurrences.map do |occ|
       event = occ.event
       entry = {
-        t: occ.occurs_at.to_i,
-        d: occ.duration,
-        n: event.title,
-        o: event.open_to[0] # First letter: p/m/r for public/members/private
+        start_time: occ.occurs_at.to_i,
+        duration: occ.duration,
+        name: event.title,
+        open_to: event.open_to
       }
 
       # Only include status info if not active
       if occ.status == 'cancelled'
-        entry[:x] = true
-        entry[:r] = occ.cancellation_reason if occ.cancellation_reason.present?
+        entry[:cancelled] = true
+        entry[:reason] = occ.cancellation_reason if occ.cancellation_reason.present?
       elsif occ.status == 'postponed'
-        entry[:p] = true
-        entry[:u] = occ.postponed_until.to_i if occ.postponed_until
+        entry[:postponed] = true
+        entry[:postponed_until] = occ.postponed_until.to_i if occ.postponed_until
       end
 
       entry
