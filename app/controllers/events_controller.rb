@@ -396,7 +396,8 @@ class EventsController < ApplicationController
       event: build_event_info(event, is_private),
       location: is_private ? nil : occurrence_location(occurrence),
       description: is_private ? nil : occurrence.description,
-      banner_url: is_private ? nil : occurrence_banner_url(occurrence)
+      banner_url: is_private ? nil : occurrence_banner_url(occurrence),
+      spectra6_banner_url: is_private ? nil : occurrence_spectra6_banner_url(occurrence)
     }
   end
 
@@ -410,7 +411,8 @@ class EventsController < ApplicationController
         more_info_url: nil,
         hosts: [],
         location: nil,
-        banner_url: nil
+        banner_url: nil,
+        spectra6_banner_url: nil
       }
     else
       {
@@ -421,7 +423,8 @@ class EventsController < ApplicationController
         more_info_url: event.more_info_url,
         hosts: event.hosts.map { |h| h.name || h.email },
         location: event.location ? { id: event.location.id, name: event.location.name } : nil,
-        banner_url: event.banner_image.attached? ? url_for(event.banner_image) : nil
+        banner_url: event.banner_image.attached? ? url_for(event.banner_image) : nil,
+        spectra6_banner_url: spectra6_banner_url_for(event.banner_image)
       }
     end
   end
@@ -437,5 +440,28 @@ class EventsController < ApplicationController
     return url_for(occurrence.banner) if occurrence.banner.attached?
 
     nil
+  end
+
+  def occurrence_spectra6_banner_url(occurrence)
+    return spectra6_banner_url_for(occurrence.banner) if occurrence.banner.attached?
+
+    # Fall back to event's spectra6 banner
+    spectra6_banner_url_for(occurrence.event.banner_image)
+  end
+
+  def spectra6_banner_url_for(attachment)
+    return nil unless attachment.attached?
+
+    blob = attachment.blob
+    spectra6_key = File.join(
+      File.dirname(blob.key),
+      Spectra6BannerJob::OUTPUT_SUBDIR,
+      "#{File.basename(blob.key, '.*')}.png"
+    )
+
+    spectra6_blob = ActiveStorage::Blob.find_by(key: spectra6_key)
+    return nil unless spectra6_blob
+
+    url_for(spectra6_blob)
   end
 end
