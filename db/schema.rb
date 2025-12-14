@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_11_30_193121) do
+ActiveRecord::Schema[7.2].define(version: 2025_12_14_185624) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_trgm"
   enable_extension "plpgsql"
@@ -127,6 +127,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_11_30_193121) do
     t.text "reminder_1d_long"
     t.datetime "deleted_at"
     t.integer "event_occurrences_count", default: 0, null: false
+    t.boolean "sign_feed", default: true, null: false
     t.index ["deleted_at"], name: "index_events_on_deleted_at"
     t.index ["description"], name: "index_events_on_description_trgm", opclass: :gin_trgm_ops, using: :gin
     t.index ["ical_token"], name: "index_events_on_ical_token", unique: true

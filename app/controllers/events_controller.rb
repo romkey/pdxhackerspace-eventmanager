@@ -318,7 +318,8 @@ class EventsController < ApplicationController
                                   :recurrence_type, :status, :visibility, :open_to,
                                   :more_info_url, :max_occurrences, :banner_image,
                                   :location_id, :requires_mask, :draft, :slack_announce, :social_reminders,
-                                  :reminder_7d_short, :reminder_1d_short, :reminder_7d_long, :reminder_1d_long)
+                                  :reminder_7d_short, :reminder_1d_short, :reminder_7d_long, :reminder_1d_long,
+                                  :sign_feed)
   end
 
   def build_recurrence_params
@@ -384,10 +385,10 @@ class EventsController < ApplicationController
   def eink_json_response
     now = Time.current
 
-    # Get next 5 upcoming occurrences from published public/members events
+    # Get next 5 upcoming occurrences from published public/members events with sign_feed enabled
     occurrences = EventOccurrence
                   .joins(:event)
-                  .where(events: { draft: false, status: 'active' })
+                  .where(events: { draft: false, status: 'active', sign_feed: true })
                   .where(events: { visibility: %w[public members] })
                   .where('event_occurrences.occurs_at > ?', now)
                   .includes(:event)
