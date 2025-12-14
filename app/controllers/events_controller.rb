@@ -385,32 +385,37 @@ class EventsController < ApplicationController
   def eink_json_response
     now = Time.current
 
-    # Get next 5 upcoming occurrences from published public/members events with sign_feed enabled
+    # Get next 5 upcoming occurrences from published public/members events
     occurrences = EventOccurrence
                   .joins(:event)
-                  .where(events: { draft: false, status: 'active', sign_feed: true })
+                  .where(events: { draft: false, status: 'active' })
                   .where(events: { visibility: %w[public members] })
                   .where('event_occurrences.occurs_at > ?', now)
-                  .includes(:event)
+                  .includes(event: :location)
                   .order(occurs_at: :asc)
                   .limit(5)
 
     occurrences.map do |occ|
       event = occ.event
+      show_details = event.sign_feed?
+
       entry = {
         start_time: occ.occurs_at.to_i,
         duration: occ.duration,
-        name: event.title,
-        open_to: event.open_to
+        name: show_details ? event.title : 'Private Event',
+        open_to: show_details ? event.open_to : nil,
+        location: show_details && event.location ? event.location.name : nil
       }
 
-      # Only include status info if not active
-      if occ.status == 'cancelled'
-        entry[:cancelled] = true
-        entry[:reason] = occ.cancellation_reason if occ.cancellation_reason.present?
-      elsif occ.status == 'postponed'
-        entry[:postponed] = true
-        entry[:postponed_until] = occ.postponed_until.to_i if occ.postponed_until
+      # Only include status info if not active and showing details
+      if show_details
+        if occ.status == 'cancelled'
+          entry[:cancelled] = true
+          entry[:reason] = occ.cancellation_reason if occ.cancellation_reason.present?
+        elsif occ.status == 'postponed'
+          entry[:postponed] = true
+          entry[:postponed_until] = occ.postponed_until.to_i if occ.postponed_until
+        end
       end
 
       entry
