@@ -2,7 +2,7 @@
 # ========================================
 # Stage 1: Builder - Install dependencies and build assets
 # ========================================
-FROM ruby:3.2.2 AS builder
+FROM ruby:3.4.8 AS builder
 
 # Install build dependencies
 RUN apt-get update -qq && apt-get install -y \
@@ -59,7 +59,7 @@ RUN SECRET_KEY_BASE=dummy RAILS_ENV=production bundle exec rake assets:precompil
 # ========================================
 # Stage 2: Runtime - Minimal production image
 # ========================================
-FROM ruby:3.2.2-slim AS runtime
+FROM ruby:3.4.8-slim AS runtime
 
 # Install only runtime dependencies
 RUN apt-get update -qq && apt-get install -y \
