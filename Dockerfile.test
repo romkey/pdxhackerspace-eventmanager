@@ -3,7 +3,7 @@
 # Dockerfile for running tests, rubocop, and migrations
 # Includes development and test gems (unlike production Dockerfile)
 # ========================================
-FROM ruby:3.2.2
+FROM ruby:4.0.0
 
 # Install build dependencies
 RUN apt-get update -qq && apt-get install -y \
