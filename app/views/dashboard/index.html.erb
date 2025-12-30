@@ -1,0 +1,356 @@
+<%# SEO - Dashboard uses defaults from layout %>
+<% content_for :json_ld do %>
+  <script type="application/ld+json"><%= breadcrumb_json_ld([
+    { name: 'Home', url: root_url },
+    { name: 'Dashboard', url: dashboard_url }
+  ]) %></script>
+<% end %>
+
+<header class="mb-5">
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+    <div>
+      <h1 class="display-5 mb-1">
+        <i class="bi bi-speedometer2 text-primary" aria-hidden="true"></i>
+        Dashboard
+      </h1>
+      <p class="lead text-muted mb-0">Welcome back, <%= current_user.name || current_user.email %></p>
+    </div>
+    <div class="d-flex gap-2">
+      <% if can_create_events? %>
+        <%= link_to new_event_path, class: "btn btn-success btn-lg" do %>
+          <i class="bi bi-plus-circle" aria-hidden="true"></i> Create Event
+        <% end %>
+      <% end %>
+      <%= link_to root_path, class: "btn btn-outline-secondary" do %>
+        <i class="bi bi-house" aria-hidden="true"></i> View Public Home
+      <% end %>
+    </div>
+  </div>
+</header>
+
+<div class="row g-4">
+  <%# Manage Events Section %>
+  <section class="col-12" aria-labelledby="manage-events-heading">
+    <div class="card shadow-sm">
+      <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+        <h2 id="manage-events-heading" class="h5 mb-0">
+          <i class="bi bi-calendar-event" aria-hidden="true"></i>
+          Manage Events
+          <span class="badge bg-light text-primary ms-2"><%= @hosted_events.count %></span>
+        </h2>
+        <% if can_create_events? %>
+          <%= link_to new_event_path, class: "btn btn-light btn-sm" do %>
+            <i class="bi bi-plus" aria-hidden="true"></i> New
+          <% end %>
+        <% end %>
+      </div>
+      <div class="card-body p-0">
+        <% if @hosted_events.any? %>
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th scope="col">Event</th>
+                  <th scope="col" class="text-center">Status</th>
+                  <th scope="col" class="text-center">Visibility</th>
+                  <th scope="col" class="text-center">Occurrences</th>
+                  <th scope="col" class="text-end">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% @hosted_events.each do |event| %>
+                  <tr>
+                    <td>
+                      <div class="d-flex align-items-center gap-3">
+                        <% if event.banner_image.attached? %>
+                          <%= image_tag event.banner_image, class: "rounded", style: "width: 60px; height: 40px; object-fit: cover;", alt: "", loading: "lazy" %>
+                        <% else %>
+                          <div class="bg-secondary rounded d-flex align-items-center justify-content-center" style="width: 60px; height: 40px;">
+                            <i class="bi bi-calendar-event text-white" aria-hidden="true"></i>
+                          </div>
+                        <% end %>
+                        <div>
+                          <%= link_to event.title, event_path(event), class: "fw-semibold text-decoration-none" %>
+                          <% if event.draft? %>
+                            <span class="badge bg-secondary ms-1">Draft</span>
+                          <% end %>
+                          <div class="text-muted small">
+                            <% if event.recurring? %>
+                              <i class="bi bi-arrow-repeat" aria-hidden="true"></i>
+                              <%= event.recurrence_type.titleize %>
+                            <% else %>
+                              <%= event.start_time.strftime('%b %d, %Y') %>
+                            <% end %>
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="text-center">
+                      <% case event.status %>
+                      <% when 'active' %>
+                        <span class="badge bg-success">Active</span>
+                      <% when 'postponed' %>
+                        <span class="badge bg-warning text-dark">Postponed</span>
+                      <% when 'cancelled' %>
+                        <span class="badge bg-danger">Cancelled</span>
+                      <% end %>
+                    </td>
+                    <td class="text-center">
+                      <% case event.visibility %>
+                      <% when 'public' %>
+                        <span class="badge bg-info"><i class="bi bi-globe" aria-hidden="true"></i> Public</span>
+                      <% when 'members' %>
+                        <span class="badge bg-primary"><i class="bi bi-people" aria-hidden="true"></i> Members</span>
+                      <% when 'private' %>
+                        <span class="badge bg-dark"><i class="bi bi-lock" aria-hidden="true"></i> Private</span>
+                      <% end %>
+                    </td>
+                    <td class="text-center">
+                      <span class="badge bg-secondary">
+                        <%= event.event_occurrences.upcoming.count %> upcoming
+                      </span>
+                    </td>
+                    <td class="text-end">
+                      <div class="btn-group" role="group" aria-label="Actions for <%= event.title %>">
+                        <%= link_to edit_event_path(event), class: "btn btn-outline-primary btn-sm", title: "Edit event" do %>
+                          <i class="bi bi-pencil" aria-hidden="true"></i>
+                          <span class="d-none d-lg-inline">Edit</span>
+                        <% end %>
+                        <%= button_to event_path(event), method: :delete, 
+                            class: "btn btn-outline-danger btn-sm",
+                            title: "Delete event",
+                            form: { data: { turbo_confirm: "Are you sure you want to delete '#{event.title}'? This action cannot be undone." } } do %>
+                          <i class="bi bi-trash" aria-hidden="true"></i>
+                          <span class="d-none d-lg-inline">Delete</span>
+                        <% end %>
+                      </div>
+                    </td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          </div>
+        <% else %>
+          <div class="p-4 text-center text-muted">
+            <i class="bi bi-calendar-x display-4 mb-3 d-block" aria-hidden="true"></i>
+            <p class="mb-2">You don't have any events yet.</p>
+            <% if can_create_events? %>
+              <%= link_to "Create your first event", new_event_path, class: "btn btn-primary" %>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </section>
+
+  <%# Manage Occurrences Section %>
+  <section class="col-12" aria-labelledby="manage-occurrences-heading">
+    <div class="card shadow-sm">
+      <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+        <h2 id="manage-occurrences-heading" class="h5 mb-0">
+          <i class="bi bi-clock-history" aria-hidden="true"></i>
+          Upcoming Occurrences
+          <span class="badge bg-light text-info ms-2"><%= @upcoming_occurrences.count %></span>
+        </h2>
+      </div>
+      <div class="card-body p-0">
+        <% if @upcoming_occurrences.any? %>
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th scope="col">Event</th>
+                  <th scope="col">Date & Time</th>
+                  <th scope="col" class="text-center">Status</th>
+                  <th scope="col" class="text-end">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% @upcoming_occurrences.each do |occurrence| %>
+                  <% 
+                    is_soon = occurrence.occurs_at < 7.days.from_now
+                    is_today = occurrence.occurs_at.to_date == Date.current
+                    is_tomorrow = occurrence.occurs_at.to_date == Date.tomorrow
+                  %>
+                  <tr class="<%= 'table-warning' if is_today %> <%= 'table-light' if is_tomorrow %>">
+                    <td>
+                      <%= link_to occurrence.event.title, event_path(occurrence.event), class: "fw-semibold text-decoration-none" %>
+                      <% if occurrence.event.recurring? %>
+                        <span class="badge bg-secondary ms-1"><%= occurrence.event.recurrence_type.titleize %></span>
+                      <% end %>
+                    </td>
+                    <td>
+                      <div class="d-flex align-items-center gap-2">
+                        <% if is_today %>
+                          <span class="badge bg-danger">Today</span>
+                        <% elsif is_tomorrow %>
+                          <span class="badge bg-warning text-dark">Tomorrow</span>
+                        <% elsif is_soon %>
+                          <span class="badge bg-info">This Week</span>
+                        <% end %>
+                        <div>
+                          <strong><%= occurrence.occurs_at.strftime('%a, %b %d, %Y') %></strong>
+                          <div class="text-muted small">
+                            <i class="bi bi-clock" aria-hidden="true"></i>
+                            <%= occurrence.occurs_at.strftime('%I:%M %p') %>
+                            <% if occurrence.event_location %>
+                              <span class="ms-2">
+                                <i class="bi bi-geo-alt" aria-hidden="true"></i>
+                                <%= occurrence.event_location.name %>
+                              </span>
+                            <% end %>
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="text-center">
+                      <% case occurrence.status %>
+                      <% when 'active' %>
+                        <span class="badge bg-success">Active</span>
+                      <% when 'postponed' %>
+                        <span class="badge bg-warning text-dark">
+                          Postponed
+                          <% if occurrence.postponed_until %>
+                            <span class="d-block small">→ <%= occurrence.postponed_until.strftime('%b %d') %></span>
+                          <% end %>
+                        </span>
+                      <% when 'cancelled' %>
+                        <span class="badge bg-danger">Cancelled</span>
+                      <% end %>
+                    </td>
+                    <td class="text-end">
+                      <div class="btn-group" role="group" aria-label="Actions for <%= occurrence.event.title %> on <%= occurrence.occurs_at.strftime('%b %d') %>">
+                        <%= link_to edit_event_occurrence_path(occurrence), class: "btn btn-outline-primary btn-sm", title: "Edit occurrence" do %>
+                          <i class="bi bi-pencil" aria-hidden="true"></i>
+                          <span class="d-none d-xl-inline">Edit</span>
+                        <% end %>
+                        
+                        <% if occurrence.status == 'active' %>
+                          <%# Postpone button with modal trigger %>
+                          <button type="button" 
+                                  class="btn btn-outline-warning btn-sm" 
+                                  data-bs-toggle="modal" 
+                                  data-bs-target="#postponeModal-<%= occurrence.id %>"
+                                  title="Postpone occurrence">
+                            <i class="bi bi-calendar-plus" aria-hidden="true"></i>
+                            <span class="d-none d-xl-inline">Postpone</span>
+                          </button>
+                          
+                          <%# Cancel button with modal trigger %>
+                          <button type="button" 
+                                  class="btn btn-outline-danger btn-sm" 
+                                  data-bs-toggle="modal" 
+                                  data-bs-target="#cancelModal-<%= occurrence.id %>"
+                                  title="Cancel occurrence">
+                            <i class="bi bi-x-circle" aria-hidden="true"></i>
+                            <span class="d-none d-xl-inline">Cancel</span>
+                          </button>
+                        <% elsif occurrence.status == 'postponed' || occurrence.status == 'cancelled' %>
+                          <%= button_to reactivate_event_occurrence_path(occurrence), 
+                              method: :post,
+                              class: "btn btn-outline-success btn-sm",
+                              title: "Reactivate occurrence" do %>
+                            <i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i>
+                            <span class="d-none d-xl-inline">Reactivate</span>
+                          <% end %>
+                        <% end %>
+                      </div>
+                    </td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          </div>
+        <% else %>
+          <div class="p-4 text-center text-muted">
+            <i class="bi bi-clock display-4 mb-3 d-block" aria-hidden="true"></i>
+            <p class="mb-0">No upcoming occurrences for your events.</p>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </section>
+</div>
+
+<%# Modals for Postpone and Cancel actions %>
+<% @upcoming_occurrences.each do |occurrence| %>
+  <% if occurrence.status == 'active' %>
+    <%# Postpone Modal %>
+    <div class="modal fade" id="postponeModal-<%= occurrence.id %>" tabindex="-1" aria-labelledby="postponeModalLabel-<%= occurrence.id %>" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <%= form_with url: postpone_event_occurrence_path(occurrence), method: :post, local: true do %>
+            <div class="modal-header bg-warning">
+              <h5 class="modal-title" id="postponeModalLabel-<%= occurrence.id %>">
+                <i class="bi bi-calendar-plus" aria-hidden="true"></i>
+                Postpone Occurrence
+              </h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <p class="mb-3">
+                Postponing <strong><%= occurrence.event.title %></strong> scheduled for
+                <strong><%= occurrence.occurs_at.strftime('%A, %B %d, %Y at %I:%M %p') %></strong>.
+              </p>
+              <p class="text-muted small mb-3">
+                <i class="bi bi-info-circle" aria-hidden="true"></i>
+                A new occurrence will be created at the rescheduled date.
+              </p>
+              <div class="mb-3">
+                <%= label_tag :postponed_until, "Reschedule to:", class: "form-label" %>
+                <%= datetime_local_field_tag :postponed_until, 
+                    (occurrence.occurs_at + 1.week).strftime('%Y-%m-%dT%H:%M'),
+                    class: "form-control",
+                    required: true %>
+              </div>
+              <div class="mb-3">
+                <%= label_tag :reason, "Reason (optional):", class: "form-label" %>
+                <%= text_area_tag :reason, nil, class: "form-control", rows: 2, placeholder: "Why is this occurrence being postponed?" %>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+              <%= submit_tag "Postpone Occurrence", class: "btn btn-warning" %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+
+    <%# Cancel Modal %>
+    <div class="modal fade" id="cancelModal-<%= occurrence.id %>" tabindex="-1" aria-labelledby="cancelModalLabel-<%= occurrence.id %>" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <%= form_with url: cancel_event_occurrence_path(occurrence), method: :post, local: true do %>
+            <div class="modal-header bg-danger text-white">
+              <h5 class="modal-title" id="cancelModalLabel-<%= occurrence.id %>">
+                <i class="bi bi-x-circle" aria-hidden="true"></i>
+                Cancel Occurrence
+              </h5>
+              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <p class="mb-3">
+                Are you sure you want to cancel <strong><%= occurrence.event.title %></strong> scheduled for
+                <strong><%= occurrence.occurs_at.strftime('%A, %B %d, %Y at %I:%M %p') %></strong>?
+              </p>
+              <div class="alert alert-warning py-2">
+                <i class="bi bi-exclamation-triangle" aria-hidden="true"></i>
+                This occurrence will be marked as cancelled. You can reactivate it later if needed.
+              </div>
+              <div class="mb-3">
+                <%= label_tag :reason, "Reason (optional):", class: "form-label" %>
+                <%= text_area_tag :reason, nil, class: "form-control", rows: 2, placeholder: "Why is this occurrence being cancelled?" %>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Keep Active</button>
+              <%= submit_tag "Cancel Occurrence", class: "btn btn-danger" %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  <% end %>
+<% end %>
+

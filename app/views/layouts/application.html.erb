@@ -94,6 +94,13 @@
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
           <ul class="navbar-nav me-auto nav-chips">
+            <% if user_signed_in? %>
+              <li class="nav-item">
+                <%= link_to dashboard_path, class: "nav-link" do %>
+                  <i class="bi bi-speedometer2" aria-hidden="true"></i> Dashboard
+                <% end %>
+              </li>
+            <% end %>
             <li class="nav-item">
               <%= link_to "Events", events_path, class: "nav-link" %>
             </li>

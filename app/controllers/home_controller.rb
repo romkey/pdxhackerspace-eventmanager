@@ -1,5 +1,8 @@
 class HomeController < ApplicationController
   def index
+    # Redirect logged-in users to the dashboard
+    redirect_to dashboard_path and return if user_signed_in? && params[:q].blank?
+
     @site_config = SiteConfig.current
     @search_query = params[:q]
 

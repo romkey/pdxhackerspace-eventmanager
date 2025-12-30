@@ -39,6 +39,9 @@ Rails.application.routes.draw do
   # Root path
   root 'home#index'
 
+  # Dashboard for logged-in users
+  get 'dashboard', to: 'dashboard#index', as: 'dashboard'
+
   # Events routes
   get 'events/rss', to: 'events#rss', as: 'events_rss', defaults: { format: 'rss' }
   get 'events/eink', to: 'events#eink', as: 'events_eink', defaults: { format: 'json' }
