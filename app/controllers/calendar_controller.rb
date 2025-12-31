@@ -8,16 +8,16 @@ class CalendarController < ApplicationController
 
     # Get occurrences based on view type
     if @view == 'calendar'
-      # For calendar view, get occurrences for the current month
-      month_start = @current_month.beginning_of_month
-      month_end = @current_month.end_of_month
+      # For calendar view, get occurrences for the full visible range (includes prev/next month days)
+      calendar_start = @current_month.beginning_of_month.beginning_of_week(:sunday)
+      calendar_end = @current_month.end_of_month.end_of_week(:sunday)
 
       @occurrences = if current_user
                        EventOccurrence
                          .joins(:event)
                          .where(event: policy_scope(Event))
                          .where('event_occurrences.occurs_at >= ? AND event_occurrences.occurs_at <= ?',
-                                month_start, month_end)
+                                calendar_start.beginning_of_day, calendar_end.end_of_day)
                          .where(event_occurrences: { status: %w[active postponed cancelled] })
                          .includes(event: %i[hosts user], banner_image_attachment: :blob)
                          .order(:occurs_at)
@@ -26,7 +26,7 @@ class CalendarController < ApplicationController
                          .joins(:event)
                          .where(events: { visibility: 'public', draft: false })
                          .where('event_occurrences.occurs_at >= ? AND event_occurrences.occurs_at <= ?',
-                                month_start, month_end)
+                                calendar_start.beginning_of_day, calendar_end.end_of_day)
                          .where(event_occurrences: { status: %w[active postponed cancelled] })
                          .includes(event: %i[hosts user], banner_image_attachment: :blob)
                          .order(:occurs_at)
@@ -78,14 +78,15 @@ class CalendarController < ApplicationController
 
     # Get occurrences based on view type (public events only for embeds)
     if @view == 'calendar'
-      month_start = @current_month.beginning_of_month
-      month_end = @current_month.end_of_month
+      # For calendar view, get occurrences for the full visible range (includes prev/next month days)
+      calendar_start = @current_month.beginning_of_month.beginning_of_week(:sunday)
+      calendar_end = @current_month.end_of_month.end_of_week(:sunday)
 
       @occurrences = EventOccurrence
                      .joins(:event)
                      .where(events: { visibility: 'public', draft: false })
                      .where('event_occurrences.occurs_at >= ? AND event_occurrences.occurs_at <= ?',
-                            month_start, month_end)
+                            calendar_start.beginning_of_day, calendar_end.end_of_day)
                      .where(event_occurrences: { status: %w[active postponed cancelled] })
                      .includes(event: %i[hosts user], banner_image_attachment: :blob)
                      .order(:occurs_at)
