@@ -19,7 +19,7 @@ class LocationsController < ApplicationController
     if @location.save
       redirect_to locations_path, notice: 'Location was successfully created.'
     else
-      render :new, status: :unprocessable_entity
+      render :new, status: :unprocessable_content
     end
   end
 
@@ -27,7 +27,7 @@ class LocationsController < ApplicationController
     if @location.update(location_params)
       redirect_to locations_path, notice: 'Location was successfully updated.'
     else
-      render :edit, status: :unprocessable_entity
+      render :edit, status: :unprocessable_content
     end
   end
 

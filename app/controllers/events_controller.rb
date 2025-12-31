@@ -166,7 +166,7 @@ class EventsController < ApplicationController
         redirect_to @event, notice: 'Event was successfully created.'
       end
     else
-      render :new, status: :unprocessable_entity
+      render :new, status: :unprocessable_content
     end
   end
 
@@ -198,7 +198,7 @@ class EventsController < ApplicationController
       else
         Rails.logger.error "Event update failed. Errors: #{@event.errors.full_messages.join(', ')}"
         Rails.logger.error "Event attributes: #{@event.attributes.slice('id', 'title', 'status', 'recurrence_type')}"
-        render :edit, status: :unprocessable_entity
+        render :edit, status: :unprocessable_content
       end
     rescue StandardError => e
       Rails.logger.error "Event update exception: #{e.class} - #{e.message}"
@@ -261,7 +261,7 @@ class EventsController < ApplicationController
     if message.present?
       render json: { success: true, message: message }
     else
-      render json: { success: false, message: 'AI generation failed. Please try again.' }, status: :unprocessable_entity
+      render json: { success: false, message: 'AI generation failed. Please try again.' }, status: :unprocessable_content
     end
   end
 

@@ -29,7 +29,7 @@ class SiteConfigsController < ApplicationController
       # Just removed attachments, no other updates
       redirect_to edit_site_config_path, notice: 'Site configuration was successfully updated.'
     else
-      render :edit, status: :unprocessable_entity
+      render :edit, status: :unprocessable_content
     end
   end
 

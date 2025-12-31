@@ -16,7 +16,7 @@ class ReminderPostingsController < ApplicationController
   # DELETE /reminder_postings/:id - Delete/retract a posting
   def destroy
     if @posting.deleted?
-      redirect_back fallback_location: event_path(@posting.event), alert: 'This posting has already been deleted.'
+      redirect_back_or_to event_path(@posting.event), alert: 'This posting has already been deleted.'
       return
     end
 
@@ -32,7 +32,7 @@ class ReminderPostingsController < ApplicationController
                "Post marked as removed (could not delete from #{@posting.platform_display_name})."
              end
 
-    redirect_back fallback_location: event_path(@posting.event), notice: notice
+    redirect_back_or_to event_path(@posting.event), notice: notice
   end
 
   private
