@@ -80,7 +80,7 @@
                 <div id="ai-notification" class="alert d-none mb-3" role="alert"></div>
                 
                 <% [7, 1].each do |days| %>
-                  <h6 class="text-muted mb-2"><%= days %>-Day Reminders</h6>
+                  <h6 class="text-muted mb-2"><%= days == 7 ? 6 : days %>-Day Reminders</h6>
                   <div class="row mb-3">
                     <div class="col-md-6">
                       <% field_short = "reminder_#{days}d_short".to_sym %>

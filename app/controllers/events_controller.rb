@@ -395,7 +395,7 @@ class EventsController < ApplicationController
                   .order(occurs_at: :asc)
                   .limit(5)
 
-    occurrences.map do |occ|
+    occurrences_data = occurrences.map do |occ|
       event = occ.event
       show_details = event.sign_feed?
 
@@ -420,6 +420,11 @@ class EventsController < ApplicationController
 
       entry
     end
+
+    {
+      updated_at: now.to_i,
+      occurrences: occurrences_data
+    }
   end
 
   def build_occurrence_json(occurrence)

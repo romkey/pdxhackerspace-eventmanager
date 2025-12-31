@@ -33,14 +33,12 @@ module ReminderMessageBuilder
   private
 
   def active_message_parts(occurrence, label, days_ahead, message_type)
-    event = occurrence.event
-
     # Check for custom reminder message (occurrence's own or inherited from event)
     custom_message = get_custom_message(occurrence, days_ahead, message_type)
 
     message = custom_message.presence || generate_default_message(occurrence, label, message_type)
 
-    { text: message, link_url: event_url_for(event), link_text: LINK_TEXT }
+    { text: message, link_url: occurrence_url_for(occurrence), link_text: LINK_TEXT }
   end
 
   def get_custom_message(occurrence, days_ahead, message_type)
@@ -90,7 +88,7 @@ module ReminderMessageBuilder
   def cancelled_message_parts(occurrence, message_type)
     event, date_str, time_str = occurrence_info(occurrence)
     msg = message_type == :short ? short_cancelled(event, date_str, time_str) : long_cancelled(event, date_str, time_str, occurrence)
-    { text: msg, link_url: event_url_for(event), link_text: LINK_TEXT }
+    { text: msg, link_url: occurrence_url_for(occurrence), link_text: LINK_TEXT }
   end
 
   def short_cancelled(event, date_str, time_str)
@@ -107,7 +105,7 @@ module ReminderMessageBuilder
   def postponed_message_parts(occurrence, message_type)
     event, date_str, time_str = occurrence_info(occurrence)
     msg = message_type == :short ? short_postponed(event, date_str, occurrence) : long_postponed(event, date_str, time_str, occurrence)
-    { text: msg, link_url: event_url_for(event), link_text: LINK_TEXT }
+    { text: msg, link_url: occurrence_url_for(occurrence), link_text: LINK_TEXT }
   end
 
   def short_postponed(event, date_str, occurrence)
@@ -126,10 +124,10 @@ module ReminderMessageBuilder
     [occurrence.event, occurrence.occurs_at.strftime('%B %d, %Y'), occurrence.occurs_at.strftime('%I:%M %p')]
   end
 
-  def event_url_for(event)
+  def occurrence_url_for(occurrence)
     host = ENV.fetch('RAILS_HOST', ENV.fetch('HOST', 'localhost:3000'))
     protocol = ENV.fetch('RAILS_PROTOCOL', 'http')
-    "#{protocol}://#{host}/events/#{event.slug}"
+    "#{protocol}://#{host}/occurrences/#{occurrence.slug}"
   end
 
   def format_duration(minutes)
