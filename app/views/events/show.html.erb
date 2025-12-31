@@ -116,11 +116,9 @@
                     </span>
                   <% end %>
                 </div>
-                <% if user_signed_in? && @event.hosted_by?(current_user) %>
-                  <div class="btn-group btn-group-sm">
-                    <%= link_to "View", event_occurrence_path(occurrence), class: "btn btn-outline-primary" %>
-                  </div>
-                <% end %>
+                <div class="btn-group btn-group-sm">
+                  <%= link_to "View", event_occurrence_path(occurrence), class: "btn btn-outline-primary" %>
+                </div>
               </div>
             <% end %>
           </div>
