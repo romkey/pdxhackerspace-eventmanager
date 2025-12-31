@@ -134,8 +134,8 @@
       <div class="card-body">
         <h2 class="card-title h5">Event Details</h2>
         <dl class="row mb-0">
-          <dt class="col-sm-5">Date:</dt>
-          <dd class="col-sm-7"><%= @event.start_time.strftime('%B %d, %Y') %></dd>
+          <dt class="col-sm-5">Schedule:</dt>
+          <dd class="col-sm-7"><%= schedule_description(@event) %></dd>
 
           <% postponed_occurrences = @event.occurrences.where(status: 'postponed').where.not(postponed_until: nil) %>
           <% if postponed_occurrences.any? %>
@@ -194,9 +194,6 @@
               <% end %>
             </dd>
           <% end %>
-
-          <dt class="col-sm-5">Recurrence:</dt>
-          <dd class="col-sm-7"><%= @event.recurrence_type.titleize %></dd>
 
           <% if @event.location.present? %>
             <dt class="col-sm-5"><i class="bi bi-geo-alt-fill" aria-hidden="true"></i> Location:</dt>
