@@ -59,7 +59,9 @@ module EventsHelper
     rules = IceCube::Schedule.from_yaml(event.recurrence_rule).rrules
     return [] if rules.empty?
 
-    rules.first.validations[:day] || []
+    day_validations = rules.first.validations[:day] || []
+    # Extract day numbers from validation objects
+    day_validations.map { |v| v.respond_to?(:day) ? v.day : v }.compact
   end
 
   def weekly_schedule_description(event)
