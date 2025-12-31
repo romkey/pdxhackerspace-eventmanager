@@ -19,8 +19,7 @@ RSpec.describe 'Locations' do
       it 'redirects with alert' do
         get locations_path
         expect(response).to redirect_to(root_path)
-        follow_redirect!
-        expect(response.body).to include('Only admins can manage locations')
+        expect(flash[:alert]).to eq('Only admins can manage locations.')
       end
     end
 

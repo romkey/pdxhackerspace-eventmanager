@@ -20,8 +20,7 @@ RSpec.describe "SiteConfig", type: :request do
       it "redirects with unauthorized message" do
         get edit_site_config_path
         expect(response).to have_http_status(:redirect)
-        follow_redirect!
-        expect(response.body).to include("not authorized")
+        expect(flash[:alert]).to include("not authorized")
       end
     end
 

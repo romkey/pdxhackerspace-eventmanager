@@ -220,13 +220,18 @@ RSpec.describe "Smoke Tests", type: :feature do
   describe "JSON API Endpoints" do
     let!(:public_event) { create(:event, visibility: 'public', title: 'API Event') }
 
+    before do
+      # Ensure occurrences are generated for the event
+      public_event.generate_occurrences
+    end
+
     it "provides events JSON feed" do
       page.driver.header('Accept', 'application/json')
       visit events_path
 
       json = JSON.parse(page.body)
-      expect(json).to have_key('events')
-      expect(json['events'].first['title']).to eq('API Event')
+      expect(json).to have_key('occurrences')
+      expect(json['occurrences'].first['event']['title']).to eq('API Event')
     end
 
     it "provides calendar JSON feed" do
