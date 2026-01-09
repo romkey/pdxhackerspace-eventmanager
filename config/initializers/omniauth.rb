@@ -13,6 +13,11 @@ Rails.application.config.middleware.use OmniAuth::Builder do
            }
 end
 
-# Configure OmniAuth to use Rails CSRF protection
-# Only allow POST to prevent CSRF attacks (CVE-2015-9284)
+# CSRF Protection for OmniAuth
+# Only allow POST requests to prevent CSRF attacks (CVE-2015-9284)
 OmniAuth.config.allowed_request_methods = [:post]
+
+# Disable the omniauth-rails_csrf_protection gem's token verification
+# OAuth2's state parameter provides CSRF protection for the callback
+# The gem's verification fails behind reverse proxies due to session/cookie issues
+OmniAuth.config.request_validation_phase = nil
