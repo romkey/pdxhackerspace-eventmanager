@@ -3,6 +3,10 @@ require "active_support/core_ext/integer/time"
 Rails.application.configure do
   # Settings specified here will take precedence over those in config/application.rb.
 
+  # Trust X-Forwarded headers from reverse proxies (nginx, Cloudflare, etc.)
+  # This ensures Rails knows the original request was HTTPS
+  config.assume_ssl = true
+
   # Code is not reloaded between requests.
   config.cache_classes = true
 
