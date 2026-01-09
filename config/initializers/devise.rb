@@ -271,7 +271,18 @@ Devise.setup do |config|
   # ==> OmniAuth
   # Add a new OmniAuth provider. Check the wiki for more information on setting
   # up on your models and hooks.
-  # config.omniauth :github, 'APP_ID', 'APP_SECRET', scope: 'user,public_repo'
+  # Configure Authentik OAuth provider through Devise (not standalone middleware)
+  # This is required for proper CSRF protection with omniauth-rails_csrf_protection 2.0+
+  config.omniauth :authentik,
+                  ENV.fetch('AUTHENTIK_CLIENT_ID', nil),
+                  ENV.fetch('AUTHENTIK_CLIENT_SECRET', nil),
+                  scope: 'openid profile email event_manager_admin',
+                  client_options: {
+                    site: ENV['AUTHENTIK_SITE_URL'] || 'http://localhost:9000',
+                    authorize_url: "#{ENV['AUTHENTIK_SITE_URL'] || 'http://localhost:9000'}/application/o/authorize/",
+                    token_url: "#{ENV['AUTHENTIK_SITE_URL'] || 'http://localhost:9000'}/application/o/token/",
+                    user_info_url: "#{ENV['AUTHENTIK_SITE_URL'] || 'http://localhost:9000'}/application/o/userinfo/"
+                  }
 
   # ==> Warden configuration
   # If you want to use other strategies, that are not supported by Devise, or
