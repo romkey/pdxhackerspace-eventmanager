@@ -10,33 +10,109 @@ class SocialService # rubocop:disable Metrics/ClassLength
   class << self
     include Rails.application.routes.url_helpers
 
-    def post_instagram(message, image_url: nil) # rubocop:disable Lint/UnusedMethodArgument
+    def post_instagram(message, image_url: nil)
       token = ENV.fetch('INSTAGRAM_ACCESS_TOKEN', nil)
-      page_id = ENV.fetch('INSTAGRAM_PAGE_ID', nil)
+      account_id = ENV.fetch('INSTAGRAM_ACCOUNT_ID', nil)
 
-      if token.blank? || page_id.blank?
-        Rails.logger.info 'SocialService: Instagram not configured (missing INSTAGRAM_ACCESS_TOKEN or INSTAGRAM_PAGE_ID)'
+      if token.blank? || account_id.blank?
+        Rails.logger.info 'SocialService: Instagram not configured (missing INSTAGRAM_ACCESS_TOKEN or INSTAGRAM_ACCOUNT_ID)'
         return { success: false, error: 'Not configured' }
       end
 
-      uri = URI("https://graph.facebook.com/v17.0/#{page_id}/feed")
+      # Instagram requires an image for feed posts
+      if image_url.blank?
+        Rails.logger.info 'SocialService: Instagram post skipped - image required for feed posts'
+        return { success: false, error: 'Image required' }
+      end
+
+      # Step 1: Create media container
+      container_id = create_instagram_container(account_id, token, image_url, message)
+      return { success: false, error: 'Container creation failed' } unless container_id
+
+      # Step 2: Wait for container to be ready (Instagram processes the image)
+      unless instagram_container_ready?(container_id, token)
+        Rails.logger.error 'SocialService: Instagram container processing timed out'
+        return { success: false, error: 'Container processing timeout' }
+      end
+
+      # Step 3: Publish the container
+      publish_instagram_container(account_id, token, container_id)
+    rescue StandardError => e
+      Rails.logger.error "SocialService: Instagram error - #{e.message}"
+      { success: false, error: e.message }
+    end
+
+    def create_instagram_container(account_id, token, image_url, caption)
+      uri = URI("https://graph.facebook.com/v21.0/#{account_id}/media")
       request = Net::HTTP::Post.new(uri)
-      request['Authorization'] = "Bearer #{token}"
-      request.set_form_data({ message: message })
+      request.set_form_data({
+                              image_url: image_url,
+                              caption: caption,
+                              access_token: token
+                            })
 
       response = Net::HTTP.start(uri.host, uri.port, use_ssl: true) { |http| http.request(request) }
 
       if response.is_a?(Net::HTTPSuccess)
         data = JSON.parse(response.body)
-        Rails.logger.info 'SocialService: Posted reminder to Instagram'
-        { success: true, post_id: data['id'] }
+        Rails.logger.info "SocialService: Instagram container created: #{data['id']}"
+        data['id']
       else
-        Rails.logger.error "SocialService: Failed to post to Instagram (#{response.code}) #{response.body}"
+        Rails.logger.error "SocialService: Failed to create Instagram container (#{response.code}) #{response.body}"
+        nil
+      end
+    end
+
+    def instagram_container_ready?(container_id, token, max_attempts: 10)
+      max_attempts.times do |attempt|
+        uri = URI("https://graph.facebook.com/v21.0/#{container_id}?fields=status_code&access_token=#{token}")
+        response = Net::HTTP.get_response(uri)
+
+        if response.is_a?(Net::HTTPSuccess)
+          data = JSON.parse(response.body)
+          status = data['status_code']
+
+          case status
+          when 'FINISHED'
+            Rails.logger.info 'SocialService: Instagram container ready'
+            return true
+          when 'ERROR'
+            Rails.logger.error "SocialService: Instagram container error: #{data}"
+            return false
+          when 'IN_PROGRESS'
+            Rails.logger.info "SocialService: Instagram container processing (attempt #{attempt + 1}/#{max_attempts})"
+            sleep 2
+          else
+            Rails.logger.info "SocialService: Instagram container status: #{status} (attempt #{attempt + 1}/#{max_attempts})"
+            sleep 2
+          end
+        else
+          Rails.logger.error "SocialService: Failed to check Instagram container status (#{response.code})"
+          return false
+        end
+      end
+      false
+    end
+
+    def publish_instagram_container(account_id, token, container_id)
+      uri = URI("https://graph.facebook.com/v21.0/#{account_id}/media_publish")
+      request = Net::HTTP::Post.new(uri)
+      request.set_form_data({
+                              creation_id: container_id,
+                              access_token: token
+                            })
+
+      response = Net::HTTP.start(uri.host, uri.port, use_ssl: true) { |http| http.request(request) }
+
+      if response.is_a?(Net::HTTPSuccess)
+        data = JSON.parse(response.body)
+        post_id = data['id']
+        Rails.logger.info "SocialService: Posted to Instagram: #{post_id}"
+        { success: true, post_id: post_id }
+      else
+        Rails.logger.error "SocialService: Failed to publish Instagram post (#{response.code}) #{response.body}"
         { success: false, error: "HTTP #{response.code}" }
       end
-    rescue StandardError => e
-      Rails.logger.error "SocialService: Instagram error - #{e.message}"
-      { success: false, error: e.message }
     end
 
     def post_bluesky(message, image_url: nil, image_alt: 'Event banner', link_url: nil, link_text: nil)
