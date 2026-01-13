@@ -24,4 +24,8 @@
     cron: '0 10 * * *'  # Daily at 10 AM
     class: SocialMediaReminderJob
     description: "Post social media reminders for upcoming events (1 week/1 day)"
+  refresh_social_credentials:
+    cron: '0 3 * * *'  # Daily at 3 AM
+    class: RefreshSocialCredentialsJob
+    description: "Refresh expiring social media tokens (Instagram, etc.)"
 

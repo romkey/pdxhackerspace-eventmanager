@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_12_14_185624) do
+ActiveRecord::Schema[7.2].define(version: 2026_01_13_000000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_trgm"
   enable_extension "plpgsql"
@@ -200,6 +200,17 @@ ActiveRecord::Schema[7.2].define(version: 2025_12_14_185624) do
     t.boolean "email_test_mode_enabled", default: false, null: false
     t.string "email_test_mode_address"
     t.check_constraint "id = 1", name: "site_configs_singleton"
+  end
+
+  create_table "social_credentials", force: :cascade do |t|
+    t.string "platform", null: false
+    t.text "access_token", null: false
+    t.datetime "expires_at"
+    t.text "refresh_token"
+    t.json "metadata", default: {}
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["platform"], name: "index_social_credentials_on_platform", unique: true
   end
 
   create_table "users", force: :cascade do |t|

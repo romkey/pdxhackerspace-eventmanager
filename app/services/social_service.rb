@@ -11,11 +11,12 @@ class SocialService # rubocop:disable Metrics/ClassLength
     include Rails.application.routes.url_helpers
 
     def post_instagram(message, image_url: nil)
-      token = ENV.fetch('INSTAGRAM_ACCESS_TOKEN', nil)
+      # Try database credential first (with auto-refresh), then fall back to ENV
+      token = SocialCredential.get_token('instagram') || ENV.fetch('INSTAGRAM_ACCESS_TOKEN', nil)
       account_id = ENV.fetch('INSTAGRAM_ACCOUNT_ID', nil)
 
       if token.blank? || account_id.blank?
-        Rails.logger.info 'SocialService: Instagram not configured (missing INSTAGRAM_ACCESS_TOKEN or INSTAGRAM_ACCOUNT_ID)'
+        Rails.logger.info 'SocialService: Instagram not configured (missing token or INSTAGRAM_ACCOUNT_ID)'
         return { success: false, error: 'Not configured' }
       end
 
