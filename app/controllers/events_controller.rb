@@ -293,6 +293,9 @@ class EventsController < ApplicationController
 
         # Add postponed info if applicable
         e.description += "\n\nRescheduled to: #{occurrence.postponed_until.strftime('%B %d, %Y at %I:%M %p')}" if occurrence.status == 'postponed' && occurrence.postponed_until
+
+        # Add relocated info if applicable
+        e.description += "\n\nNew Location: #{occurrence.relocated_to}" if occurrence.status == 'relocated' && occurrence.relocated_to.present?
       end
     end
 
@@ -409,12 +412,17 @@ class EventsController < ApplicationController
 
       # Only include status info if not active and showing details
       if show_details
-        if occ.status == 'cancelled'
+        case occ.status
+        when 'cancelled'
           entry[:cancelled] = true
           entry[:reason] = occ.cancellation_reason if occ.cancellation_reason.present?
-        elsif occ.status == 'postponed'
+        when 'postponed'
           entry[:postponed] = true
           entry[:postponed_until] = occ.postponed_until.to_i if occ.postponed_until
+        when 'relocated'
+          entry[:relocated] = true
+          entry[:relocated_to] = occ.relocated_to if occ.relocated_to.present?
+          entry[:reason] = occ.cancellation_reason if occ.cancellation_reason.present?
         end
       end
 

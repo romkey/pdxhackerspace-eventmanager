@@ -1,4 +1,4 @@
-class EventOccurrence < ApplicationRecord
+class EventOccurrence < ApplicationRecord # rubocop:disable Metrics/ClassLength
   include SoftDeletable
 
   belongs_to :event, counter_cache: true
@@ -12,8 +12,9 @@ class EventOccurrence < ApplicationRecord
   before_save :rename_banner_image
 
   validates :occurs_at, presence: true
-  validates :status, inclusion: { in: %w[active postponed cancelled] }
+  validates :status, inclusion: { in: %w[active postponed cancelled relocated] }
   validates :slug, presence: true, uniqueness: true
+  validates :relocated_to, presence: true, if: -> { status == 'relocated' }
 
   # Allow finding by slug or ID
   def self.friendly_find(param)
@@ -27,6 +28,7 @@ class EventOccurrence < ApplicationRecord
   scope :active, -> { where(status: 'active') }
   scope :postponed, -> { where(status: 'postponed') }
   scope :cancelled, -> { where(status: 'cancelled') }
+  scope :relocated, -> { where(status: 'relocated') }
   scope :upcoming, -> { where('occurs_at >= ?', Time.now).order(:occurs_at) }
   scope :past, -> { where('occurs_at < ?', Time.now).order(occurs_at: :desc) }
 
@@ -155,10 +157,18 @@ class EventOccurrence < ApplicationRecord
     result
   end
 
+  # Mark occurrence as relocated
+  def relocate!(new_location, reason = nil, user = nil)
+    self.current_user_for_journal = user if user
+    result = update(status: 'relocated', relocated_to: new_location, cancellation_reason: reason)
+    log_status_change('relocated', reason, user) if result && user
+    result
+  end
+
   # Reactivate occurrence
   def reactivate!(user = nil)
     self.current_user_for_journal = user if user
-    result = update(status: 'active', postponed_until: nil, cancellation_reason: nil)
+    result = update(status: 'active', postponed_until: nil, cancellation_reason: nil, relocated_to: nil)
     log_status_change('reactivated', nil, user) if result && user
     result
   end

@@ -1,8 +1,11 @@
-class EventOccurrencesController < ApplicationController
+class EventOccurrencesController < ApplicationController # rubocop:disable Metrics/ClassLength
   include ReminderMessageBuilder
 
-  before_action :set_occurrence, only: %i[show edit update destroy postpone cancel reactivate post_slack_reminder post_social_reminder generate_ai_reminder send_host_reminder ical]
-  before_action :authorize_occurrence, only: %i[edit update destroy postpone cancel reactivate post_slack_reminder post_social_reminder generate_ai_reminder]
+  before_action :set_occurrence, only: %i[show edit update destroy postpone cancel relocate reactivate
+                                          post_slack_reminder post_social_reminder generate_ai_reminder
+                                          send_host_reminder ical]
+  before_action :authorize_occurrence, only: %i[edit update destroy postpone cancel relocate reactivate
+                                                post_slack_reminder post_social_reminder generate_ai_reminder]
   before_action :authorize_admin, only: %i[send_host_reminder]
 
   def show
@@ -75,6 +78,19 @@ class EventOccurrencesController < ApplicationController
       redirect_to @occurrence, notice: 'Occurrence was cancelled.'
     else
       redirect_to @occurrence, alert: 'Failed to cancel occurrence.'
+    end
+  end
+
+  def relocate
+    if params[:relocated_to].blank?
+      redirect_to @occurrence, alert: 'New location is required.'
+      return
+    end
+
+    if @occurrence.relocate!(params[:relocated_to], params[:reason], current_user)
+      redirect_to @occurrence, notice: 'Occurrence was marked as relocated.'
+    else
+      redirect_to @occurrence, alert: 'Failed to mark occurrence as relocated.'
     end
   end
 

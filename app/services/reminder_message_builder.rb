@@ -14,6 +14,8 @@ module ReminderMessageBuilder
       cancelled_message_parts(occurrence, message_type)
     when 'postponed'
       postponed_message_parts(occurrence, message_type)
+    when 'relocated'
+      relocated_message_parts(occurrence, message_type)
     else
       active_message_parts(occurrence, label, days_ahead, message_type)
     end
@@ -118,6 +120,25 @@ module ReminderMessageBuilder
     return msg if occurrence.postponed_until.blank?
 
     "#{msg}\nNew date: #{occurrence.postponed_until.strftime('%B %d, %Y at %I:%M %p')}."
+  end
+
+  def relocated_message_parts(occurrence, message_type)
+    event, date_str, time_str = occurrence_info(occurrence)
+    msg = message_type == :short ? short_relocated(event, date_str, occurrence) : long_relocated(event, date_str, time_str, occurrence)
+    { text: msg, link_url: occurrence_url_for(occurrence), link_text: LINK_TEXT }
+  end
+
+  def short_relocated(event, date_str, occurrence)
+    msg = "📍 RELOCATED: #{event.title} on #{date_str}"
+    occurrence.relocated_to.present? ? "#{msg} moved to #{occurrence.relocated_to}." : "#{msg} has moved."
+  end
+
+  def long_relocated(event, date_str, time_str, occurrence)
+    msg = "📍 RELOCATED: #{event.title} on #{date_str} at #{time_str} has moved to a new location."
+    msg += "\n📍 New venue: #{occurrence.relocated_to}" if occurrence.relocated_to.present?
+    msg += "\nNote: #{occurrence.cancellation_reason}" if occurrence.cancellation_reason.present?
+    msg += "\nThe event continues at the new location (no longer at our space)."
+    msg
   end
 
   def occurrence_info(occurrence)

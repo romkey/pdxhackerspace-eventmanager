@@ -64,6 +64,7 @@ Rails.application.routes.draw do
     member do
       post :postpone
       post :cancel
+      post :relocate
       post :reactivate
       post :post_slack_reminder
       post :post_social_reminder

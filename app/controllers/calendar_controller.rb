@@ -194,6 +194,7 @@ class CalendarController < ApplicationController
       description: occ.description,
       postponed_until: occ.postponed_until&.iso8601,
       cancellation_reason: occ.cancellation_reason,
+      relocated_to: occ.relocated_to,
       in_progress: now >= occ.occurs_at && now < occurrence_end,
       open_to: occ.event.open_to,
       location: occ.event_location ? { id: occ.event_location.id, name: occ.event_location.name } : nil,

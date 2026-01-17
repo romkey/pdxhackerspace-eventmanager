@@ -40,7 +40,11 @@
     <header class="d-flex justify-content-between align-items-start mb-3">
       <h1 itemprop="name"><%= @event.title %></h1>
       <% if @occurrence.status != 'active' %>
-        <span class="badge bg-<%= @occurrence.status == 'postponed' ? 'warning' : 'danger' %> fs-5">
+        <span class="badge bg-<%= case @occurrence.status
+                                   when 'postponed' then 'warning'
+                                   when 'relocated' then 'info'
+                                   else 'danger'
+                                   end %> fs-5">
           <%= @occurrence.status.titleize %>
         </span>
       <% end %>
@@ -69,6 +73,19 @@
         <% else %>
           <p class="mb-0">This occurrence has been cancelled.</p>
         <% end %>
+      </div>
+    <% elsif @occurrence.status == 'relocated' %>
+      <div class="alert alert-info" role="alert">
+        <h2 class="alert-heading h5">
+          <i class="bi bi-geo-alt" aria-hidden="true"></i> Event Relocated
+        </h2>
+        <p class="mb-0"><strong>New Location:</strong> <%= @occurrence.relocated_to %></p>
+        <% if @occurrence.cancellation_reason.present? %>
+          <hr>
+          <p class="mb-0"><strong>Note:</strong> <%= @occurrence.cancellation_reason %></p>
+        <% end %>
+        <hr>
+        <p class="mb-0 text-muted small">This event is no longer at our space but continues at the new location.</p>
       </div>
     <% end %>
 
@@ -169,6 +186,9 @@
               <button type="button" class="btn btn-outline-warning" data-bs-toggle="modal" data-bs-target="#postponeModal">
                 Postpone This Occurrence
               </button>
+              <button type="button" class="btn btn-outline-info" data-bs-toggle="modal" data-bs-target="#relocateModal">
+                Mark as Relocated
+              </button>
               <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#cancelModal">
                 Cancel This Occurrence
               </button>
@@ -263,6 +283,43 @@
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Don't Cancel</button>
           <%= f.submit "Cancel Occurrence", class: "btn btn-danger" %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<!-- Relocate Modal -->
+<div class="modal fade" id="relocateModal" tabindex="-1" aria-labelledby="relocateModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <%= form_with url: relocate_event_occurrence_path(@occurrence), method: :post do |f| %>
+        <div class="modal-header bg-info text-white">
+          <h2 class="modal-title h5" id="relocateModalLabel">Mark as Relocated</h2>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="alert alert-secondary" role="note">
+            Use this when an event has moved to a different venue. The event will be marked as relocated and visitors will see the new location.
+          </div>
+          <div class="mb-3">
+            <label for="relocated_to" class="form-label">New Location <span class="text-danger">*</span></label>
+            <input type="text" 
+                   class="form-control" 
+                   id="relocated_to"
+                   name="relocated_to"
+                   placeholder="e.g., Community Center, 123 Main St"
+                   required>
+            <div class="form-text">Enter the name and/or address of the new venue</div>
+          </div>
+          <div class="mb-3">
+            <label for="relocate_reason" class="form-label">Additional Notes (Optional)</label>
+            <textarea class="form-control" id="relocate_reason" name="reason" rows="3" placeholder="Any additional information about the move..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <%= f.submit "Mark as Relocated", class: "btn btn-info" %>
         </div>
       <% end %>
     </div>

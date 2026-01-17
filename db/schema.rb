@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_01_13_000000) do
+ActiveRecord::Schema[7.2].define(version: 2026_01_17_000000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_trgm"
   enable_extension "plpgsql"
@@ -86,6 +86,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_01_13_000000) do
     t.text "reminder_7d_long"
     t.text "reminder_1d_long"
     t.datetime "deleted_at"
+    t.text "relocated_to"
     t.index ["deleted_at"], name: "index_event_occurrences_on_deleted_at"
     t.index ["event_id", "occurs_at"], name: "index_event_occurrences_on_event_id_and_occurs_at"
     t.index ["event_id"], name: "index_event_occurrences_on_event_id"
@@ -94,7 +95,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_01_13_000000) do
     t.index ["slug"], name: "index_event_occurrences_on_slug", unique: true
     t.index ["status", "occurs_at"], name: "index_event_occurrences_on_status_and_occurs_at"
     t.index ["status"], name: "index_event_occurrences_on_status"
-    t.check_constraint "status::text = ANY (ARRAY['active'::character varying::text, 'postponed'::character varying::text, 'cancelled'::character varying::text])", name: "event_occurrences_status_check"
+    t.check_constraint "status::text = ANY (ARRAY['active'::character varying, 'postponed'::character varying, 'cancelled'::character varying, 'relocated'::character varying]::text[])", name: "event_occurrences_status_check"
   end
 
   create_table "events", force: :cascade do |t|

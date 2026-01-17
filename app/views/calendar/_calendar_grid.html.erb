@@ -33,6 +33,7 @@
                 badge_class = case occurrence.status
                 when 'postponed' then 'bg-warning text-dark'
                 when 'cancelled' then 'bg-danger text-white'
+                when 'relocated' then 'bg-info text-white'
                 else 'bg-primary text-white'
                 end
               %>
@@ -64,6 +65,10 @@
                     <% elsif occurrence.status == 'cancelled' %>
                       <div class="fw-bold mt-1" style="font-size: 0.65rem;">
                         CANCELLED
+                      </div>
+                    <% elsif occurrence.status == 'relocated' %>
+                      <div class="fw-bold mt-1" style="font-size: 0.65rem;">
+                        RELOCATED
                       </div>
                     <% end %>
                   </div>
