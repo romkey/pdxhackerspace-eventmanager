@@ -108,27 +108,56 @@
         </div>
       </div>
 
+      <% weekly_schedule = parse_weekly_recurrence(event) %>
       <div id="weekly_options" class="mb-3" style="display: none;">
-        <div class="alert alert-info py-2">
+        <div class="alert alert-info py-2 mb-3">
           <small>
             <i class="bi bi-info-circle"></i>
-            This event will repeat every week on <strong id="weekly_day_name"></strong> (based on the start date).
+            <strong>Examples:</strong> Select "Every 2 weeks" for biweekly events.
+            Check multiple days for events that happen on different days each week.
           </small>
+        </div>
+        <div class="row">
+          <div class="col-md-4 mb-3">
+            <label class="form-label">Repeat every:</label>
+            <%= select_tag :recurrence_interval,
+                options_for_select([
+                  ['Every week', 1],
+                  ['Every 2 weeks', 2],
+                  ['Every 3 weeks', 3],
+                  ['Every 4 weeks', 4]
+                ], weekly_schedule[:interval]),
+                class: "form-select" %>
+          </div>
+          <div class="col-md-8 mb-3">
+            <label class="form-label">On which day(s): <small class="text-muted">(check one or more)</small></label>
+            <div class="d-flex flex-wrap gap-3">
+              <% [['Sun', 0], ['Mon', 1], ['Tue', 2], ['Wed', 3], ['Thu', 4], ['Fri', 5], ['Sat', 6]].each do |label, value| %>
+                <div class="form-check">
+                  <%= check_box_tag "recurrence_days[]", value, weekly_schedule[:days].include?(value), id: "weekly_day_#{value}", class: "form-check-input weekly-day-checkbox" %>
+                  <%= label_tag "weekly_day_#{value}", label, class: "form-check-label" %>
+                </div>
+              <% end %>
+            </div>
+            <small class="form-text text-muted mt-1">
+              <i class="bi bi-calendar-week"></i> If no days selected, uses the day from start date
+            </small>
+          </div>
         </div>
       </div>
 
+      <% monthly_schedule = parse_monthly_recurrence(event) %>
       <div id="monthly_options" class="mb-3" style="display: none;">
         <div class="alert alert-info py-2 mb-3">
           <small>
             <i class="bi bi-info-circle"></i>
             <strong>Examples:</strong> Check "First" and "Third" with "Monday" for events on the 1st and 3rd Monday.
-            Check "Second" with "Sunday" for events on the 2nd Sunday of each month.
+            Use "Except" to exclude specific occurrences (e.g., "Every Saturday except the Last Saturday").
           </small>
         </div>
         <div class="row">
-          <% monthly_schedule = parse_monthly_recurrence(event) %>
-          <div class="col-md-6">
-            <label class="form-label">Which week(s) of the month: <small class="text-muted">(check one or more)</small></label>
+          <div class="col-md-4 mb-3">
+            <label class="form-label">Which week(s): <small class="text-muted">(include)</small></label>
             <div class="d-flex flex-column gap-2">
               <% [['First', 'first'], ['Second', 'second'], ['Third', 'third'], ['Fourth', 'fourth'], ['Last', 'last']].each do |label, value| %>
                 <div class="form-check">
@@ -138,8 +167,19 @@
               <% end %>
             </div>
           </div>
-          <div class="col-md-6">
-            <label class="form-label">On which day of the week:</label>
+          <div class="col-md-4 mb-3">
+            <label class="form-label">Except: <small class="text-muted">(exclude)</small></label>
+            <div class="d-flex flex-column gap-2">
+              <% [['First', 'first'], ['Second', 'second'], ['Third', 'third'], ['Fourth', 'fourth'], ['Last', 'last']].each do |label, value| %>
+                <div class="form-check">
+                  <%= check_box_tag "recurrence_except_occurrences[]", value, monthly_schedule[:except_occurrences]&.include?(value), id: "except_occurrence_#{value}", class: "form-check-input" %>
+                  <%= label_tag "except_occurrence_#{value}", label, class: "form-check-label text-muted" %>
+                </div>
+              <% end %>
+            </div>
+          </div>
+          <div class="col-md-4 mb-3">
+            <label class="form-label">On which day:</label>
             <%= select_tag :recurrence_day,
                 options_for_select([
                   ['Monday', 'monday'],
@@ -151,11 +191,24 @@
                   ['Sunday', 'sunday']
                 ], monthly_schedule[:day]),
                 class: "form-select" %>
-            <small class="form-text text-muted">
-              <i class="bi bi-calendar-week"></i> You can select multiple weeks above for complex schedules
-            </small>
           </div>
         </div>
+      </div>
+
+      <div id="custom_options" class="mb-3" style="display: none;">
+        <div class="alert alert-warning py-2 mb-3">
+          <small>
+            <i class="bi bi-exclamation-triangle"></i>
+            <strong>Advanced:</strong> Custom schedules let you combine multiple rules.
+            For example: "Every other Tuesday AND every other Thursday on alternating weeks."
+          </small>
+        </div>
+        <div id="custom_rules_container">
+          <!-- Custom rules will be added dynamically -->
+        </div>
+        <button type="button" class="btn btn-outline-secondary btn-sm" id="add_custom_rule">
+          <i class="bi bi-plus-circle"></i> Add Rule
+        </button>
       </div>
 
       <div class="mb-0">
@@ -378,17 +431,25 @@
     const recurrenceSelect = document.getElementById('recurrence_type_select');
     const weeklyOptions = document.getElementById('weekly_options');
     const monthlyOptions = document.getElementById('monthly_options');
+    const customOptions = document.getElementById('custom_options');
     const startTimeField = document.querySelector('input[name="event[start_time]"]');
-    const weeklyDayName = document.getElementById('weekly_day_name');
 
     if (!recurrenceSelect) return; // Guard in case form not present
 
     const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
-    function updateWeeklyDayName() {
-      if (startTimeField && weeklyDayName && startTimeField.value) {
-        const date = new Date(startTimeField.value);
-        weeklyDayName.textContent = dayNames[date.getDay()];
+    // Auto-select the day from start time if no days are checked
+    function autoSelectWeeklyDay() {
+      if (!startTimeField || !startTimeField.value) return;
+      
+      const date = new Date(startTimeField.value);
+      const dayNum = date.getDay();
+      const checkboxes = document.querySelectorAll('.weekly-day-checkbox');
+      const anyChecked = Array.from(checkboxes).some(cb => cb.checked);
+      
+      if (!anyChecked) {
+        const checkbox = document.getElementById(`weekly_day_${dayNum}`);
+        if (checkbox) checkbox.checked = true;
       }
     }
 
@@ -397,17 +458,132 @@
       
       weeklyOptions.style.display = value === 'weekly' ? 'block' : 'none';
       monthlyOptions.style.display = value === 'monthly' ? 'block' : 'none';
+      if (customOptions) customOptions.style.display = value === 'custom' ? 'block' : 'none';
       
       if (value === 'weekly') {
-        updateWeeklyDayName();
+        autoSelectWeeklyDay();
       }
     }
 
     recurrenceSelect.addEventListener('change', updateRecurrenceOptions);
     if (startTimeField) {
-      startTimeField.addEventListener('change', updateWeeklyDayName);
+      startTimeField.addEventListener('change', autoSelectWeeklyDay);
     }
     updateRecurrenceOptions(); // Run immediately to show correct state
+
+    // Custom rules functionality
+    initCustomRules();
+  }
+
+  let customRuleCount = 0;
+
+  function initCustomRules() {
+    const addButton = document.getElementById('add_custom_rule');
+    if (!addButton) return;
+
+    addButton.addEventListener('click', addCustomRule);
+  }
+
+  function addCustomRule() {
+    const container = document.getElementById('custom_rules_container');
+    if (!container) return;
+
+    const ruleIndex = customRuleCount++;
+    const ruleHtml = `
+      <div class="card mb-2 custom-rule" data-rule-index="${ruleIndex}">
+        <div class="card-body py-2">
+          <div class="d-flex justify-content-between align-items-start mb-2">
+            <strong>Rule ${ruleIndex + 1}</strong>
+            <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeCustomRule(${ruleIndex})">
+              <i class="bi bi-trash"></i>
+            </button>
+          </div>
+          <div class="row">
+            <div class="col-md-3 mb-2">
+              <label class="form-label small">Type:</label>
+              <select name="custom_rules[${ruleIndex}][type]" class="form-select form-select-sm custom-rule-type" data-rule="${ruleIndex}">
+                <option value="weekly">Weekly</option>
+                <option value="monthly">Monthly</option>
+              </select>
+            </div>
+            <div class="col-md-9">
+              <div class="custom-rule-weekly-options" data-rule="${ruleIndex}">
+                <div class="row">
+                  <div class="col-md-4 mb-2">
+                    <label class="form-label small">Interval:</label>
+                    <select name="custom_rules[${ruleIndex}][interval]" class="form-select form-select-sm">
+                      <option value="1">Every week</option>
+                      <option value="2">Every 2 weeks</option>
+                      <option value="3">Every 3 weeks</option>
+                      <option value="4">Every 4 weeks</option>
+                    </select>
+                  </div>
+                  <div class="col-md-8 mb-2">
+                    <label class="form-label small">Days:</label>
+                    <div class="d-flex flex-wrap gap-2">
+                      ${['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, i) => `
+                        <div class="form-check form-check-inline">
+                          <input type="checkbox" name="custom_rules[${ruleIndex}][days][]" value="${i}" 
+                                 id="custom_rule_${ruleIndex}_day_${i}" class="form-check-input">
+                          <label for="custom_rule_${ruleIndex}_day_${i}" class="form-check-label small">${day}</label>
+                        </div>
+                      `).join('')}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="custom-rule-monthly-options" data-rule="${ruleIndex}" style="display: none;">
+                <div class="row">
+                  <div class="col-md-6 mb-2">
+                    <label class="form-label small">Week(s):</label>
+                    <div class="d-flex flex-wrap gap-2">
+                      ${['first', 'second', 'third', 'fourth', 'last'].map(occ => `
+                        <div class="form-check form-check-inline">
+                          <input type="checkbox" name="custom_rules[${ruleIndex}][occurrences][]" value="${occ}" 
+                                 id="custom_rule_${ruleIndex}_occ_${occ}" class="form-check-input">
+                          <label for="custom_rule_${ruleIndex}_occ_${occ}" class="form-check-label small">${occ.charAt(0).toUpperCase() + occ.slice(1)}</label>
+                        </div>
+                      `).join('')}
+                    </div>
+                  </div>
+                  <div class="col-md-6 mb-2">
+                    <label class="form-label small">Day:</label>
+                    <select name="custom_rules[${ruleIndex}][day]" class="form-select form-select-sm">
+                      ${['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].map(day => `
+                        <option value="${day}">${day.charAt(0).toUpperCase() + day.slice(1)}</option>
+                      `).join('')}
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    container.insertAdjacentHTML('beforeend', ruleHtml);
+
+    // Add event listener for rule type change
+    const typeSelect = container.querySelector(`select[data-rule="${ruleIndex}"]`);
+    if (typeSelect) {
+      typeSelect.addEventListener('change', function() {
+        updateCustomRuleOptions(ruleIndex, this.value);
+      });
+    }
+  }
+
+  function updateCustomRuleOptions(ruleIndex, type) {
+    const weeklyOptions = document.querySelector(`.custom-rule-weekly-options[data-rule="${ruleIndex}"]`);
+    const monthlyOptions = document.querySelector(`.custom-rule-monthly-options[data-rule="${ruleIndex}"]`);
+    
+    if (weeklyOptions) weeklyOptions.style.display = type === 'weekly' ? 'block' : 'none';
+    if (monthlyOptions) monthlyOptions.style.display = type === 'monthly' ? 'block' : 'none';
+  }
+
+  function removeCustomRule(ruleIndex) {
+    const rule = document.querySelector(`.custom-rule[data-rule-index="${ruleIndex}"]`);
+    if (rule) rule.remove();
   }
 
   // Support both Turbo and regular page loads

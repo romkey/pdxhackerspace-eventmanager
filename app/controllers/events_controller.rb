@@ -331,16 +331,65 @@ class EventsController < ApplicationController
 
     case recurrence_type
     when 'weekly'
-      # For weekly events, automatically use the day of the week from the start date
-      { days: [start_time&.wday || 0] }
+      build_weekly_params(start_time)
     when 'monthly'
-      # For monthly events, use the form selections
-      {
-        occurrences: params[:recurrence_occurrences],
-        day: params[:recurrence_day]
-      }.compact
+      build_monthly_params
+    when 'custom'
+      build_custom_params(start_time)
     else
       {}
+    end
+  end
+
+  def build_weekly_params(start_time)
+    # Allow selecting multiple days and interval
+    days = if params[:recurrence_days].present?
+             Array(params[:recurrence_days]).map(&:to_i)
+           else
+             [start_time&.wday || 0]
+           end
+
+    interval = params[:recurrence_interval].present? ? params[:recurrence_interval].to_i : 1
+
+    { days: days, interval: interval }
+  end
+
+  def build_monthly_params
+    {
+      occurrences: params[:recurrence_occurrences],
+      except_occurrences: params[:recurrence_except_occurrences],
+      day: params[:recurrence_day]
+    }.compact
+  end
+
+  def build_custom_params(start_time)
+    # Custom allows combining multiple rule definitions
+    custom_rules = []
+
+    # Parse custom rules from params (array of rule definitions)
+    if params[:custom_rules].present?
+      params[:custom_rules].each do |rule_data|
+        rule = parse_custom_rule(rule_data, start_time)
+        custom_rules << rule if rule.present?
+      end
+    end
+
+    { custom_rules: custom_rules }
+  end
+
+  def parse_custom_rule(rule_data, start_time)
+    case rule_data[:type]
+    when 'weekly'
+      days = rule_data[:days].present? ? Array(rule_data[:days]).map(&:to_i) : [start_time&.wday || 0]
+      interval = rule_data[:interval].present? ? rule_data[:interval].to_i : 1
+      { type: 'weekly', days: days, interval: interval }
+    when 'monthly'
+      {
+        type: 'monthly',
+        occurrences: rule_data[:occurrences],
+        except_occurrences: rule_data[:except_occurrences],
+        day: rule_data[:day]
+      }.compact
     end
   end
 
@@ -353,8 +402,15 @@ class EventsController < ApplicationController
     # Rebuild if start time changed (affects schedule for weekly events)
     return true if params[:event][:start_time].present? && Time.parse(params[:event][:start_time]) != @event.start_time
 
+    # Rebuild if weekly options were explicitly provided
+    return true if params[:recurrence_days].present? || params[:recurrence_interval].present?
+
     # Rebuild if monthly options were explicitly provided
     return true if params[:recurrence_occurrences].present? || params[:recurrence_day].present?
+    return true if params[:recurrence_except_occurrences].present?
+
+    # Rebuild if custom rules were provided
+    return true if params[:custom_rules].present?
 
     false
   end

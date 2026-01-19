@@ -238,35 +238,88 @@ class Event < ApplicationRecord
 
     case recurrence_type
     when 'weekly'
-      # Weekly on specific day(s)
+      # Weekly on specific day(s) with optional interval
       days = recurrence_params[:days] || [start_time.wday]
-      rule = IceCube::Rule.weekly.day(*days)
+      interval = (recurrence_params[:interval] || 1).to_i
+      interval = 1 if interval < 1
+
+      # Convert day numbers to IceCube day symbols
+      day_map = { 0 => :sunday, 1 => :monday, 2 => :tuesday, 3 => :wednesday,
+                  4 => :thursday, 5 => :friday, 6 => :saturday }
+      day_symbols = days.map { |d| day_map[d.to_i] }.compact
+
+      rule = IceCube::Rule.weekly(interval).day(*day_symbols)
       schedule.add_recurrence_rule(rule)
+
     when 'monthly'
-      if recurrence_params[:occurrences].present? && recurrence_params[:day]
-        # e.g., "first and third Tuesday", "second Monday"
-        # Convert occurrence strings to integers for IceCube
-        occurrence_map = { 'first' => 1, 'second' => 2, 'third' => 3, 'fourth' => 4, 'last' => -1 }
-        occurrence_ints = recurrence_params[:occurrences].map { |occ| occurrence_map[occ.to_s] }.compact
-        day = recurrence_params[:day].to_sym # :monday, :tuesday, etc.
-        rule = IceCube::Rule.monthly.day_of_week(day => occurrence_ints)
-      elsif recurrence_params[:occurrence] && recurrence_params[:day]
-        # Backward compatibility with single occurrence (old format)
-        occurrence_map = { 'first' => 1, 'second' => 2, 'third' => 3, 'fourth' => 4, 'last' => -1 }
-        occurrence_int = occurrence_map[recurrence_params[:occurrence].to_s]
-        day = recurrence_params[:day].to_sym # :monday, :tuesday, etc.
-        rule = IceCube::Rule.monthly.day_of_week(day => [occurrence_int])
-      else
-        # Monthly on the same day of month
-        rule = IceCube::Rule.monthly.day_of_month(start_time.day)
-      end
-      schedule.add_recurrence_rule(rule)
+      build_monthly_schedule(schedule, start_time, recurrence_params)
+
     when 'custom'
-      # For more complex recurrence patterns
-      # Can be extended based on specific needs
+      # Custom allows combining multiple rules
+      build_custom_schedule(schedule, start_time, recurrence_params)
     end
 
     schedule
+  end
+
+  def self.build_monthly_schedule(schedule, start_time, recurrence_params)
+    occurrence_map = { 'first' => 1, 'second' => 2, 'third' => 3, 'fourth' => 4, 'last' => -1 }
+
+    if recurrence_params[:occurrences].present? && recurrence_params[:day]
+      # e.g., "first and third Tuesday", "second Monday"
+      occurrence_ints = recurrence_params[:occurrences].map { |occ| occurrence_map[occ.to_s] }.compact
+      day = recurrence_params[:day].to_sym
+      rule = IceCube::Rule.monthly.day_of_week(day => occurrence_ints)
+      schedule.add_recurrence_rule(rule)
+
+      # Handle exceptions (e.g., "every Saturday except the last")
+      add_monthly_exceptions(schedule, recurrence_params)
+
+    elsif recurrence_params[:occurrence] && recurrence_params[:day]
+      # Backward compatibility with single occurrence
+      occurrence_int = occurrence_map[recurrence_params[:occurrence].to_s]
+      day = recurrence_params[:day].to_sym
+      rule = IceCube::Rule.monthly.day_of_week(day => [occurrence_int])
+      schedule.add_recurrence_rule(rule)
+    else
+      # Monthly on the same day of month
+      rule = IceCube::Rule.monthly.day_of_month(start_time.day)
+      schedule.add_recurrence_rule(rule)
+    end
+  end
+
+  def self.add_monthly_exceptions(schedule, recurrence_params)
+    return unless recurrence_params[:except_occurrences].present? && recurrence_params[:day]
+
+    occurrence_map = { 'first' => 1, 'second' => 2, 'third' => 3, 'fourth' => 4, 'last' => -1 }
+    except_ints = recurrence_params[:except_occurrences].map { |occ| occurrence_map[occ.to_s] }.compact
+    return if except_ints.empty?
+
+    day = recurrence_params[:day].to_sym
+    except_rule = IceCube::Rule.monthly.day_of_week(day => except_ints)
+    schedule.add_exception_rule(except_rule)
+  end
+
+  def self.build_custom_schedule(schedule, start_time, recurrence_params)
+    # Custom schedule can have multiple weekly rules for complex patterns
+    # e.g., "Every other Tuesday AND every other Thursday on alternating weeks"
+    return if recurrence_params[:custom_rules].blank?
+
+    recurrence_params[:custom_rules].each do |rule_params|
+      case rule_params[:type]
+      when 'weekly'
+        interval = (rule_params[:interval] || 1).to_i
+        days = rule_params[:days] || [start_time.wday]
+        day_map = { 0 => :sunday, 1 => :monday, 2 => :tuesday, 3 => :wednesday,
+                    4 => :thursday, 5 => :friday, 6 => :saturday }
+        day_symbols = days.map { |d| day_map[d.to_i] }.compact
+
+        rule = IceCube::Rule.weekly(interval).day(*day_symbols)
+        schedule.add_recurrence_rule(rule)
+      when 'monthly'
+        build_monthly_schedule(schedule, start_time, rule_params)
+      end
+    end
   end
 
   private
