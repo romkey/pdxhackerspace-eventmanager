@@ -112,7 +112,8 @@ class EventOccurrencesController < ApplicationController # rubocop:disable Metri
       return
     end
 
-    message = long_reminder_message(@occurrence, 'today')
+    label = timing_label_for(@occurrence)
+    message = long_reminder_message(@occurrence, label)
     if SlackService.post_occurrence_reminder(@occurrence, message)
       respond_to do |format|
         format.html { redirect_to @occurrence, notice: 'Posted reminder to Slack.' }
@@ -138,8 +139,9 @@ class EventOccurrencesController < ApplicationController # rubocop:disable Metri
     end
 
     Rails.logger.info "post_social_reminder: Posting for occurrence #{@occurrence.id} (#{@occurrence.event.title})"
-    short_parts = reminder_message_with_link(@occurrence, 'today', message_type: :short)
-    long_parts = reminder_message_with_link(@occurrence, 'today', message_type: :long)
+    label = timing_label_for(@occurrence)
+    short_parts = reminder_message_with_link(@occurrence, label, message_type: :short)
+    long_parts = reminder_message_with_link(@occurrence, label, message_type: :long)
     if SocialService.post_occurrence_reminder(@occurrence, short_parts: short_parts, long_parts: long_parts)
       respond_to do |format|
         format.html { redirect_to @occurrence, notice: 'Posted reminder to social media.' }
@@ -242,5 +244,18 @@ class EventOccurrencesController < ApplicationController # rubocop:disable Metri
     return 'social' if event.social_reminders? && site_config.social_reminders_enabled?
 
     'general'
+  end
+
+  def timing_label_for(occurrence)
+    days_until = (occurrence.occurs_at.to_date - Date.current).to_i
+
+    case days_until
+    when ..(-1) then 'recently' # Past event
+    when 0 then 'today'
+    when 1 then 'tomorrow'
+    when 2..6 then "#{days_until} days"
+    when 7 then '1 week'
+    else "#{days_until} days"
+    end
   end
 end
