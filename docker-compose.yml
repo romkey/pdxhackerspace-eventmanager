@@ -36,13 +36,11 @@ services:
   web:
     image: ghcr.io/romkey/pdxhackerspace-eventmanager:latest
     restart: always
-    command: bash -c "rm -f tmp/pids/server.pid && bundle exec rails db:migrate && bundle exec puma -C config/puma.rb"
     environment:
       RAILS_ENV: production
       TZ: America/Los_Angeles
       RAILS_LOG_TO_STDOUT: "true"
       RAILS_SERVE_STATIC_FILES: "true"
-      RUN_MIGRATIONS: "true"
       SECRET_KEY_BASE: ${SECRET_KEY_BASE}
       DATABASE_URL: postgres://${DATABASE_USER}:${DATABASE_PASSWORD}@${DATABASE_HOST}/${DATABASE_NAME}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}

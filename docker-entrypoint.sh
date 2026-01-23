@@ -16,25 +16,19 @@ done
 
 echo "Database is ready!"
 
-# Only run migrations if RUN_MIGRATIONS is set to true
-# This prevents multiple containers from trying to migrate simultaneously
-if [ "$RUN_MIGRATIONS" = "true" ]; then
-  # Create database if it doesn't exist
-  bundle exec rails db:create 2>/dev/null || echo "Database already exists"
+# Create database if it doesn't exist
+bundle exec rails db:create 2>/dev/null || echo "Database already exists"
 
-  # Run migrations
-  echo "Running database migrations..."
-  bundle exec rails db:migrate
+# Always run migrations - they're idempotent, if already run Rails skips them
+echo "Running database migrations..."
+bundle exec rails db:migrate
 
-  # Check if database is seeded (check if any users exist)
-  if bundle exec rails runner "exit(User.count > 0 ? 0 : 1)" 2>/dev/null; then
-    echo "Database already seeded, skipping seed data"
-  else
-    echo "Seeding database..."
-    bundle exec rails db:seed
-  fi
+# Check if database is seeded (check if any users exist)
+if bundle exec rails runner "exit(User.count > 0 ? 0 : 1)" 2>/dev/null; then
+  echo "Database already seeded, skipping seed data"
 else
-  echo "Skipping migrations (RUN_MIGRATIONS not set to 'true')"
+  echo "Seeding database..."
+  bundle exec rails db:seed
 fi
 
 # Execute the main command
