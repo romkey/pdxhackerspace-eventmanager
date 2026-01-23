@@ -23,7 +23,6 @@ class Event < ApplicationRecord
   after_update :log_update
   after_update :regenerate_occurrences_if_needed
   after_update :cancel_future_occurrences_if_permanently_cancelled
-  after_update :relocate_occurrences_if_permanently_relocated
   after_save :log_banner_change
   after_commit :queue_spectra6_processing, if: :banner_image_attached_recently?
 
@@ -418,15 +417,6 @@ class Event < ApplicationRecord
     # Cancel all future active occurrences when event becomes permanently cancelled
     occurrences.where('occurs_at > ?', Time.now).where(status: 'active').find_each do |occ|
       occ.update!(status: 'cancelled', cancellation_reason: 'Event permanently cancelled')
-    end
-  end
-
-  def relocate_occurrences_if_permanently_relocated
-    return unless saved_change_to_permanently_relocated? && permanently_relocated?
-
-    # Mark all active occurrences as relocated when event becomes permanently relocated
-    occurrences.where(status: 'active').find_each do |occ|
-      occ.update!(status: 'relocated', relocated_to: relocated_to, cancellation_reason: 'Event permanently relocated')
     end
   end
 
