@@ -280,12 +280,22 @@
         </div>
       </div>
 
+      <div class="mb-3">
+        <div class="form-check">
+          <%= f.check_box :default_to_cancelled, class: "form-check-input" %>
+          <%= f.label :default_to_cancelled, "Default to Cancelled", class: "form-check-label text-warning" %>
+          <div class="form-text text-warning">
+            <i class="bi bi-calendar-x"></i> New occurrences are created as cancelled by default. Manually activate the dates that will happen. Useful for "every week except one" patterns.
+          </div>
+        </div>
+      </div>
+
       <div class="mb-0">
         <div class="form-check">
           <%= f.check_box :permanently_cancelled, class: "form-check-input" %>
           <%= f.label :permanently_cancelled, "Permanently Cancelled", class: "form-check-label text-danger" %>
           <div class="form-text text-danger">
-            <i class="bi bi-x-circle-fill"></i> All future occurrences will be created as cancelled. Use this for events that are no longer running.
+            <i class="bi bi-x-circle-fill"></i> All future occurrences will be created as cancelled and no new ones will be generated. Use this for events that are no longer running.
           </div>
         </div>
       </div>

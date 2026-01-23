@@ -79,6 +79,7 @@ class Event < ApplicationRecord
   scope :cancelled, -> { where(status: 'cancelled') }
   scope :permanently_cancelled, -> { where(permanently_cancelled: true) }
   scope :not_permanently_cancelled, -> { where(permanently_cancelled: false) }
+  scope :default_to_cancelled, -> { where(default_to_cancelled: true) }
   scope :public_events, -> { where(visibility: 'public') }
   scope :members_events, -> { where(visibility: 'members') }
   scope :private_events, -> { where(visibility: 'private') }
@@ -159,8 +160,10 @@ class Event < ApplicationRecord
   def generate_occurrences(limit = nil)
     limit ||= max_occurrences || 5
 
-    # Determine status for new occurrences - cancelled if permanently_cancelled
-    occurrence_status = permanently_cancelled? ? 'cancelled' : 'active'
+    # Determine status for new occurrences
+    # - cancelled if permanently_cancelled or default_to_cancelled
+    # - active otherwise
+    occurrence_status = permanently_cancelled? || default_to_cancelled? ? 'cancelled' : 'active'
 
     if recurrence_type == 'once'
       # One-time event - create single occurrence if it doesn't exist
