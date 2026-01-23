@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_01_17_000000) do
+ActiveRecord::Schema[7.2].define(version: 2026_01_23_000000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_trgm"
   enable_extension "plpgsql"
@@ -95,7 +95,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_01_17_000000) do
     t.index ["slug"], name: "index_event_occurrences_on_slug", unique: true
     t.index ["status", "occurs_at"], name: "index_event_occurrences_on_status_and_occurs_at"
     t.index ["status"], name: "index_event_occurrences_on_status"
-    t.check_constraint "status::text = ANY (ARRAY['active'::character varying, 'postponed'::character varying, 'cancelled'::character varying, 'relocated'::character varying]::text[])", name: "event_occurrences_status_check"
+    t.check_constraint "status::text = ANY (ARRAY['active'::character varying::text, 'postponed'::character varying::text, 'cancelled'::character varying::text, 'relocated'::character varying::text])", name: "event_occurrences_status_check"
   end
 
   create_table "events", force: :cascade do |t|
@@ -129,6 +129,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_01_17_000000) do
     t.datetime "deleted_at"
     t.integer "event_occurrences_count", default: 0, null: false
     t.boolean "sign_feed", default: true, null: false
+    t.boolean "permanently_cancelled", default: false, null: false
     t.index ["deleted_at"], name: "index_events_on_deleted_at"
     t.index ["description"], name: "index_events_on_description_trgm", opclass: :gin_trgm_ops, using: :gin
     t.index ["ical_token"], name: "index_events_on_ical_token", unique: true

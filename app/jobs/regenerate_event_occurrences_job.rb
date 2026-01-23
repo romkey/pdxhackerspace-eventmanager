@@ -7,7 +7,7 @@ class RegenerateEventOccurrencesJob < ApplicationJob
     regenerated_count = 0
     error_count = 0
 
-    Event.active.where.not(recurrence_type: 'once').find_each do |event|
+    Event.active.not_permanently_cancelled.where.not(recurrence_type: 'once').find_each do |event|
       # Count upcoming occurrences
       upcoming_count = event.upcoming_occurrences.count
       target_count = event.max_occurrences || 5

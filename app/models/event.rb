@@ -22,6 +22,7 @@ class Event < ApplicationRecord
   after_create :log_creation
   after_update :log_update
   after_update :regenerate_occurrences_if_needed
+  after_update :cancel_future_occurrences_if_permanently_cancelled
   after_save :log_banner_change
   after_commit :queue_spectra6_processing, if: :banner_image_attached_recently?
 
@@ -76,6 +77,8 @@ class Event < ApplicationRecord
   scope :active, -> { where(status: 'active') }
   scope :postponed, -> { where(status: 'postponed') }
   scope :cancelled, -> { where(status: 'cancelled') }
+  scope :permanently_cancelled, -> { where(permanently_cancelled: true) }
+  scope :not_permanently_cancelled, -> { where(permanently_cancelled: false) }
   scope :public_events, -> { where(visibility: 'public') }
   scope :members_events, -> { where(visibility: 'members') }
   scope :private_events, -> { where(visibility: 'private') }
@@ -156,9 +159,14 @@ class Event < ApplicationRecord
   def generate_occurrences(limit = nil)
     limit ||= max_occurrences || 5
 
+    # Determine status for new occurrences - cancelled if permanently_cancelled
+    occurrence_status = permanently_cancelled? ? 'cancelled' : 'active'
+
     if recurrence_type == 'once'
       # One-time event - create single occurrence if it doesn't exist
-      occurrences.find_or_create_by!(occurs_at: start_time.to_datetime)
+      occ = occurrences.find_or_initialize_by(occurs_at: start_time.to_datetime)
+      occ.status = occurrence_status if occ.new_record?
+      occ.save!
     elsif recurrence_rule.present?
       # Recurring event - generate occurrences
       schedule = IceCube::Schedule.from_yaml(recurrence_rule)
@@ -166,7 +174,9 @@ class Event < ApplicationRecord
 
       future_dates.each do |date|
         # Convert Time to DateTime for PostgreSQL
-        occurrences.find_or_create_by!(occurs_at: date.to_datetime)
+        occ = occurrences.find_or_initialize_by(occurs_at: date.to_datetime)
+        occ.status = occurrence_status if occ.new_record?
+        occ.save!
       end
     end
   end
@@ -389,6 +399,15 @@ class Event < ApplicationRecord
     Rails.logger.error "Failed to regenerate occurrences for event #{id}: #{e.class} - #{e.message}"
     Rails.logger.error e.backtrace.first(5).join("\n")
     raise # Re-raise to rollback the transaction
+  end
+
+  def cancel_future_occurrences_if_permanently_cancelled
+    return unless saved_change_to_permanently_cancelled? && permanently_cancelled?
+
+    # Cancel all future active occurrences when event becomes permanently cancelled
+    occurrences.where('occurs_at > ?', Time.now).where(status: 'active').find_each do |occ|
+      occ.update!(status: 'cancelled', cancellation_reason: 'Event permanently cancelled')
+    end
   end
 
   def log_creation
