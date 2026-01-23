@@ -14,11 +14,11 @@ class EventsController < ApplicationController
     # Apply search filter if query present
     base_events = base_events.search(@search_query) if @search_query.present?
 
-    # Get upcoming occurrences for these events
+    # Get upcoming occurrences for these events (include relocated to show permanently relocated events)
     upcoming_occurrences = EventOccurrence
                            .joins(:event)
                            .where(event: base_events)
-                           .where(event_occurrences: { status: 'active' })
+                           .where(event_occurrences: { status: %w[active relocated] })
                            .upcoming
                            .includes(event: %i[user hosts])
 

@@ -18,7 +18,7 @@ class CalendarController < ApplicationController
                          .where(event: policy_scope(Event))
                          .where('event_occurrences.occurs_at >= ? AND event_occurrences.occurs_at <= ?',
                                 calendar_start.beginning_of_day, calendar_end.end_of_day)
-                         .where(event_occurrences: { status: %w[active postponed cancelled] })
+                         .where(event_occurrences: { status: %w[active postponed cancelled relocated] })
                          .includes(event: %i[hosts user], banner_image_attachment: :blob)
                          .order(:occurs_at)
                      else
@@ -27,7 +27,7 @@ class CalendarController < ApplicationController
                          .where(events: { visibility: 'public', draft: false })
                          .where('event_occurrences.occurs_at >= ? AND event_occurrences.occurs_at <= ?',
                                 calendar_start.beginning_of_day, calendar_end.end_of_day)
-                         .where(event_occurrences: { status: %w[active postponed cancelled] })
+                         .where(event_occurrences: { status: %w[active postponed cancelled relocated] })
                          .includes(event: %i[hosts user], banner_image_attachment: :blob)
                          .order(:occurs_at)
                      end
@@ -40,13 +40,13 @@ class CalendarController < ApplicationController
         Rails.logger.info "  - Occurrence ##{occ.id}: #{occ.event.title} at #{occ.occurs_at} (status: #{occ.status})"
       end
     else
-      # For list view, get upcoming occurrences + postponed/cancelled ones (even if original date passed)
+      # For list view, get upcoming occurrences + postponed/cancelled/relocated ones (even if original date passed)
       @occurrences = if current_user
                        EventOccurrence
                          .joins(:event)
                          .where(event: policy_scope(Event))
                          .where('event_occurrences.occurs_at >= ? OR event_occurrences.status IN (?)',
-                                Time.now, %w[postponed cancelled])
+                                Time.now, %w[postponed cancelled relocated])
                          .includes(event: %i[hosts user], banner_image_attachment: :blob)
                          .order(:occurs_at)
                          .limit(50)
@@ -55,7 +55,7 @@ class CalendarController < ApplicationController
                          .joins(:event)
                          .where(events: { visibility: 'public', draft: false })
                          .where('event_occurrences.occurs_at >= ? OR event_occurrences.status IN (?)',
-                                Time.now, %w[postponed cancelled])
+                                Time.now, %w[postponed cancelled relocated])
                          .includes(event: %i[hosts user], banner_image_attachment: :blob)
                          .order(:occurs_at)
                          .limit(50)
@@ -87,7 +87,7 @@ class CalendarController < ApplicationController
                      .where(events: { visibility: 'public', draft: false })
                      .where('event_occurrences.occurs_at >= ? AND event_occurrences.occurs_at <= ?',
                             calendar_start.beginning_of_day, calendar_end.end_of_day)
-                     .where(event_occurrences: { status: %w[active postponed cancelled] })
+                     .where(event_occurrences: { status: %w[active postponed cancelled relocated] })
                      .includes(event: %i[hosts user], banner_image_attachment: :blob)
                      .order(:occurs_at)
 
@@ -97,7 +97,7 @@ class CalendarController < ApplicationController
                      .joins(:event)
                      .where(events: { visibility: 'public', draft: false })
                      .where('event_occurrences.occurs_at >= ? OR event_occurrences.status IN (?)',
-                            Time.now, %w[postponed cancelled])
+                            Time.now, %w[postponed cancelled relocated])
                      .includes(event: %i[hosts user], banner_image_attachment: :blob)
                      .order(:occurs_at)
                      .limit(50)
