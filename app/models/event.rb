@@ -248,6 +248,10 @@ class Event < ApplicationRecord
 
   # Regenerate occurrences (useful after recurrence rule changes)
   def regenerate_future_occurrences!
+    # Don't delete/regenerate for permanently cancelled or relocated events
+    # They should keep their existing occurrences
+    return if permanently_cancelled? || permanently_relocated?
+
     # Delete future occurrences that haven't been modified
     occurrences.where('occurs_at > ? AND status = ?', Time.now, 'active').destroy_all
     generate_occurrences
