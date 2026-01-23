@@ -290,13 +290,28 @@
         </div>
       </div>
 
-      <div class="mb-0">
+      <div class="mb-3">
         <div class="form-check">
           <%= f.check_box :permanently_cancelled, class: "form-check-input" %>
           <%= f.label :permanently_cancelled, "Permanently Cancelled", class: "form-check-label text-danger" %>
           <div class="form-text text-danger">
             <i class="bi bi-x-circle-fill"></i> All future occurrences will be created as cancelled and no new ones will be generated. Use this for events that are no longer running.
           </div>
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <div class="form-check">
+          <%= f.check_box :permanently_relocated, class: "form-check-input", id: "permanently_relocated_checkbox" %>
+          <%= f.label :permanently_relocated, "Permanently Relocated", class: "form-check-label text-info" %>
+          <div class="form-text text-info">
+            <i class="bi bi-geo-alt-fill"></i> This event has moved to a new location permanently. All occurrences will be marked as relocated and no new ones will be generated.
+          </div>
+        </div>
+        <div id="relocated_to_field" class="mt-2 ms-4" style="display: <%= event.permanently_relocated? ? 'block' : 'none' %>;">
+          <%= f.label :relocated_to, "New Location", class: "form-label" %>
+          <%= f.text_field :relocated_to, class: "form-control", placeholder: "e.g., New venue name, address, or URL" %>
+          <small class="form-text text-muted">Where has this event moved to?</small>
         </div>
       </div>
     </div>
@@ -735,5 +750,23 @@
   document.addEventListener('turbo:load', initReminderButtons);
   document.addEventListener('DOMContentLoaded', initCharCounts);
   document.addEventListener('turbo:load', initCharCounts);
+
+  // Toggle relocated_to field visibility
+  function initRelocatedField() {
+    const checkbox = document.getElementById('permanently_relocated_checkbox');
+    const field = document.getElementById('relocated_to_field');
+    if (!checkbox || !field) return;
+
+    checkbox.addEventListener('change', function() {
+      field.style.display = this.checked ? 'block' : 'none';
+      if (!this.checked) {
+        const input = field.querySelector('input');
+        if (input) input.value = '';
+      }
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', initRelocatedField);
+  document.addEventListener('turbo:load', initRelocatedField);
 </script>
 

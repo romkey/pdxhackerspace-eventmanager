@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_01_23_000001) do
+ActiveRecord::Schema[7.2].define(version: 2026_01_23_000002) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_trgm"
   enable_extension "plpgsql"
@@ -131,6 +131,8 @@ ActiveRecord::Schema[7.2].define(version: 2026_01_23_000001) do
     t.boolean "sign_feed", default: true, null: false
     t.boolean "permanently_cancelled", default: false, null: false
     t.boolean "default_to_cancelled", default: false, null: false
+    t.boolean "permanently_relocated", default: false, null: false
+    t.text "relocated_to"
     t.index ["deleted_at"], name: "index_events_on_deleted_at"
     t.index ["description"], name: "index_events_on_description_trgm", opclass: :gin_trgm_ops, using: :gin
     t.index ["ical_token"], name: "index_events_on_ical_token", unique: true

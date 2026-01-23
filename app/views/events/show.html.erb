@@ -70,6 +70,19 @@
       </div>
     <% end %>
 
+    <% if @event.permanently_relocated? %>
+      <div class="alert alert-info" role="alert">
+        <h2 class="alert-heading h5">
+          <i class="bi bi-geo-alt-fill" aria-hidden="true"></i> Event Permanently Relocated
+        </h2>
+        <p class="mb-0">
+          <strong>This event has moved to:</strong> <%= @event.relocated_to %>
+        </p>
+        <hr>
+        <p class="mb-0 small text-muted">No new occurrences will be generated. Existing occurrences are shown for historical reference.</p>
+      </div>
+    <% end %>
+
     <section class="card mb-4">
       <div class="card-body">
         <h2 class="card-title h5">Description</h2>

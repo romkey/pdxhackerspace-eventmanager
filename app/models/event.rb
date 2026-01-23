@@ -23,6 +23,7 @@ class Event < ApplicationRecord
   after_update :log_update
   after_update :regenerate_occurrences_if_needed
   after_update :cancel_future_occurrences_if_permanently_cancelled
+  after_update :relocate_occurrences_if_permanently_relocated
   after_save :log_banner_change
   after_commit :queue_spectra6_processing, if: :banner_image_attached_recently?
 
@@ -38,6 +39,8 @@ class Event < ApplicationRecord
   validates :more_info_url,
             format: { with: URI::DEFAULT_PARSER.make_regexp(%w[http https]), message: "must be a valid URL" }, allow_blank: true
   validates :slug, presence: true, uniqueness: true
+  validates :relocated_to, presence: { message: "is required when event is permanently relocated" },
+                           if: :permanently_relocated?
 
   # Full-text search using pg_trgm (trigram matching)
   # Searches title and description with fuzzy matching
@@ -80,6 +83,8 @@ class Event < ApplicationRecord
   scope :permanently_cancelled, -> { where(permanently_cancelled: true) }
   scope :not_permanently_cancelled, -> { where(permanently_cancelled: false) }
   scope :default_to_cancelled, -> { where(default_to_cancelled: true) }
+  scope :permanently_relocated, -> { where(permanently_relocated: true) }
+  scope :not_permanently_relocated, -> { where(permanently_relocated: false) }
   scope :public_events, -> { where(visibility: 'public') }
   scope :members_events, -> { where(visibility: 'members') }
   scope :private_events, -> { where(visibility: 'private') }
@@ -158,12 +163,15 @@ class Event < ApplicationRecord
 
   # Generate future occurrences based on recurrence rules
   def generate_occurrences(limit = nil)
+    # Don't generate new occurrences for permanently cancelled or relocated events
+    return if permanently_cancelled? || permanently_relocated?
+
     limit ||= max_occurrences || 5
 
     # Determine status for new occurrences
-    # - cancelled if permanently_cancelled or default_to_cancelled
+    # - cancelled if default_to_cancelled
     # - active otherwise
-    occurrence_status = permanently_cancelled? || default_to_cancelled? ? 'cancelled' : 'active'
+    occurrence_status = default_to_cancelled? ? 'cancelled' : 'active'
 
     if recurrence_type == 'once'
       # One-time event - create single occurrence if it doesn't exist
@@ -410,6 +418,15 @@ class Event < ApplicationRecord
     # Cancel all future active occurrences when event becomes permanently cancelled
     occurrences.where('occurs_at > ?', Time.now).where(status: 'active').find_each do |occ|
       occ.update!(status: 'cancelled', cancellation_reason: 'Event permanently cancelled')
+    end
+  end
+
+  def relocate_occurrences_if_permanently_relocated
+    return unless saved_change_to_permanently_relocated? && permanently_relocated?
+
+    # Mark all active occurrences as relocated when event becomes permanently relocated
+    occurrences.where(status: 'active').find_each do |occ|
+      occ.update!(status: 'relocated', relocated_to: relocated_to, cancellation_reason: 'Event permanently relocated')
     end
   end
 

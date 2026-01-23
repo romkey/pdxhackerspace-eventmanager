@@ -1,4 +1,11 @@
-<article class="card h-100 <%= 'border-warning' if event.status == 'postponed' %> <%= 'border-danger' if event.status == 'cancelled' %>" aria-labelledby="event-title-<%= event.id %>">
+<%
+  border_class = case event.status
+  when 'postponed' then 'border-warning'
+  when 'cancelled' then 'border-danger'
+  else event.permanently_relocated? ? 'border-info' : ''
+  end
+%>
+<article class="card h-100 <%= border_class %>" aria-labelledby="event-title-<%= event.id %>">
   <% if event.banner_image.attached? %>
     <%= link_to event_path(event), "aria-label": "View #{event.title}" do %>
       <%= image_tag event.banner_image, class: "card-img-top", style: "max-height: 200px; object-fit: cover; cursor: pointer;", alt: "Banner image for #{event.title}", loading: "lazy" %>
@@ -15,6 +22,11 @@
             <i class="bi bi-file-earmark-text" aria-hidden="true"></i> Draft
           </span>
         <% end %>
+        <% if event.permanently_relocated? %>
+          <span class="badge bg-info me-1">
+            <i class="bi bi-geo-alt-fill" aria-hidden="true"></i> Relocated
+          </span>
+        <% end %>
         <% if event.status != 'active' %>
           <span class="badge bg-<%= event.status == 'postponed' ? 'warning' : 'danger' %>">
             <%= event.status.titleize %>
@@ -23,7 +35,11 @@
       </div>
     </div>
     
-    <% if event.status != 'active' && event.cancellation_reason.present? %>
+    <% if event.permanently_relocated? && event.relocated_to.present? %>
+      <div class="alert alert-info py-2 small mb-2">
+        <strong><i class="bi bi-geo-alt-fill"></i> Moved to:</strong> <%= truncate(event.relocated_to, length: 80) %>
+      </div>
+    <% elsif event.status != 'active' && event.cancellation_reason.present? %>
       <div class="alert alert-<%= event.status == 'postponed' ? 'warning' : 'danger' %> py-2 small mb-2">
         <strong>Reason:</strong> <%= truncate(event.cancellation_reason, length: 80) %>
       </div>
