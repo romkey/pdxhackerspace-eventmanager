@@ -228,5 +228,5 @@ module EventsHelper
   def format_list(items)
     "#{items[0..-2].join(', ')} and #{items.last}"
   end
-  # rubocop:enable Metrics/ModuleLength
 end
+# rubocop:enable Metrics/ModuleLength
