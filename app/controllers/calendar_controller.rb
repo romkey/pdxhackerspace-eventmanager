@@ -40,13 +40,13 @@ class CalendarController < ApplicationController
         Rails.logger.info "  - Occurrence ##{occ.id}: #{occ.event.title} at #{occ.occurs_at} (status: #{occ.status})"
       end
     else
-      # For list view, get upcoming occurrences + postponed/cancelled/relocated ones (even if original date passed)
+      # For list view, get occurrences from today forward (all statuses)
       @occurrences = if current_user
                        EventOccurrence
                          .joins(:event)
                          .where(event: policy_scope(Event))
-                         .where('event_occurrences.occurs_at >= ? OR event_occurrences.status IN (?)',
-                                Time.now, %w[postponed cancelled relocated])
+                         .where('event_occurrences.occurs_at >= ?', Time.current.beginning_of_day)
+                         .where(event_occurrences: { status: %w[active postponed cancelled relocated] })
                          .includes(event: %i[hosts user], banner_image_attachment: :blob)
                          .order(:occurs_at)
                          .limit(50)
@@ -54,8 +54,8 @@ class CalendarController < ApplicationController
                        EventOccurrence
                          .joins(:event)
                          .where(events: { visibility: 'public', draft: false })
-                         .where('event_occurrences.occurs_at >= ? OR event_occurrences.status IN (?)',
-                                Time.now, %w[postponed cancelled relocated])
+                         .where('event_occurrences.occurs_at >= ?', Time.current.beginning_of_day)
+                         .where(event_occurrences: { status: %w[active postponed cancelled relocated] })
                          .includes(event: %i[hosts user], banner_image_attachment: :blob)
                          .order(:occurs_at)
                          .limit(50)
@@ -93,11 +93,12 @@ class CalendarController < ApplicationController
 
       @occurrences_by_date = @occurrences.group_by { |occ| occ.occurs_at.to_date }
     else
+      # For list view, get occurrences from today forward (all statuses)
       @occurrences = EventOccurrence
                      .joins(:event)
                      .where(events: { visibility: 'public', draft: false })
-                     .where('event_occurrences.occurs_at >= ? OR event_occurrences.status IN (?)',
-                            Time.now, %w[postponed cancelled relocated])
+                     .where('event_occurrences.occurs_at >= ?', Time.current.beginning_of_day)
+                     .where(event_occurrences: { status: %w[active postponed cancelled relocated] })
                      .includes(event: %i[hosts user], banner_image_attachment: :blob)
                      .order(:occurs_at)
                      .limit(50)
