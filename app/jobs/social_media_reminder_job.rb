@@ -9,12 +9,19 @@ class SocialMediaReminderJob < ApplicationJob
   }.freeze
 
   def perform
+    Rails.logger.info 'SocialMediaReminderJob: Starting social media reminder job'
+
     site_config = SiteConfig.current
-    return unless site_config.social_reminders_enabled?
+    unless site_config.social_reminders_enabled?
+      Rails.logger.info 'SocialMediaReminderJob: Social reminders disabled in site config, exiting'
+      return
+    end
 
     REMINDER_OFFSETS.each do |days_ahead, label|
       post_reminders_for_days(days_ahead, label)
     end
+
+    Rails.logger.info 'SocialMediaReminderJob: Completed'
   end
 
   private
@@ -24,23 +31,54 @@ class SocialMediaReminderJob < ApplicationJob
     start_time = target_date.beginning_of_day
     end_time = target_date.end_of_day
 
+    Rails.logger.info "SocialMediaReminderJob: Looking for occurrences on #{target_date} (#{label} reminder)"
+
     occurrences = EventOccurrence
                   .joins(:event)
                   .where('event_occurrences.occurs_at >= ? AND event_occurrences.occurs_at <= ?', start_time, end_time)
-                  .where(event_occurrences: { status: %w[active cancelled postponed] })
+                  .where(event_occurrences: { status: %w[active cancelled postponed relocated] })
                   .where(events: { status: 'active', draft: false, social_reminders: true })
                   .where(events: { visibility: %w[public members] })
                   .includes(:event)
 
-    return if occurrences.empty?
+    Rails.logger.info "SocialMediaReminderJob: Found #{occurrences.count} occurrences for #{target_date}"
+
+    if occurrences.empty?
+      Rails.logger.info "SocialMediaReminderJob: No occurrences to post for #{target_date}"
+      return
+    end
 
     occurrences.each do |occurrence|
-      next if occurrence.event.social_reminders? == false
+      Rails.logger.info "SocialMediaReminderJob: Processing '#{occurrence.event.title}' " \
+                        "(occurrence ##{occurrence.id}, status: #{occurrence.status})"
+
+      # Check if already posted today for this occurrence and label
+      if already_posted_today?(occurrence, label)
+        Rails.logger.info "SocialMediaReminderJob: Skipping '#{occurrence.event.title}' - " \
+                          "already posted #{label} reminder today"
+        next
+      end
 
       short_parts = reminder_message_with_link(occurrence, label, days_ahead: days_ahead, message_type: :short)
       long_parts = reminder_message_with_link(occurrence, label, days_ahead: days_ahead, message_type: :long)
+
+      Rails.logger.info "SocialMediaReminderJob: Posting reminder for '#{occurrence.event.title}'"
       SocialService.post_occurrence_reminder(occurrence, short_parts: short_parts, long_parts: long_parts)
+
+      # Small delay between posts to avoid rate limiting
+      sleep(5) if occurrences.many?
     end
+  end
+
+  def already_posted_today?(occurrence, label)
+    # Check if we've already posted a social media reminder for this occurrence today
+    # This prevents duplicate posts if the job runs multiple times
+    ReminderPosting.where(
+      event_occurrence: occurrence,
+      platform: %w[bluesky instagram]
+    ).exists?(
+      ['posted_at >= ? AND message LIKE ?', Time.current.beginning_of_day, "%#{label}%"]
+    )
   end
 
   def build_social_message(occurrence, label)
