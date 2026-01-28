@@ -335,14 +335,49 @@ class Event < ApplicationRecord
       when 'weekly'
         interval = (rule_params[:interval] || 1).to_i
         days = rule_params[:days] || [start_time.wday]
+        week_offset = (rule_params[:week_offset] || 0).to_i
         day_map = { 0 => :sunday, 1 => :monday, 2 => :tuesday, 3 => :wednesday,
                     4 => :thursday, 5 => :friday, 6 => :saturday }
         day_symbols = days.map { |d| day_map[d.to_i] }.compact
 
-        rule = IceCube::Rule.weekly(interval).day(*day_symbols)
-        schedule.add_recurrence_rule(rule)
+        # If there's a week offset, we need to add explicit recurrence times
+        # to shift this rule's occurrences by the offset number of weeks
+        if week_offset.positive? && interval > 1
+          # Add recurrence times for the offset pattern
+          # Calculate the first occurrence for each day, offset by week_offset weeks
+          add_offset_weekly_occurrences(schedule, start_time, interval, day_symbols, week_offset)
+        else
+          rule = IceCube::Rule.weekly(interval).day(*day_symbols)
+          schedule.add_recurrence_rule(rule)
+        end
       when 'monthly'
         build_monthly_schedule(schedule, start_time, rule_params)
+      end
+    end
+  end
+
+  # Add weekly occurrences with a week offset for alternating patterns
+  def self.add_offset_weekly_occurrences(schedule, start_time, interval, day_symbols, week_offset)
+    day_map_reverse = { sunday: 0, monday: 1, tuesday: 2, wednesday: 3,
+                        thursday: 4, friday: 5, saturday: 6 }
+
+    day_symbols.each do |day_sym|
+      target_wday = day_map_reverse[day_sym]
+
+      # Find the first occurrence of this day of week on or after start_time
+      first_occurrence = start_time
+      days_until_target = (target_wday - first_occurrence.wday) % 7
+      first_occurrence += days_until_target.days
+
+      # Apply the week offset
+      first_occurrence += week_offset.weeks
+
+      # Add occurrences for 2 years (enough for typical event planning)
+      current = first_occurrence
+      end_date = start_time + 2.years
+      while current <= end_date
+        schedule.add_recurrence_time(current)
+        current += interval.weeks
       end
     end
   end

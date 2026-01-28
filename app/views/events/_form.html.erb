@@ -200,7 +200,8 @@
           <small>
             <i class="bi bi-exclamation-triangle"></i>
             <strong>Advanced:</strong> Custom schedules let you combine multiple rules.
-            For example: "Every other Tuesday AND every other Thursday on alternating weeks."
+            For alternating patterns (e.g., Tuesday one week, Thursday the next), add two rules 
+            with "Every 2 weeks" and set different "Start on" weeks for each.
           </small>
         </div>
         <div id="custom_rules_container">
@@ -544,16 +545,25 @@
             <div class="col-md-9">
               <div class="custom-rule-weekly-options" data-rule="${ruleIndex}">
                 <div class="row">
-                  <div class="col-md-4 mb-2">
+                  <div class="col-md-3 mb-2">
                     <label class="form-label small">Interval:</label>
-                    <select name="custom_rules[${ruleIndex}][interval]" class="form-select form-select-sm">
+                    <select name="custom_rules[${ruleIndex}][interval]" class="form-select form-select-sm custom-rule-interval" data-rule="${ruleIndex}">
                       <option value="1">Every week</option>
                       <option value="2">Every 2 weeks</option>
                       <option value="3">Every 3 weeks</option>
                       <option value="4">Every 4 weeks</option>
                     </select>
                   </div>
-                  <div class="col-md-8 mb-2">
+                  <div class="col-md-3 mb-2 week-offset-container" data-rule="${ruleIndex}" style="display: none;">
+                    <label class="form-label small">Start on:</label>
+                    <select name="custom_rules[${ruleIndex}][week_offset]" class="form-select form-select-sm">
+                      <option value="0">This week</option>
+                      <option value="1">Next week</option>
+                      <option value="2">Week 3</option>
+                      <option value="3">Week 4</option>
+                    </select>
+                  </div>
+                  <div class="col-md-6 mb-2">
                     <label class="form-label small">Days:</label>
                     <div class="d-flex flex-wrap gap-2">
                       ${['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, i) => `
@@ -600,11 +610,27 @@
     container.insertAdjacentHTML('beforeend', ruleHtml);
 
     // Add event listener for rule type change
-    const typeSelect = container.querySelector(`select[data-rule="${ruleIndex}"]`);
+    const typeSelect = container.querySelector(`select.custom-rule-type[data-rule="${ruleIndex}"]`);
     if (typeSelect) {
       typeSelect.addEventListener('change', function() {
         updateCustomRuleOptions(ruleIndex, this.value);
       });
+    }
+
+    // Add event listener for interval change to show/hide week offset
+    const intervalSelect = container.querySelector(`select.custom-rule-interval[data-rule="${ruleIndex}"]`);
+    if (intervalSelect) {
+      intervalSelect.addEventListener('change', function() {
+        updateWeekOffsetVisibility(ruleIndex, this.value);
+      });
+    }
+  }
+
+  function updateWeekOffsetVisibility(ruleIndex, interval) {
+    const offsetContainer = document.querySelector(`.week-offset-container[data-rule="${ruleIndex}"]`);
+    if (offsetContainer) {
+      // Show week offset only for intervals > 1 (alternating patterns)
+      offsetContainer.style.display = parseInt(interval) > 1 ? 'block' : 'none';
     }
   }
 

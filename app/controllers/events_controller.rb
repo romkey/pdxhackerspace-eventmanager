@@ -383,7 +383,8 @@ class EventsController < ApplicationController
     when 'weekly'
       days = rule_data[:days].present? ? Array(rule_data[:days]).map(&:to_i) : [start_time&.wday || 0]
       interval = rule_data[:interval].present? ? rule_data[:interval].to_i : 1
-      { type: 'weekly', days: days, interval: interval }
+      week_offset = rule_data[:week_offset].present? ? rule_data[:week_offset].to_i : 0
+      { type: 'weekly', days: days, interval: interval, week_offset: week_offset }
     when 'monthly'
       {
         type: 'monthly',
