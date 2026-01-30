@@ -23,12 +23,18 @@ bundle exec rails db:create 2>/dev/null || echo "Database already exists"
 echo "Running database migrations..."
 bundle exec rails db:migrate
 
-# Check if database is seeded (check if any users exist)
-if bundle exec rails runner "exit(User.count > 0 ? 0 : 1)" 2>/dev/null; then
-  echo "Database already seeded, skipping seed data"
+# NEVER auto-seed in production - seeds are only for development/test
+# To seed development: docker compose run --rm app bundle exec rails db:seed
+if [ "$RAILS_ENV" = "development" ] || [ "$RAILS_ENV" = "test" ]; then
+  # Check if database is seeded (check if any users exist)
+  if bundle exec rails runner "exit(User.count > 0 ? 0 : 1)" 2>/dev/null; then
+    echo "Database already seeded, skipping seed data"
+  else
+    echo "Seeding database..."
+    bundle exec rails db:seed
+  fi
 else
-  echo "Seeding database..."
-  bundle exec rails db:seed
+  echo "Skipping seed data (production environment)"
 fi
 
 # Execute the main command
