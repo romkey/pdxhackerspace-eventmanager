@@ -4,6 +4,7 @@
     <title><%= @site_config&.organization_name || 'EventManager' %> - Calendar</title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="color-scheme" content="light dark">
+    <meta name="robots" content="<%= @site_config&.disallow_robots? ? 'noindex, nofollow' : 'index, follow' %>">
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
 

@@ -3,6 +3,7 @@ class ApplicationController < ActionController::Base
 
   before_action :load_site_config
   before_action :configure_permitted_parameters, if: :devise_controller?
+  before_action :set_robots_header
 
   rescue_from Pundit::NotAuthorizedError, with: :user_not_authorized
 
@@ -17,6 +18,12 @@ class ApplicationController < ActionController::Base
 
   def load_site_config
     @site_config = SiteConfig.current
+  end
+
+  def set_robots_header
+    return unless @site_config&.disallow_robots?
+
+    response.headers['X-Robots-Tag'] = 'noindex, nofollow'
   end
 
   def user_not_authorized

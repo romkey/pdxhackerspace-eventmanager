@@ -103,6 +103,7 @@ Rails.application.routes.draw do
   # Locations management (admin only)
   resources :locations, except: %i[show]
 
-  # SEO: Sitemap
+  # SEO: Sitemap and robots.txt
   get 'sitemap.xml', to: 'sitemap#index', as: 'sitemap', defaults: { format: 'xml' }
+  get 'robots.txt', to: 'robots#show', as: 'robots', defaults: { format: 'text' }
 end

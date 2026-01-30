@@ -65,7 +65,8 @@ class SiteConfigsController < ApplicationController
       :long_reminder_max_length,
       :matomo_enabled,
       :matomo_url,
-      :matomo_site_id
+      :matomo_site_id,
+      :disallow_robots
     )
   end
 end
