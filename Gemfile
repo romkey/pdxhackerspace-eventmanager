@@ -60,6 +60,10 @@ gem "sidekiq-scheduler"
 # Redis for Sidekiq
 gem "redis", "~> 5.0"
 
+# Pin connection_pool to 2.x for Sidekiq 7.3.x compatibility
+# connection_pool 3.0+ has breaking API changes
+gem "connection_pool", "~> 2.4"
+
 # Rate limiting and throttling
 gem "rack-attack"
 
