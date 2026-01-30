@@ -7,12 +7,16 @@ class EventsController < ApplicationController
 
   def index
     @search_query = params[:q]
+    @open_to_filter = params[:open_to]
 
     # Start with policy-scoped events
     base_events = policy_scope(Event).where(status: 'active')
 
     # Apply search filter if query present
     base_events = base_events.search(@search_query) if @search_query.present?
+
+    # Apply open_to filter if specified
+    base_events = base_events.where(open_to: @open_to_filter) if @open_to_filter.present?
 
     # Get upcoming occurrences for these events (include relocated to show permanently relocated events)
     upcoming_occurrences = EventOccurrence

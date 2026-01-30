@@ -33,16 +33,30 @@
     <% else %>
       Showing <%= @occurrences.count %> upcoming event occurrences
     <% end %>
+    <% if @open_to_filter == 'public' %>
+      <span class="badge bg-success ms-2"><i class="bi bi-door-open"></i> Public Only</span>
+    <% end %>
     <small class="text-muted">· <%= link_to "Subscribe to calendar feed", calendar_ical_path, class: "text-decoration-none" %></small>
   </p>
   
-  <div class="btn-group" role="group" aria-label="View selector">
-    <%= link_to calendar_path(view: 'calendar'), class: "btn btn-sm #{@view == 'calendar' ? 'btn-primary' : 'btn-outline-primary'}" do %>
-      <i class="bi bi-calendar3"></i> Calendar
-    <% end %>
-    <%= link_to calendar_path(view: 'list'), class: "btn btn-sm #{@view == 'list' ? 'btn-primary' : 'btn-outline-primary'}" do %>
-      <i class="bi bi-list-ul"></i> List
-    <% end %>
+  <div class="d-flex gap-2">
+    <div class="btn-group" role="group" aria-label="Filter selector">
+      <%= link_to calendar_path(view: @view, month: params[:month]), class: "btn btn-sm #{@open_to_filter.blank? ? 'btn-secondary' : 'btn-outline-secondary'}" do %>
+        All Events
+      <% end %>
+      <%= link_to calendar_path(view: @view, month: params[:month], open_to: 'public'), class: "btn btn-sm #{@open_to_filter == 'public' ? 'btn-success' : 'btn-outline-success'}" do %>
+        <i class="bi bi-door-open"></i> Public Only
+      <% end %>
+    </div>
+    
+    <div class="btn-group" role="group" aria-label="View selector">
+      <%= link_to calendar_path(view: 'calendar', month: params[:month], open_to: @open_to_filter), class: "btn btn-sm #{@view == 'calendar' ? 'btn-primary' : 'btn-outline-primary'}" do %>
+        <i class="bi bi-calendar3"></i> Calendar
+      <% end %>
+      <%= link_to calendar_path(view: 'list', open_to: @open_to_filter), class: "btn btn-sm #{@view == 'list' ? 'btn-primary' : 'btn-outline-primary'}" do %>
+        <i class="bi bi-list-ul"></i> List
+      <% end %>
+    </div>
   </div>
 </div>
 

@@ -5,6 +5,7 @@ class CalendarController < ApplicationController
     @embed = false
     @view = params[:view] || 'calendar' # Default to calendar view
     @current_month = params[:month] ? Date.parse(params[:month]) : Date.current.beginning_of_month
+    @open_to_filter = params[:open_to]
 
     # Get occurrences based on view type
     if @view == 'calendar'
@@ -31,6 +32,9 @@ class CalendarController < ApplicationController
                          .includes(event: %i[hosts user], banner_image_attachment: :blob)
                          .order(:occurs_at)
                      end
+
+      # Apply open_to filter if specified
+      @occurrences = @occurrences.where(events: { open_to: @open_to_filter }) if @open_to_filter.present?
 
       # Group by date for calendar view
       @occurrences_by_date = @occurrences.group_by { |occ| occ.occurs_at.to_date }
@@ -61,6 +65,9 @@ class CalendarController < ApplicationController
                          .limit(50)
                      end
 
+      # Apply open_to filter if specified
+      @occurrences = @occurrences.where(events: { open_to: @open_to_filter }) if @open_to_filter.present?
+
       # Group by month for list view
       @occurrences_by_month = @occurrences.group_by { |occ| occ.occurs_at.beginning_of_month }
     end
@@ -75,6 +82,7 @@ class CalendarController < ApplicationController
     # Same logic as index but with embed layout
     @view = params[:view] || 'calendar' # Default to calendar view
     @current_month = params[:month] ? Date.parse(params[:month]) : Date.current.beginning_of_month
+    @open_to_filter = params[:open_to]
 
     # Get occurrences based on view type (public events only for embeds)
     if @view == 'calendar'
@@ -91,6 +99,9 @@ class CalendarController < ApplicationController
                      .includes(event: %i[hosts user], banner_image_attachment: :blob)
                      .order(:occurs_at)
 
+      # Apply open_to filter if specified
+      @occurrences = @occurrences.where(events: { open_to: @open_to_filter }) if @open_to_filter.present?
+
       @occurrences_by_date = @occurrences.group_by { |occ| occ.occurs_at.to_date }
     else
       # For list view, get occurrences from today forward (all statuses)
@@ -102,6 +113,9 @@ class CalendarController < ApplicationController
                      .includes(event: %i[hosts user], banner_image_attachment: :blob)
                      .order(:occurs_at)
                      .limit(50)
+
+      # Apply open_to filter if specified
+      @occurrences = @occurrences.where(events: { open_to: @open_to_filter }) if @open_to_filter.present?
 
       @occurrences_by_month = @occurrences.group_by { |occ| occ.occurs_at.beginning_of_month }
     end
