@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
 class RobotsController < ApplicationController
-  skip_before_action :authenticate_user!
-
   def show
     respond_to do |format|
       format.text { render plain: robots_content, content_type: 'text/plain' }
