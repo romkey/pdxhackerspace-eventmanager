@@ -97,6 +97,9 @@ Rails.application.routes.draw do
   # Reminder postings (admin can see all, hosts can delete their own)
   resources :reminder_postings, only: %i[index destroy]
 
+  # Activity journal (admin only)
+  resources :event_journals, only: [:index]
+
   # Location information page (public)
   get 'location', to: 'site_configs#location', as: 'location_info'
 

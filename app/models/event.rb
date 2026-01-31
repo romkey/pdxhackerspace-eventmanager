@@ -7,7 +7,7 @@ class Event < ApplicationRecord
   has_many :hosts, through: :event_hosts, source: :user
   has_many :event_occurrences, dependent: :destroy
   has_many :occurrences, class_name: 'EventOccurrence', dependent: :destroy
-  has_many :event_journals, dependent: :destroy
+  has_many :event_journals, dependent: :nullify
   has_many :reminder_postings, dependent: :destroy
   has_one_attached :banner_image do |attachable|
     attachable.variant :thumb, resize_to_limit: [300, 300]

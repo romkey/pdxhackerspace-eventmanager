@@ -1,6 +1,6 @@
 class EventJournal < ApplicationRecord
-  belongs_to :event
-  belongs_to :user
+  belongs_to :event, optional: true  # Optional so journals persist after event deletion
+  belongs_to :user, optional: true   # Optional so journals persist after user deletion
   belongs_to :occurrence, class_name: 'EventOccurrence', optional: true
 
   validates :action, presence: true
