@@ -40,7 +40,7 @@ class Spectra6BannerJob < ApplicationJob
           key: spectra6_key
         )
 
-        Rails.logger.info "Spectra6BannerJob: Created spectra6 version for blob #{blob_id} at key #{spectra6_key}"
+        Rails.logger.info "Spectra6BannerJob: Created spectra6 version for blob #{blob.id} at key #{spectra6_key}"
         spectra6_blob
       ensure
         output_file.close
@@ -48,7 +48,7 @@ class Spectra6BannerJob < ApplicationJob
       end
     end
   rescue StandardError => e
-    Rails.logger.error "Spectra6BannerJob: Failed to process blob #{blob_id}: #{e.message}"
+    Rails.logger.error "Spectra6BannerJob: Failed to process blob #{blob.id}: #{e.message}"
     Rails.logger.error e.backtrace.first(5).join("\n")
     raise
   end
