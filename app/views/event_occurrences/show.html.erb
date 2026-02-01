@@ -68,9 +68,12 @@
         <h2 class="alert-heading h5">
           <i class="bi bi-x-circle" aria-hidden="true"></i> Occurrence Cancelled
         </h2>
+        <% if @occurrence.relocated_to.present? %>
+          <p class="mb-2"><strong><i class="bi bi-geo-alt-fill"></i> Was relocated to:</strong> <%= @occurrence.relocated_to %></p>
+        <% end %>
         <% if @occurrence.cancellation_reason.present? %>
           <p class="mb-0"><strong>Reason:</strong> <%= @occurrence.cancellation_reason %></p>
-        <% else %>
+        <% elsif @occurrence.relocated_to.blank? %>
           <p class="mb-0">This occurrence has been cancelled.</p>
         <% end %>
       </div>

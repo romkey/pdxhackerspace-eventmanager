@@ -123,12 +123,12 @@
                 <% if occurrence.status == 'postponed' && occurrence.postponed_until %>
                   <p class="mb-1"><strong>Rescheduled to:</strong> <%= occurrence.postponed_until.strftime('%B %d, %Y at %I:%M %p') %></p>
                 <% end %>
-                <% if occurrence.status == 'relocated' && occurrence.relocated_to.present? %>
+                <% if occurrence.relocated_to.present? %>
                   <p class="mb-1"><strong><i class="bi bi-geo-alt-fill"></i> Moved to:</strong> <%= occurrence.relocated_to %></p>
                 <% elsif occurrence.event.permanently_relocated? && occurrence.event.relocated_to.present? %>
                   <p class="mb-1"><strong><i class="bi bi-geo-alt-fill"></i> Event moved to:</strong> <%= occurrence.event.relocated_to %></p>
                 <% end %>
-                <% if occurrence.cancellation_reason.present? && occurrence.status != 'relocated' %>
+                <% if occurrence.cancellation_reason.present? %>
                   <p class="mb-1"><strong>Reason:</strong> <%= occurrence.cancellation_reason %></p>
                 <% end %>
                 <p class="mb-0">

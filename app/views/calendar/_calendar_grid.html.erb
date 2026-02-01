@@ -65,6 +65,9 @@
                     <% elsif occurrence.status == 'cancelled' %>
                       <div class="fw-bold mt-1" style="font-size: 0.65rem;">
                         CANCELLED
+                        <% if occurrence.relocated_to.present? %>
+                          <br>(was relocated)
+                        <% end %>
                       </div>
                     <% elsif occurrence.status == 'relocated' %>
                       <div class="fw-bold mt-1" style="font-size: 0.65rem;">
