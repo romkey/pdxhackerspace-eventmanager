@@ -277,6 +277,26 @@
           </div>
         </div>
       </section>
+
+      <section class="card mb-3">
+        <div class="card-body">
+          <h2 class="card-title h5">Invite Co-Host</h2>
+          <%= form_with url: event_event_hosts_path(@event), method: :post, local: true do |f| %>
+            <div class="mb-3">
+              <label for="user_id" class="form-label">Select User</label>
+              <%= select_tag :user_id, 
+                  options_from_collection_for_select(
+                    User.where.not(id: @event.hosts.pluck(:id)).order(:name, :email), 
+                    :id, 
+                    ->(u) { u.name || u.email }
+                  ),
+                  class: "form-select",
+                  prompt: "Choose a user to add as host..." %>
+            </div>
+            <%= f.submit "Add as Co-Host", class: "btn btn-primary w-100" %>
+          <% end %>
+        </div>
+      </section>
     <% end %>
 
     <% next_occurrence = @event.occurrences.upcoming.first %>
@@ -340,26 +360,6 @@
 
     <% if user_signed_in? && (current_user.admin? || @event.hosted_by?(current_user)) %>
       <%= render 'reminder_postings/event_history', event: @event %>
-
-      <section class="card">
-        <div class="card-body">
-          <h2 class="card-title h5">Invite Co-Host</h2>
-          <%= form_with url: event_event_hosts_path(@event), method: :post, local: true do |f| %>
-            <div class="mb-3">
-              <label for="user_id" class="form-label">Select User</label>
-              <%= select_tag :user_id, 
-                  options_from_collection_for_select(
-                    User.where.not(id: @event.hosts.pluck(:id)).order(:name, :email), 
-                    :id, 
-                    ->(u) { u.name || u.email }
-                  ),
-                  class: "form-select",
-                  prompt: "Choose a user to add as host..." %>
-            </div>
-            <%= f.submit "Add as Co-Host", class: "btn btn-primary w-100" %>
-          <% end %>
-        </div>
-      </section>
     <% end %>
   </aside>
 </article>
