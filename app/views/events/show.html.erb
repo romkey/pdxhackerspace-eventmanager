@@ -248,6 +248,37 @@
       </div>
     </section>
 
+    <% if user_signed_in? && (current_user.admin? || @event.hosted_by?(current_user)) %>
+      <section class="card mb-3">
+        <div class="card-body">
+          <h2 class="card-title h5">Manage Event</h2>
+          <div class="d-grid gap-2">
+            <%= link_to "Edit", edit_event_path(@event), class: "btn btn-warning" %>
+            
+            <% if @event.status == 'active' %>
+              <% if @event.occurrences.count == 1 %>
+                <button type="button" class="btn btn-outline-warning" data-bs-toggle="modal" data-bs-target="#postponeModal">
+                  Postpone Occurrence
+                </button>
+              <% end %>
+              <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#cancelModal">
+                Cancel Event
+              </button>
+            <% else %>
+              <%= button_to "Reactivate", reactivate_event_path(@event), 
+                  method: :post, 
+                  class: "btn btn-success" %>
+            <% end %>
+            
+            <%= button_to "Delete", event_path(@event), 
+                method: :delete, 
+                class: "btn btn-danger",
+                form: { data: { turbo_confirm: "Are you sure you want to delete this event? This cannot be undone." } } %>
+          </div>
+        </div>
+      </section>
+    <% end %>
+
     <% next_occurrence = @event.occurrences.upcoming.first %>
     <% if next_occurrence %>
       <section class="card mb-3">
@@ -310,7 +341,7 @@
     <% if user_signed_in? && (current_user.admin? || @event.hosted_by?(current_user)) %>
       <%= render 'reminder_postings/event_history', event: @event %>
 
-      <section class="card mb-3">
+      <section class="card">
         <div class="card-body">
           <h2 class="card-title h5">Invite Co-Host</h2>
           <%= form_with url: event_event_hosts_path(@event), method: :post, local: true do |f| %>
@@ -327,35 +358,6 @@
             </div>
             <%= f.submit "Add as Co-Host", class: "btn btn-primary w-100" %>
           <% end %>
-        </div>
-      </section>
-
-      <section class="card">
-        <div class="card-body">
-          <h2 class="card-title h5">Manage Event</h2>
-          <div class="d-grid gap-2">
-            <%= link_to "Edit", edit_event_path(@event), class: "btn btn-warning" %>
-            
-            <% if @event.status == 'active' %>
-              <% if @event.occurrences.count == 1 %>
-                <button type="button" class="btn btn-outline-warning" data-bs-toggle="modal" data-bs-target="#postponeModal">
-                  Postpone Occurrence
-                </button>
-              <% end %>
-              <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#cancelModal">
-                Cancel Event
-              </button>
-            <% else %>
-              <%= button_to "Reactivate", reactivate_event_path(@event), 
-                  method: :post, 
-                  class: "btn btn-success" %>
-            <% end %>
-            
-            <%= button_to "Delete", event_path(@event), 
-                method: :delete, 
-                class: "btn btn-danger",
-                form: { data: { turbo_confirm: "Are you sure you want to delete this event? This cannot be undone." } } %>
-          </div>
         </div>
       </section>
     <% end %>
