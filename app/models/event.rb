@@ -258,29 +258,35 @@ class Event < ApplicationRecord
     # Get existing future occurrences (including non-active ones)
     existing_future = occurrences.where('occurs_at > ?', Time.now)
 
-    # Build a hash of existing occurrences by date (normalized to start of minute)
-    existing_by_date = existing_future.index_by { |occ| occ.occurs_at.change(sec: 0) }
+    # Build a hash of existing occurrences by date
+    # Use epoch seconds as keys for reliable comparison (TimeWithZone and DateTime have different hash codes)
+    existing_by_epoch = existing_future.index_by { |occ| normalize_to_epoch(occ.occurs_at) }
 
-    # Normalize scheduled dates to start of minute for comparison
-    scheduled_date_set = scheduled_dates.to_set { |d| d.to_datetime.change(sec: 0) }
+    # Build set of scheduled epochs for comparison
+    scheduled_epoch_set = scheduled_dates.to_set { |d| normalize_to_epoch(d) }
 
     # Create occurrences for new dates
     occurrence_status = default_to_cancelled? ? 'cancelled' : 'active'
     scheduled_dates.each do |date|
-      normalized_date = date.to_datetime.change(sec: 0)
-      next if existing_by_date[normalized_date] # Already exists
+      epoch = normalize_to_epoch(date)
+      next if existing_by_epoch[epoch] # Already exists
 
       occurrences.create!(occurs_at: date.to_datetime, status: occurrence_status)
     end
 
     # Remove occurrences that are no longer scheduled (only active ones)
     # Keep modified occurrences (cancelled, postponed, relocated) as they represent intentional changes
-    existing_by_date.each do |date, occ|
-      next if scheduled_date_set.include?(date) # Still scheduled
+    existing_by_epoch.each do |epoch, occ|
+      next if scheduled_epoch_set.include?(epoch) # Still scheduled
       next unless occ.status == 'active' # Only remove unmodified active occurrences
 
       occ.destroy
     end
+  end
+
+  # Normalize a time to epoch seconds (rounded to minute) for reliable comparison
+  def normalize_to_epoch(time)
+    time.to_time.to_i / 60 * 60 # Round to nearest minute
   end
 
   # Get future scheduled dates based on recurrence rule
