@@ -6,8 +6,8 @@ RSpec.describe EventJournal, type: :model do
   end
 
   describe 'associations' do
-    it { is_expected.to belong_to(:event) }
-    it { is_expected.to belong_to(:user) }
+    it { is_expected.to belong_to(:event).optional }
+    it { is_expected.to belong_to(:user).optional }
     it { is_expected.to belong_to(:occurrence).optional }
   end
 

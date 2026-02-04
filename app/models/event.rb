@@ -247,14 +247,54 @@ class Event < ApplicationRecord
   end
 
   # Regenerate occurrences (useful after recurrence rule changes)
+  # This method updates occurrences in place to preserve URLs/slugs
   def regenerate_future_occurrences!
-    # Don't delete/regenerate for permanently cancelled or relocated events
-    # They should keep their existing occurrences
+    # Don't modify occurrences for permanently cancelled or relocated events
     return if permanently_cancelled? || permanently_relocated?
 
-    # Delete future occurrences that haven't been modified
-    occurrences.where('occurs_at > ? AND status = ?', Time.now, 'active').destroy_all
-    generate_occurrences
+    # Get the scheduled future dates
+    scheduled_dates = future_scheduled_dates
+
+    # Get existing future occurrences (including non-active ones)
+    existing_future = occurrences.where('occurs_at > ?', Time.now)
+
+    # Build a hash of existing occurrences by date (normalized to start of minute)
+    existing_by_date = existing_future.index_by { |occ| occ.occurs_at.change(sec: 0) }
+
+    # Normalize scheduled dates to start of minute for comparison
+    scheduled_date_set = scheduled_dates.to_set { |d| d.to_datetime.change(sec: 0) }
+
+    # Create occurrences for new dates
+    occurrence_status = default_to_cancelled? ? 'cancelled' : 'active'
+    scheduled_dates.each do |date|
+      normalized_date = date.to_datetime.change(sec: 0)
+      next if existing_by_date[normalized_date] # Already exists
+
+      occurrences.create!(occurs_at: date.to_datetime, status: occurrence_status)
+    end
+
+    # Remove occurrences that are no longer scheduled (only active ones)
+    # Keep modified occurrences (cancelled, postponed, relocated) as they represent intentional changes
+    existing_by_date.each do |date, occ|
+      next if scheduled_date_set.include?(date) # Still scheduled
+      next unless occ.status == 'active' # Only remove unmodified active occurrences
+
+      occ.destroy
+    end
+  end
+
+  # Get future scheduled dates based on recurrence rule
+  def future_scheduled_dates
+    limit = max_occurrences || 5
+
+    if recurrence_type == 'once'
+      start_time > Time.now ? [start_time] : []
+    elsif recurrence_rule.present?
+      schedule = IceCube::Schedule.from_yaml(recurrence_rule)
+      schedule.occurrences_between(Time.now, 1.year.from_now).first(limit)
+    else
+      []
+    end
   end
 
   # Build IceCube schedule from parameters
