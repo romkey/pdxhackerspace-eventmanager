@@ -4,7 +4,7 @@ Rails.application.config.middleware.use OmniAuth::Builder do
   provider :authentik,
            ENV.fetch('AUTHENTIK_CLIENT_ID', nil),
            ENV.fetch('AUTHENTIK_CLIENT_SECRET', nil),
-           scope: 'openid profile email is_admin is_event_host',
+           scope: 'openid profile email member-roles',
            client_options: {
              site: ENV['AUTHENTIK_SITE_URL'] || 'http://localhost:9000',
              authorize_url: "#{ENV['AUTHENTIK_SITE_URL'] || 'http://localhost:9000'}/application/o/authorize/",
