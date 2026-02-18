@@ -25,22 +25,23 @@ class User < ApplicationRecord
     user.email = auth.info.email
     user.name = auth.info.name
 
-    # Set role based on Authentik claim
+    # Set role and permissions based on Authentik claims
     user.role = determine_role_from_auth(auth)
+    user.can_create_events = determine_can_create_events_from_auth(auth, user.role)
 
     # Set password for new users
     user.password = Devise.friendly_token[0, 20] if user.new_record?
 
     user.save!
 
-    Rails.logger.info "User #{user.email} logged in with role: #{user.role}"
+    Rails.logger.info "User #{user.email} logged in with role: #{user.role}, can_create_events: #{user.can_create_events}"
 
     user
   end
 
   def self.determine_role_from_auth(auth)
-    # Check if Authentik sends the event_manager_admin claim in raw_info
-    is_admin_claim = auth.extra&.raw_info&.[]('event_manager_admin')
+    # Check if Authentik sends the is_admin claim in raw_info
+    is_admin_claim = auth.extra&.raw_info&.[]('is_admin')
 
     # Handle both boolean true and string "true" from Authentik
     # Only set admin if explicitly true (boolean) or "true" (string)
@@ -48,10 +49,26 @@ class User < ApplicationRecord
 
     # Log for debugging
     role = is_admin ? 'admin' : 'user'
-    Rails.logger.info "Role check for #{auth.info.email}: event_manager_admin claim = #{is_admin_claim.inspect} " \
+    Rails.logger.info "Role check for #{auth.info.email}: is_admin claim = #{is_admin_claim.inspect} " \
                       "(type: #{is_admin_claim.class}), setting role to #{role}"
 
     # Return admin if claim is explicitly true, otherwise user (safe default)
     is_admin ? 'admin' : 'user'
+  end
+
+  def self.determine_can_create_events_from_auth(auth, role)
+    # Admins can always create events
+    return true if role == 'admin'
+
+    # Check if Authentik sends the is_event_host claim in raw_info
+    is_event_host_claim = auth.extra&.raw_info&.[]('is_event_host')
+
+    # Handle both boolean true and string "true" from Authentik
+    can_create = [true, 'true'].include?(is_event_host_claim)
+
+    Rails.logger.info "Event host check for #{auth.info.email}: is_event_host claim = #{is_event_host_claim.inspect} " \
+                      "(type: #{is_event_host_claim.class}), can_create_events: #{can_create}"
+
+    can_create
   end
 end

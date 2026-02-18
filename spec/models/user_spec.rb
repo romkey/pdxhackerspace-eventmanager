@@ -94,7 +94,7 @@ RSpec.describe User, type: :model do
             sub: '12345',
             email: 'oauth_user@example.com',
             name: 'OAuth User',
-            event_manager_admin: false
+            is_admin: false
           }
         }
       )
@@ -135,13 +135,13 @@ RSpec.describe User, type: :model do
     end
 
     context 'role assignment (security-critical)' do
-      it 'defaults to user role when event_manager_admin is false' do
+      it 'defaults to user role when is_admin is false' do
         user = described_class.from_omniauth(auth)
         expect(user.role).to eq('user')
         expect(user.admin?).to be false
       end
 
-      it 'defaults to user role when event_manager_admin claim is missing' do
+      it 'defaults to user role when is_admin claim is missing' do
         auth_without_admin = OmniAuth::AuthHash.new(
           provider: 'authentik',
           uid: '99999',
@@ -176,24 +176,24 @@ RSpec.describe User, type: :model do
         expect(user.admin?).to be false
       end
 
-      it 'sets admin role only when event_manager_admin is boolean true' do
+      it 'sets admin role only when is_admin is boolean true' do
         auth_admin = OmniAuth::AuthHash.new(
           provider: 'authentik',
           uid: '66666',
           info: { email: 'admin@example.com', name: 'Admin User' },
-          extra: { raw_info: { event_manager_admin: true } }
+          extra: { raw_info: { is_admin: true } }
         )
         user = described_class.from_omniauth(auth_admin)
         expect(user.role).to eq('admin')
         expect(user.admin?).to be true
       end
 
-      it 'sets admin role when event_manager_admin is string "true"' do
+      it 'sets admin role when is_admin is string "true"' do
         auth_admin_string = OmniAuth::AuthHash.new(
           provider: 'authentik',
           uid: '55555',
           info: { email: 'admin_str@example.com', name: 'Admin String' },
-          extra: { raw_info: { event_manager_admin: 'true' } }
+          extra: { raw_info: { is_admin: 'true' } }
         )
         user = described_class.from_omniauth(auth_admin_string)
         expect(user.role).to eq('admin')
@@ -206,7 +206,7 @@ RSpec.describe User, type: :model do
           provider: 'authentik',
           uid: '44444',
           info: { email: 'truthy@example.com', name: 'Truthy User' },
-          extra: { raw_info: { event_manager_admin: 1 } }
+          extra: { raw_info: { is_admin: 1 } }
         )
         user = described_class.from_omniauth(auth_truthy)
         expect(user.role).to eq('user')
@@ -218,11 +218,70 @@ RSpec.describe User, type: :model do
           provider: 'authentik',
           uid: '33333',
           info: { email: 'yes@example.com', name: 'Yes User' },
-          extra: { raw_info: { event_manager_admin: 'yes' } }
+          extra: { raw_info: { is_admin: 'yes' } }
         )
         user = described_class.from_omniauth(auth_yes)
         expect(user.role).to eq('user')
         expect(user.admin?).to be false
+      end
+    end
+
+    context 'can_create_events assignment' do
+      it 'sets can_create_events to true when is_event_host is boolean true' do
+        auth_host = OmniAuth::AuthHash.new(
+          provider: 'authentik',
+          uid: '77777',
+          info: { email: 'host@example.com', name: 'Event Host' },
+          extra: { raw_info: { is_event_host: true } }
+        )
+        user = described_class.from_omniauth(auth_host)
+        expect(user.role).to eq('user')
+        expect(user.can_create_events).to be true
+      end
+
+      it 'sets can_create_events to true when is_event_host is string "true"' do
+        auth_host = OmniAuth::AuthHash.new(
+          provider: 'authentik',
+          uid: '88888',
+          info: { email: 'host_str@example.com', name: 'Event Host String' },
+          extra: { raw_info: { is_event_host: 'true' } }
+        )
+        user = described_class.from_omniauth(auth_host)
+        expect(user.can_create_events).to be true
+      end
+
+      it 'sets can_create_events to false when is_event_host is missing' do
+        auth_no_host = OmniAuth::AuthHash.new(
+          provider: 'authentik',
+          uid: '99999',
+          info: { email: 'nohost@example.com', name: 'No Host' },
+          extra: { raw_info: {} }
+        )
+        user = described_class.from_omniauth(auth_no_host)
+        expect(user.can_create_events).to be false
+      end
+
+      it 'sets can_create_events to true for admins regardless of is_event_host' do
+        auth_admin = OmniAuth::AuthHash.new(
+          provider: 'authentik',
+          uid: '11111',
+          info: { email: 'admin_nohost@example.com', name: 'Admin No Host' },
+          extra: { raw_info: { is_admin: true, is_event_host: false } }
+        )
+        user = described_class.from_omniauth(auth_admin)
+        expect(user.role).to eq('admin')
+        expect(user.can_create_events).to be true
+      end
+
+      it 'does NOT set can_create_events for other truthy values' do
+        auth_truthy = OmniAuth::AuthHash.new(
+          provider: 'authentik',
+          uid: '22222',
+          info: { email: 'truthy_host@example.com', name: 'Truthy Host' },
+          extra: { raw_info: { is_event_host: 1 } }
+        )
+        user = described_class.from_omniauth(auth_truthy)
+        expect(user.can_create_events).to be false
       end
     end
   end
