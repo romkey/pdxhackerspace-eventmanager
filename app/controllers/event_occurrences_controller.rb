@@ -226,7 +226,7 @@ class EventOccurrencesController < ApplicationController # rubocop:disable Metri
 
   def occurrence_params
     params.require(:event_occurrence).permit(:custom_description, :duration_override, :status, :banner_image,
-                                             :remove_banner_image, :location_id,
+                                             :location_id,
                                              :reminder_7d_short, :reminder_1d_short,
                                              :reminder_7d_long, :reminder_1d_long)
   end
