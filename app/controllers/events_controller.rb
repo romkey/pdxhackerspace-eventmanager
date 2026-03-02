@@ -440,10 +440,25 @@ class EventsController < ApplicationController
       build_occurrence_json(occ)
     end
 
+    # Get unique events that have upcoming occurrences
+    events_with_occurrences = Event
+                              .where(draft: false, status: 'active')
+                              .joins(:occurrences)
+                              .where('event_occurrences.occurs_at + (events.duration * interval \'1 minute\') > ?', now)
+                              .distinct
+                              .includes(:hosts, :location, banner_image_attachment: :blob)
+                              .order(:title)
+
+    events_data = events_with_occurrences.map do |event|
+      build_event_json(event)
+    end
+
     {
+      events: events_data,
       occurrences: occurrences_data,
       generated_at: Time.current.iso8601,
-      count: occurrences_data.count
+      event_count: events_data.count,
+      occurrence_count: occurrences_data.count
     }
   end
 
@@ -521,6 +536,40 @@ class EventsController < ApplicationController
       banner_url: is_private ? nil : occurrence_banner_url(occurrence),
       spectra6_banner_url: is_private ? nil : occurrence_spectra6_banner_url(occurrence)
     }
+  end
+
+  def build_event_json(event)
+    is_private = event.visibility != 'public'
+
+    {
+      id: event.id,
+      slug: event.slug,
+      title: is_private ? 'Private Event' : event.title,
+      description: is_private ? nil : event.description,
+      more_info_url: is_private ? nil : event.more_info_url,
+      visibility: event.visibility,
+      open_to: is_private ? nil : event.open_to,
+      recurrence_type: event.recurrence_type,
+      start_time: event.start_time.iso8601,
+      duration: is_private ? nil : event.duration,
+      requires_mask: is_private ? nil : event.requires_mask,
+      hosts: is_private ? [] : event.hosts.map { |h| h.name || h.email },
+      location: is_private ? nil : event_location_json(event),
+      banner_url: is_private ? nil : event_banner_url(event),
+      spectra6_banner_url: is_private ? nil : spectra6_banner_url_for(event.banner_image)
+    }
+  end
+
+  def event_location_json(event)
+    return nil unless event.location
+
+    { id: event.location.id, name: event.location.name }
+  end
+
+  def event_banner_url(event)
+    return nil unless event.banner_image.attached?
+
+    url_for(event.banner_image)
   end
 
   def build_event_info(event, is_private)
