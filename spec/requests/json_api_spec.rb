@@ -144,9 +144,11 @@ RSpec.describe "JSON API", type: :request do
       get events_path, headers: { 'Accept' => 'application/json' }
       json = JSON.parse(response.body)
 
+      expect(json).to have_key('events')
       expect(json).to have_key('occurrences')
       expect(json).to have_key('generated_at')
-      expect(json).to have_key('count')
+      expect(json).to have_key('event_count')
+      expect(json).to have_key('occurrence_count')
     end
 
     it "includes standard occurrence details" do
