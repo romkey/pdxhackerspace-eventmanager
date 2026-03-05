@@ -6,41 +6,39 @@ module DstOccurrenceFixer
     puts "Processing: #{event.title} (ID: #{event.id})"
 
     schedule = IceCube::Schedule.from_yaml(event.recurrence_rule)
-    puts "  Schedule start: #{schedule.start_time.inspect}"
+    expected_hour = schedule.start_time.in_time_zone(Time.zone).hour
+    expected_min = schedule.start_time.in_time_zone(Time.zone).min
+    puts "  Expected time: #{format('%<hour>02d:%<min>02d', hour: expected_hour, min: expected_min)} local"
 
-    future_dates = schedule.occurrences_between(Time.current, 1.year.from_now)
-                           .first(event.max_occurrences || 5)
-
+    # Get ALL future occurrences, not just ones matching schedule dates
     existing_future = event.occurrences.where('occurs_at > ?', Time.current)
-    updated_count = fix_occurrence_times(existing_future, future_dates)
+    puts "  Found #{existing_future.count} future occurrences"
+
+    updated_count = 0
+    existing_future.find_each do |occ|
+      local_time = occ.occurs_at.in_time_zone(Time.zone)
+      current_hour = local_time.hour
+      current_min = local_time.min
+
+      # Check if the time is off (typically by 1 hour for DST)
+      if current_hour != expected_hour || current_min != expected_min
+        # Build the correct time: same date, correct hour/minute
+        correct_time = local_time.change(hour: expected_hour, min: expected_min)
+
+        puts "  Fixing ##{occ.id}: #{local_time.strftime('%Y-%m-%d %H:%M')} -> #{correct_time.strftime('%H:%M')}"
+        # rubocop:disable Rails/SkipsModelValidations
+        occ.update_column(:occurs_at, correct_time)
+        # rubocop:enable Rails/SkipsModelValidations
+        updated_count += 1
+      end
+    end
 
     puts "  Updated #{updated_count} occurrences"
     puts ""
   rescue StandardError => e
     puts "  ERROR: #{e.message}"
+    puts "  #{e.backtrace.first(3).join("\n  ")}"
     puts ""
-  end
-
-  def fix_occurrence_times(occurrences, future_dates)
-    updated_count = 0
-
-    occurrences.each do |occ|
-      occ_date = occ.occurs_at.to_date
-      matching_scheduled = future_dates.find { |d| d.to_date == occ_date }
-      next unless matching_scheduled
-
-      correct_time = matching_scheduled.in_time_zone(Time.zone)
-      current_time = occ.occurs_at.in_time_zone(Time.zone)
-      next if current_time.strftime('%H:%M') == correct_time.strftime('%H:%M')
-
-      puts "  Fixing occurrence #{occ.id}: #{occ.occurs_at} -> #{correct_time}"
-      # rubocop:disable Rails/SkipsModelValidations
-      occ.update_column(:occurs_at, correct_time)
-      # rubocop:enable Rails/SkipsModelValidations
-      updated_count += 1
-    end
-
-    updated_count
   end
 
   def regenerate_event(event)
@@ -50,13 +48,46 @@ module DstOccurrenceFixer
   rescue StandardError => e
     puts "  ERROR: #{e.message}"
   end
+
+  def debug_events
+    puts "Debugging DST occurrence times..."
+    puts "Time zone: #{Time.zone.name}"
+    puts "Current time: #{Time.current}"
+    puts ""
+
+    Event.where.not(recurrence_rule: nil).limit(5).each do |event|
+      debug_single_event(event)
+    end
+  end
+
+  def debug_single_event(event)
+    puts "Event: #{event.title} (ID: #{event.id})"
+
+    schedule = IceCube::Schedule.from_yaml(event.recurrence_rule)
+    puts "  Schedule start: #{schedule.start_time.inspect}"
+    puts "  Schedule start (local): #{schedule.start_time.in_time_zone(Time.zone)}"
+
+    puts "  Future occurrences in DB:"
+    event.occurrences.where('occurs_at > ?', Time.current).limit(3).each do |occ|
+      local = occ.occurs_at.in_time_zone(Time.zone)
+      puts "    ##{occ.id}: #{occ.occurs_at} (UTC) = #{local} (local)"
+    end
+
+    puts "  IceCube generates:"
+    schedule.occurrences_between(Time.current, 3.months.from_now).first(3).each do |d|
+      puts "    #{d.inspect} = #{d.in_time_zone(Time.zone)} (local)"
+    end
+
+    puts ""
+  end
 end
 
 namespace :events do
-  desc 'Fix occurrence times for DST by regenerating from IceCube schedules'
+  desc 'Fix occurrence times for DST by adjusting to match schedule start time'
   task fix_dst_occurrences: :environment do
     puts "Fixing DST occurrence times..."
     puts "Time zone: #{Time.zone.name}"
+    puts "Current time: #{Time.current}"
     puts ""
 
     Event.where.not(recurrence_rule: nil).find_each do |event|
@@ -77,5 +108,10 @@ namespace :events do
     end
 
     puts "Done!"
+  end
+
+  desc 'Show occurrence times for debugging DST issues'
+  task debug_dst: :environment do
+    DstOccurrenceFixer.debug_events
   end
 end
