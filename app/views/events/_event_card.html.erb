@@ -116,8 +116,8 @@
   <footer class="card-footer d-flex justify-content-between align-items-center flex-wrap gap-2">
     <div>
       <%= link_to "View Details", event_path(event), class: "btn btn-sm btn-primary" %>
-      <% if event.more_info_url.present? %>
-        <%= link_to event.more_info_url, target: "_blank", rel: "noopener", class: "btn btn-sm btn-outline-info", "aria-label": "Learn more about #{event.title} (opens in new tab)" do %>
+      <% if (safe_more_info_url = safe_url(event.more_info_url)) %>
+        <%= link_to safe_more_info_url, target: "_blank", rel: "noopener", class: "btn btn-sm btn-outline-info", "aria-label": "Learn more about #{event.title} (opens in new tab)" do %>
           <i class="bi bi-link-45deg" aria-hidden="true"></i>
           <span class="visually-hidden">External link</span>
         <% end %>

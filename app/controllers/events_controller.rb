@@ -1,6 +1,4 @@
 class EventsController < ApplicationController
-  skip_before_action :verify_authenticity_token, only: [:ical]
-
   before_action :authenticate_user!, except: %i[index show ical embed rss event_rss eink]
   before_action :set_event, only: %i[show embed edit update destroy postpone cancel reactivate generate_ai_reminder event_rss]
   before_action :authorize_event, only: %i[edit update destroy postpone cancel reactivate]

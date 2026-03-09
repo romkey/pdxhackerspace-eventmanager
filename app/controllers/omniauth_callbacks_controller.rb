@@ -1,8 +1,20 @@
 class OmniauthCallbacksController < Devise::OmniauthCallbacksController
-  skip_before_action :verify_authenticity_token, only: :authentik
+  # OAuth callbacks come from external providers and cannot include CSRF tokens.
+  # Protection is provided by:
+  # 1. OmniAuth's state parameter (validated automatically)
+  # 2. The omniauth-rails_csrf_protection gem (requires POST for OAuth initiation)
+  # 3. Verification that the OAuth response matches the initiated request
+  protect_from_forgery with: :null_session, only: :authentik
 
   def authentik
-    @user = User.from_omniauth(request.env['omniauth.auth'])
+    # Verify the OmniAuth response is present and valid
+    auth = request.env['omniauth.auth']
+    unless auth&.provider == 'authentik' && auth&.uid.present?
+      Rails.logger.warn "Invalid OAuth callback: missing or invalid auth data"
+      return redirect_to root_path, alert: 'Authentication failed. Invalid response from provider.'
+    end
+
+    @user = User.from_omniauth(auth)
 
     if @user.persisted?
       sign_in_and_redirect @user, event: :authentication
