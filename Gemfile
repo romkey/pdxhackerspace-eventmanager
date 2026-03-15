@@ -68,8 +68,8 @@ gem "connection_pool", "~> 2.4"
 gem "rack-attack"
 
 # Error tracking
-gem "sentry-ruby"
 gem "sentry-rails"
+gem "sentry-ruby"
 gem "sentry-sidekiq"
 
 # Windows does not include zoneinfo files, so bundle the tzinfo-data gem
