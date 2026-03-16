@@ -175,20 +175,41 @@ class Event < ApplicationRecord
 
     if recurrence_type == 'once'
       # One-time event - create single occurrence if it doesn't exist
-      occ = occurrences.find_or_initialize_by(occurs_at: start_time.to_datetime)
-      occ.status = occurrence_status if occ.new_record?
-      occ.save!
+      occ = find_or_create_occurrence_by_date(start_time, occurrence_status)
+      occ.save! if occ.changed?
     elsif recurrence_rule.present?
       # Recurring event - generate occurrences
       schedule = IceCube::Schedule.from_yaml(recurrence_rule)
       future_dates = schedule.occurrences_between(Time.current, 1.year.from_now).first(limit)
 
       future_dates.each do |date|
-        # Convert Time to DateTime for PostgreSQL
-        occ = occurrences.find_or_initialize_by(occurs_at: date.to_datetime)
-        occ.status = occurrence_status if occ.new_record?
-        occ.save!
+        occ = find_or_create_occurrence_by_date(date, occurrence_status)
+        occ.save! if occ.changed?
       end
+    end
+  end
+
+  # Find existing occurrence by date (ignoring time) or create new one
+  # If existing occurrence has wrong time, update it to the correct time
+  def find_or_create_occurrence_by_date(scheduled_time, default_status)
+    scheduled_date = scheduled_time.to_date
+    local_time = scheduled_time.in_time_zone(Time.zone)
+
+    # Find occurrence on the same date
+    existing = occurrences.find_by(
+      'DATE(occurs_at AT TIME ZONE ?) = ?',
+      Time.zone.name,
+      scheduled_date
+    )
+
+    if existing
+      # Update time if it's off (DST fix)
+      existing_local = existing.occurs_at.in_time_zone(Time.zone)
+      existing.occurs_at = scheduled_time if existing_local.hour != local_time.hour || existing_local.min != local_time.min
+      existing
+    else
+      # Create new occurrence
+      occurrences.build(occurs_at: scheduled_time, status: default_status)
     end
   end
 
@@ -258,35 +279,47 @@ class Event < ApplicationRecord
     # Get existing future occurrences (including non-active ones)
     existing_future = occurrences.where('occurs_at > ?', Time.current)
 
-    # Build a hash of existing occurrences by date
-    # Use epoch seconds as keys for reliable comparison (TimeWithZone and DateTime have different hash codes)
-    existing_by_epoch = existing_future.index_by { |occ| normalize_to_epoch(occ.occurs_at) }
+    # Build a hash of existing occurrences by DATE (not exact time)
+    # This handles DST shifts where the time might be off by an hour
+    existing_by_date = existing_future.index_by { |occ| occ.occurs_at.in_time_zone(Time.zone).to_date }
 
-    # Build set of scheduled epochs for comparison
-    scheduled_epoch_set = scheduled_dates.to_set { |d| normalize_to_epoch(d) }
+    # Build set of scheduled dates for comparison
+    scheduled_date_set = scheduled_dates.to_set { |d| d.in_time_zone(Time.zone).to_date }
 
-    # Create occurrences for new dates
+    # Create or update occurrences for scheduled dates
     occurrence_status = default_to_cancelled? ? 'cancelled' : 'active'
-    scheduled_dates.each do |date|
-      epoch = normalize_to_epoch(date)
-      next if existing_by_epoch[epoch] # Already exists
+    scheduled_dates.each do |scheduled_time|
+      scheduled_date = scheduled_time.in_time_zone(Time.zone).to_date
+      existing = existing_by_date[scheduled_date]
 
-      occurrences.create!(occurs_at: date.to_datetime, status: occurrence_status)
+      if existing
+        # Update time if it's off (DST fix) - preserves slug/status
+        update_occurrence_time_if_needed(existing, scheduled_time)
+      else
+        # Create new occurrence
+        occurrences.create!(occurs_at: scheduled_time, status: occurrence_status)
+      end
     end
 
     # Remove occurrences that are no longer scheduled (only active ones)
     # Keep modified occurrences (cancelled, postponed, relocated) as they represent intentional changes
-    existing_by_epoch.each do |epoch, occ|
-      next if scheduled_epoch_set.include?(epoch) # Still scheduled
+    existing_by_date.each do |date, occ|
+      next if scheduled_date_set.include?(date) # Still scheduled
       next unless occ.status == 'active' # Only remove unmodified active occurrences
 
       occ.destroy
     end
   end
 
-  # Normalize a time to epoch seconds (rounded to minute) for reliable comparison
-  def normalize_to_epoch(time)
-    time.to_time.to_i / 60 * 60 # Round to nearest minute
+  # Update an occurrence's time if it doesn't match the scheduled time
+  def update_occurrence_time_if_needed(occurrence, scheduled_time)
+    local_scheduled = scheduled_time.in_time_zone(Time.zone)
+    local_existing = occurrence.occurs_at.in_time_zone(Time.zone)
+
+    return if local_existing.hour == local_scheduled.hour && local_existing.min == local_scheduled.min
+
+    # Time is off - update it (preserves slug and status)
+    occurrence.update_column(:occurs_at, scheduled_time) # rubocop:disable Rails/SkipsModelValidations
   end
 
   # Get future scheduled dates based on recurrence rule
