@@ -2,6 +2,20 @@
 
 This document contains helpful commands and procedures for debugging the EventManager application.
 
+## Table of Contents
+
+- [Rails Console Access](#rails-console-access)
+- [Rake Tasks Reference](#rake-tasks-reference)
+- [Occurrence Management](#occurrence-management)
+- [DST Issues](#dst-daylight-saving-time-issues)
+- [User Account Debugging](#user-account-debugging)
+- [Event Debugging](#event-debugging)
+- [Occurrence Debugging](#occurrence-debugging)
+- [Sidekiq / Background Jobs](#sidekiq--background-jobs)
+- [Database Queries](#database-queries)
+- [Timezone Debugging](#timezone-debugging)
+- [Common Issues](#common-issues)
+
 ## Rails Console Access
 
 ```bash
@@ -10,6 +24,106 @@ docker exec -it eventmanager_app_1 rails console
 
 # Development/Test
 docker-compose -f docker-compose.test.yml run --rm app rails console
+```
+
+## Rake Tasks Reference
+
+All rake tasks can be run with:
+```bash
+# Production
+docker exec -it eventmanager_app_1 rails <task_name>
+
+# Development/Test
+docker-compose -f docker-compose.test.yml run --rm app rails <task_name>
+```
+
+### DST / Timezone Correction Tasks
+
+| Task | Description |
+|------|-------------|
+| `events:full_dst_fix` | **Recommended** - Runs both duplicate cleanup and time correction |
+| `events:clean_duplicate_occurrences` | Removes duplicate occurrences on the same day (keeps correct time) |
+| `events:fix_dst_occurrences` | Fixes occurrence times to match schedule without removing duplicates |
+| `events:regenerate_all_occurrences` | Nuclear option - regenerates all future occurrences from scratch |
+| `events:debug_dst` | Shows diagnostic info comparing DB times vs IceCube schedule |
+
+**When to use:**
+- After a DST transition if occurrences show wrong times
+- If you see duplicate occurrences one hour apart
+- After deploying timezone-related fixes
+
+```bash
+# Most common fix
+rails events:full_dst_fix
+
+# Just see what's wrong without changing anything
+rails events:debug_dst
+```
+
+### Event Correction Tasks
+
+| Task | Description |
+|------|-------------|
+| `events:fix_postponed_events` | Fixes events incorrectly postponed at event-level instead of occurrence-level |
+
+**When to use:**
+- If an event was postponed but the whole event shows as postponed instead of just one occurrence
+- Migrating from old postponement behavior
+
+```bash
+rails events:fix_postponed_events
+```
+
+### Banner Image Tasks
+
+| Task | Description |
+|------|-------------|
+| `banners:generate_spectra6` | Queue jobs to generate spectra6 versions of all banner images |
+| `banners:generate_spectra6_sync` | Generate spectra6 versions synchronously (for debugging) |
+
+**When to use:**
+- After adding spectra6 support to regenerate existing banners
+- If spectra6 versions are missing for some events
+
+```bash
+# Queue all for background processing
+rails banners:generate_spectra6
+
+# Process immediately (slower, shows errors)
+rails banners:generate_spectra6_sync
+```
+
+### Instagram Integration Tasks
+
+| Task | Description |
+|------|-------------|
+| `instagram:setup` | Set up Instagram credential from INSTAGRAM_ACCESS_TOKEN env var |
+| `instagram:status` | Check Instagram token status (expiration, refresh capability) |
+| `instagram:refresh` | Force refresh Instagram token |
+
+**When to use:**
+- Setting up Instagram integration for the first time
+- Checking if token is expired or needs refresh
+- Manually refreshing token if auto-refresh failed
+
+```bash
+# Initial setup (requires INSTAGRAM_ACCESS_TOKEN env var)
+rails instagram:setup
+
+# Check current status
+rails instagram:status
+
+# Force refresh (requires INSTAGRAM_APP_ID and INSTAGRAM_APP_SECRET)
+rails instagram:refresh
+```
+
+### List All Available Tasks
+
+```bash
+# See all custom rake tasks
+rails -T events
+rails -T banners
+rails -T instagram
 ```
 
 ## Occurrence Management
