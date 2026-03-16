@@ -44,29 +44,29 @@ class SiteConfigsController < ApplicationController
   end
 
   def site_config_params
-    params.require(:site_config).permit(
-      :organization_name,
-      :website_url,
-      :contact_email,
-      :contact_phone,
-      :footer_text,
-      :location_info,
-      :address,
-      :favicon,
-      :banner_image,
-      :slack_enabled,
-      :social_reminders_enabled,
-      :host_email_reminders_enabled,
-      :email_test_mode_enabled,
-      :email_test_mode_address,
-      :ai_reminder_prompt,
-      :ai_model,
-      :short_reminder_max_length,
-      :long_reminder_max_length,
-      :matomo_enabled,
-      :matomo_url,
-      :matomo_site_id,
-      :disallow_robots
+    params.expect(
+      site_config: %i[organization_name
+                      website_url
+                      contact_email
+                      contact_phone
+                      footer_text
+                      location_info
+                      address
+                      favicon
+                      banner_image
+                      slack_enabled
+                      social_reminders_enabled
+                      host_email_reminders_enabled
+                      email_test_mode_enabled
+                      email_test_mode_address
+                      ai_reminder_prompt
+                      ai_model
+                      short_reminder_max_length
+                      long_reminder_max_length
+                      matomo_enabled
+                      matomo_url
+                      matomo_site_id
+                      disallow_robots]
     )
   end
 end

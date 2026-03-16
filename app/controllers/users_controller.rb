@@ -42,7 +42,7 @@ class UsersController < ApplicationController
   end
 
   def user_params
-    permitted = params.require(:user).permit(:name, :email)
+    permitted = params.expect(user: %i[name email])
 
     # Only admins can change roles, and only to valid values
     if current_user.admin?

@@ -216,7 +216,7 @@ class EventsController < ApplicationController
 
   def postpone
     authorize @event, :postpone?
-    postponed_until = params[:postponed_until] ? Time.parse(params[:postponed_until]) : 1.week.from_now
+    postponed_until = params[:postponed_until] ? Time.zone.parse(params[:postponed_until]) : 1.week.from_now
     if @event.postpone!(postponed_until, params[:reason])
       redirect_to @event, notice: 'Event was postponed.'
     else
@@ -319,18 +319,18 @@ class EventsController < ApplicationController
   end
 
   def event_params
-    params.require(:event).permit(:title, :description, :start_time, :duration,
-                                  :recurrence_type, :status, :visibility, :open_to,
-                                  :more_info_url, :max_occurrences, :banner_image,
-                                  :location_id, :requires_mask, :draft, :slack_announce, :social_reminders,
-                                  :reminder_7d_short, :reminder_1d_short, :reminder_7d_long, :reminder_1d_long,
-                                  :sign_feed, :permanently_cancelled, :default_to_cancelled,
-                                  :permanently_relocated, :relocated_to)
+    params.expect(event: %i[title description start_time duration
+                            recurrence_type status visibility open_to
+                            more_info_url max_occurrences banner_image
+                            location_id requires_mask draft slack_announce social_reminders
+                            reminder_7d_short reminder_1d_short reminder_7d_long reminder_1d_long
+                            sign_feed permanently_cancelled default_to_cancelled
+                            permanently_relocated relocated_to])
   end
 
   def build_recurrence_params
     recurrence_type = params[:event][:recurrence_type]
-    start_time = params[:event][:start_time].present? ? Time.parse(params[:event][:start_time]) : @event&.start_time
+    start_time = params[:event][:start_time].present? ? Time.zone.parse(params[:event][:start_time]) : @event&.start_time
 
     case recurrence_type
     when 'weekly'
@@ -404,7 +404,7 @@ class EventsController < ApplicationController
     return true if params[:event][:recurrence_type] != @event.recurrence_type
 
     # Rebuild if start time changed (affects schedule for weekly events)
-    return true if params[:event][:start_time].present? && Time.parse(params[:event][:start_time]) != @event.start_time
+    return true if params[:event][:start_time].present? && Time.zone.parse(params[:event][:start_time]) != @event.start_time
 
     # Rebuild if weekly options were explicitly provided
     return true if params[:recurrence_days].present? || params[:recurrence_interval].present?

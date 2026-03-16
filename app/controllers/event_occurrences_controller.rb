@@ -65,7 +65,7 @@ class EventOccurrencesController < ApplicationController # rubocop:disable Metri
   end
 
   def postpone
-    postponed_until = params[:postponed_until] ? Time.parse(params[:postponed_until]) : 1.week.from_now
+    postponed_until = params[:postponed_until] ? Time.zone.parse(params[:postponed_until]) : 1.week.from_now
     if @occurrence.postpone!(postponed_until, params[:reason], current_user)
       redirect_back_or_to @occurrence.event, notice: 'Occurrence was postponed. A new occurrence has been created at the rescheduled date.'
     else
@@ -225,10 +225,10 @@ class EventOccurrencesController < ApplicationController # rubocop:disable Metri
   end
 
   def occurrence_params
-    params.require(:event_occurrence).permit(:custom_description, :duration_override, :status, :banner_image,
-                                             :location_id,
-                                             :reminder_7d_short, :reminder_1d_short,
-                                             :reminder_7d_long, :reminder_1d_long)
+    params.expect(event_occurrence: %i[custom_description duration_override status banner_image
+                                       location_id
+                                       reminder_7d_short reminder_1d_short
+                                       reminder_7d_long reminder_1d_long])
   end
 
   def build_ical_description(event, occurrence)

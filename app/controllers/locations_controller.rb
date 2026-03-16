@@ -47,6 +47,6 @@ class LocationsController < ApplicationController
   end
 
   def location_params
-    params.require(:location).permit(:name, :description)
+    params.expect(location: %i[name description])
   end
 end
