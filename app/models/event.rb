@@ -181,7 +181,7 @@ class Event < ApplicationRecord
     elsif recurrence_rule.present?
       # Recurring event - generate occurrences
       schedule = IceCube::Schedule.from_yaml(recurrence_rule)
-      future_dates = schedule.occurrences_between(Time.now, 1.year.from_now).first(limit)
+      future_dates = schedule.occurrences_between(Time.current, 1.year.from_now).first(limit)
 
       future_dates.each do |date|
         # Convert Time to DateTime for PostgreSQL
@@ -256,7 +256,7 @@ class Event < ApplicationRecord
     scheduled_dates = future_scheduled_dates
 
     # Get existing future occurrences (including non-active ones)
-    existing_future = occurrences.where('occurs_at > ?', Time.now)
+    existing_future = occurrences.where('occurs_at > ?', Time.current)
 
     # Build a hash of existing occurrences by date
     # Use epoch seconds as keys for reliable comparison (TimeWithZone and DateTime have different hash codes)
@@ -294,10 +294,10 @@ class Event < ApplicationRecord
     limit = max_occurrences || 5
 
     if recurrence_type == 'once'
-      start_time > Time.now ? [start_time] : []
+      start_time > Time.current ? [start_time] : []
     elsif recurrence_rule.present?
       schedule = IceCube::Schedule.from_yaml(recurrence_rule)
-      schedule.occurrences_between(Time.now, 1.year.from_now).first(limit)
+      schedule.occurrences_between(Time.current, 1.year.from_now).first(limit)
     else
       []
     end
@@ -501,7 +501,7 @@ class Event < ApplicationRecord
     return unless saved_change_to_permanently_cancelled? && permanently_cancelled?
 
     # Cancel all future active occurrences when event becomes permanently cancelled
-    occurrences.where('occurs_at > ?', Time.now).where(status: 'active').find_each do |occ|
+    occurrences.where('occurs_at > ?', Time.current).where(status: 'active').find_each do |occ|
       occ.update!(status: 'cancelled', cancellation_reason: 'Event permanently cancelled')
     end
   end
@@ -511,7 +511,7 @@ class Event < ApplicationRecord
     return if permanently_relocated? # Only run when turning OFF permanently_relocated
 
     # Reactivate future relocated occurrences when event is no longer permanently relocated
-    occurrences.where('occurs_at > ?', Time.now).where(status: 'relocated').find_each do |occ|
+    occurrences.where('occurs_at > ?', Time.current).where(status: 'relocated').find_each do |occ|
       occ.update!(status: 'active', relocated_to: nil, cancellation_reason: nil)
     end
   end

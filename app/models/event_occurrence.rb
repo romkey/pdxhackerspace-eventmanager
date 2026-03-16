@@ -29,8 +29,8 @@ class EventOccurrence < ApplicationRecord # rubocop:disable Metrics/ClassLength
   scope :postponed, -> { where(status: 'postponed') }
   scope :cancelled, -> { where(status: 'cancelled') }
   scope :relocated, -> { where(status: 'relocated') }
-  scope :upcoming, -> { where('occurs_at >= ?', Time.now).order(:occurs_at) }
-  scope :past, -> { where('occurs_at < ?', Time.now).order(occurs_at: :desc) }
+  scope :upcoming, -> { where('occurs_at >= ?', Time.current).order(:occurs_at) }
+  scope :past, -> { where('occurs_at < ?', Time.current).order(occurs_at: :desc) }
 
   # Format the date/time for this occurrence
   def when_text

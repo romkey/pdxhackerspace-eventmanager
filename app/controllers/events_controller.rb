@@ -112,7 +112,7 @@ class EventsController < ApplicationController
     else
       # List view
       @occurrences = @event.occurrences
-                           .where('occurs_at >= ? OR status IN (?)', Time.now, %w[postponed cancelled])
+                           .where('occurs_at >= ? OR status IN (?)', Time.current, %w[postponed cancelled])
                            .order(:occurs_at)
                            .limit(50)
 
