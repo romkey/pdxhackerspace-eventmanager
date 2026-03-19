@@ -40,7 +40,7 @@ gem "jbuilder"
 # gem "bcrypt", "~> 3.1.7"
 
 # Authentication and authorization
-gem "devise"
+gem "devise", "~> 5.0"
 gem "omniauth"
 gem "omniauth-oauth2"
 # Updated to 2.0.1 to fix ActiveSupport::Configurable deprecation warning
