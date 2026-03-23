@@ -88,6 +88,32 @@ RSpec.describe "EventOccurrences", type: :request do
         patch event_occurrence_path(occurrence), params: update_params
         expect(response).to redirect_to(event_occurrence_path(occurrence))
       end
+
+      it "updates occurs_at when provided" do
+        new_time = 2.weeks.from_now.change(sec: 0)
+        patch event_occurrence_path(occurrence),
+              params: {
+                event_occurrence: {
+                  occurs_at: new_time.strftime('%Y-%m-%dT%H:%M')
+                }
+              }
+        occurrence.reload
+        expect(occurrence.occurs_at).to be_within(1.second).of(new_time)
+      end
+
+      it "refreshes the slug when occurs_at changes" do
+        old_slug = occurrence.slug
+        new_time = occurrence.occurs_at + 3.days
+        patch event_occurrence_path(occurrence),
+              params: {
+                event_occurrence: {
+                  occurs_at: new_time.strftime('%Y-%m-%dT%H:%M')
+                }
+              }
+        occurrence.reload
+        expect(occurrence.slug).not_to eq(old_slug)
+        expect(occurrence.slug).to include(new_time.strftime('%Y-%m-%d'))
+      end
     end
 
     context "as a different user" do

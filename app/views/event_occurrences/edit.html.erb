@@ -32,6 +32,15 @@
           </div>
 
           <div class="mb-3">
+            <%= f.label :occurs_at, "Date & time", class: "form-label" %>
+            <%= f.datetime_field :occurs_at, class: "form-control", step: 60 %>
+            <small class="form-text text-muted">
+              This occurrence’s scheduled start. Use this to fix a wrong reschedule time or adjust a one-off instance.
+              If you change the date, the link to this occurrence (its URL slug) updates to match.
+            </small>
+          </div>
+
+          <div class="mb-3">
             <%= f.label :custom_description, "Custom Description (Optional)", class: "form-label" %>
             <%= f.text_area :custom_description, class: "form-control", rows: 5, 
                 placeholder: "Leave blank to use the event's default description..." %>

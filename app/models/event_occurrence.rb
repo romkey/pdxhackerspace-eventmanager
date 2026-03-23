@@ -9,6 +9,7 @@ class EventOccurrence < ApplicationRecord # rubocop:disable Metrics/ClassLength
   end
 
   before_validation :generate_slug, on: :create
+  before_validation :refresh_slug_if_occurs_at_changed, on: :update
   before_save :rename_banner_image
 
   validates :occurs_at, presence: true
@@ -194,6 +195,17 @@ class EventOccurrence < ApplicationRecord # rubocop:disable Metrics/ClassLength
 
   def generate_slug
     return if slug.present?
+
+    assign_unique_slug_from_occurs_at
+  end
+
+  def refresh_slug_if_occurs_at_changed
+    return unless occurs_at_changed?
+
+    assign_unique_slug_from_occurs_at
+  end
+
+  def assign_unique_slug_from_occurs_at
     return if event.blank? || occurs_at.blank?
 
     event_slug = event.title.parameterize
@@ -202,8 +214,11 @@ class EventOccurrence < ApplicationRecord # rubocop:disable Metrics/ClassLength
     new_slug = base_slug
     counter = 1
 
+    conflict_scope = EventOccurrence.unscoped
+    conflict_scope = conflict_scope.where.not(id: id) if persisted?
+
     # Check against ALL occurrences including soft-deleted ones to avoid conflicts
-    while EventOccurrence.unscoped.exists?(slug: new_slug)
+    while conflict_scope.exists?(slug: new_slug)
       new_slug = "#{base_slug}-#{counter}"
       counter += 1
     end

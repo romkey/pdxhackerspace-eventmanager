@@ -225,10 +225,13 @@ class EventOccurrencesController < ApplicationController # rubocop:disable Metri
   end
 
   def occurrence_params
-    params.expect(event_occurrence: %i[custom_description duration_override status banner_image
-                                       location_id
-                                       reminder_7d_short reminder_1d_short
-                                       reminder_7d_long reminder_1d_long])
+    p = params.expect(event_occurrence: %i[occurs_at custom_description duration_override status banner_image
+                                           location_id
+                                           reminder_7d_short reminder_1d_short
+                                           reminder_7d_long reminder_1d_long])
+    return p if p[:occurs_at].blank?
+
+    p.merge(occurs_at: Time.zone.parse(p[:occurs_at].to_s))
   end
 
   def build_ical_description(event, occurrence)
