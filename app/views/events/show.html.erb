@@ -51,6 +51,10 @@
         <h2 class="alert-heading h5">
           <i class="bi bi-clock-history" aria-hidden="true"></i> Event Postponed
         </h2>
+        <p class="mb-1 text-muted">
+          <span class="text-decoration-line-through"><%= @event.start_time.strftime('%B %d, %Y at %I:%M %p') %></span>
+          <span class="visually-hidden"> (original schedule, no longer valid)</span>
+        </p>
         <p class="mb-0"><strong>Rescheduled to:</strong> <%= @event.postponed_until.strftime('%B %d, %Y at %I:%M %p') %></p>
         <% if @event.cancellation_reason.present? %>
           <hr>
@@ -106,7 +110,12 @@
             <% @event.occurrences.upcoming.limit(10).each do |occurrence| %>
               <div class="list-group-item d-flex justify-content-between align-items-center">
                 <div>
-                  <%= occurrence.occurs_at.strftime('%A, %B %d, %Y at %I:%M %p') %>
+                  <% if occurrence.status == 'postponed' %>
+                    <span class="text-decoration-line-through text-muted"><%= occurrence.occurs_at.strftime('%A, %B %d, %Y at %I:%M %p') %></span>
+                    <span class="visually-hidden"> (original date, no longer valid)</span>
+                  <% else %>
+                    <%= occurrence.occurs_at.strftime('%A, %B %d, %Y at %I:%M %p') %>
+                  <% end %>
                   <% if occurrence.status == 'postponed' && occurrence.postponed_until %>
                     <%
                       new_occurrence = occurrence.event.occurrences.find_by(
@@ -148,7 +157,13 @@
         <h2 class="card-title h5">Event Details</h2>
         <dl class="row mb-0">
           <dt class="col-sm-5">Schedule:</dt>
-          <dd class="col-sm-7"><%= schedule_description(@event) %></dd>
+          <dd class="col-sm-7">
+            <% if @event.status == 'postponed' && @event.recurrence_type == 'once' %>
+              <span class="text-decoration-line-through text-muted"><%= schedule_description(@event) %></span>
+            <% else %>
+              <%= schedule_description(@event) %>
+            <% end %>
+          </dd>
 
           <% postponed_occurrences = @event.occurrences.where(status: 'postponed').where.not(postponed_until: nil) %>
           <% if postponed_occurrences.any? %>
@@ -162,9 +177,10 @@
                   )
                 %>
                 <div class="mb-2">
-                  <span class="text-warning fw-bold">
+                  <span class="text-decoration-line-through text-muted">
                     <%= occurrence.occurs_at.strftime('%B %d') %>
                   </span>
+                  <span class="visually-hidden"> (original date, no longer valid)</span>
                   <% if new_occurrence %>
                     <%= link_to event_occurrence_path(new_occurrence), class: "badge bg-warning text-dark text-decoration-none ms-2" do %>
                       <i class="bi bi-arrow-right"></i> <%= occurrence.postponed_until.strftime('%B %d at %I:%M %p') %>
@@ -180,7 +196,15 @@
           <% end %>
 
           <dt class="col-sm-5">Time:</dt>
-          <dd class="col-sm-7"><%= @event.start_time.strftime('%I:%M %p') %> to <%= (@event.start_time + @event.duration.minutes).strftime('%I:%M %p') %></dd>
+          <dd class="col-sm-7">
+            <% if @event.status == 'postponed' && @event.postponed_until %>
+              <span class="text-decoration-line-through text-muted"><%= @event.start_time.strftime('%I:%M %p') %> to <%= (@event.start_time + @event.duration.minutes).strftime('%I:%M %p') %></span>
+              <br>
+              <span class="text-body"><%= @event.postponed_until.strftime('%I:%M %p') %> to <%= (@event.postponed_until + @event.duration.minutes).strftime('%I:%M %p') %> <span class="small text-muted">(rescheduled)</span></span>
+            <% else %>
+              <%= @event.start_time.strftime('%I:%M %p') %> to <%= (@event.start_time + @event.duration.minutes).strftime('%I:%M %p') %>
+            <% end %>
+          </dd>
 
           <% if @event.hosts.any? %>
             <dt class="col-sm-5">Hosts:</dt>

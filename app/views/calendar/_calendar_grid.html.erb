@@ -39,7 +39,7 @@
               %>
               <%= link_to event_occurrence_path(occurrence), class: "calendar-event-item text-decoration-none", target: "_blank", rel: "noopener", "aria-label": "#{occurrence.event.title} at #{occurrence.occurs_at.strftime('%I:%M %p')}#{occurrence.status != 'active' ? " (#{occurrence.status})" : ''}" do %>
                 <div class="calendar-event-badge <%= badge_class %>">
-                  <div class="event-time"><%= occurrence.occurs_at.strftime('%I:%M %p') %></div>
+                  <div class="event-time <%= 'text-decoration-line-through opacity-75' if occurrence.status == 'postponed' && occurrence.postponed_until %>"><%= occurrence.occurs_at.strftime('%I:%M %p') %></div>
                   <div class="event-title">
                     <% if occurrence.event.requires_mask %>
                       <i class="bi bi-shield-fill-check" aria-hidden="true"></i>

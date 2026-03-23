@@ -48,11 +48,28 @@
                     </span>
                   <% end %>
                 </h6>
-                <p class="mb-1 small text-muted">
-                  <i class="bi bi-calendar"></i> <%= occurrence.occurs_at.strftime('%B %d') %>
-                  ·
-                  <i class="bi bi-clock"></i> <%= occurrence.occurs_at.strftime('%I:%M %p') %> to <%= (occurrence.occurs_at + occurrence.duration.minutes).strftime('%I:%M %p') %>
-                </p>
+                <% if occurrence.status == 'postponed' && occurrence.postponed_until %>
+                  <p class="mb-1 small text-muted">
+                    <i class="bi bi-calendar"></i>
+                    <span class="text-decoration-line-through"><%= occurrence.occurs_at.strftime('%B %d') %></span>
+                    ·
+                    <i class="bi bi-clock"></i>
+                    <span class="text-decoration-line-through"><%= occurrence.occurs_at.strftime('%I:%M %p') %> to <%= (occurrence.occurs_at + occurrence.duration.minutes).strftime('%I:%M %p') %></span>
+                  </p>
+                <% else %>
+                  <p class="mb-1 small text-muted">
+                    <i class="bi bi-calendar"></i> <%= occurrence.occurs_at.strftime('%B %d') %>
+                    ·
+                    <i class="bi bi-clock"></i> <%= occurrence.occurs_at.strftime('%I:%M %p') %> to <%= (occurrence.occurs_at + occurrence.duration.minutes).strftime('%I:%M %p') %>
+                  </p>
+                <% end %>
+                <% if occurrence.status == 'postponed' && occurrence.postponed_until %>
+                  <p class="mb-1 small text-warning fw-semibold">
+                    <i class="bi bi-calendar-check"></i>
+                    <%= occurrence.postponed_until.strftime('%B %d, %I:%M %p') %> to <%= (occurrence.postponed_until + occurrence.duration.minutes).strftime('%I:%M %p') %>
+                    <span class="text-muted fw-normal">(rescheduled)</span>
+                  </p>
+                <% end %>
                 <% if occurrence.event.requires_mask %>
                   <span class="badge bg-info badge-sm">
                     <i class="bi bi-shield-fill-check"></i> Masks Required

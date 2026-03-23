@@ -34,13 +34,25 @@
                     </span>
                   <% end %>
                 </h6>
-                <p class="mb-0 small text-muted">
-                  <i class="bi bi-calendar"></i> <%= occurrence.occurs_at.strftime('%B %d') %>
-                  ·
-                  <i class="bi bi-clock"></i> <%= occurrence.occurs_at.strftime('%I:%M %p') %> to <%= (occurrence.occurs_at + occurrence.duration.minutes).strftime('%I:%M %p') %>
-                </p>
                 <% if occurrence.status == 'postponed' && occurrence.postponed_until %>
-                  <p class="mb-0 small"><strong>Rescheduled to:</strong> <%= occurrence.postponed_until.strftime('%B %d at %I:%M %p') %></p>
+                  <p class="mb-0 small text-muted">
+                    <i class="bi bi-calendar"></i>
+                    <span class="text-decoration-line-through"><%= occurrence.occurs_at.strftime('%B %d') %></span>
+                    ·
+                    <i class="bi bi-clock"></i>
+                    <span class="text-decoration-line-through"><%= occurrence.occurs_at.strftime('%I:%M %p') %> to <%= (occurrence.occurs_at + occurrence.duration.minutes).strftime('%I:%M %p') %></span>
+                  </p>
+                  <p class="mb-0 small text-warning fw-semibold">
+                    <strong>Rescheduled to:</strong>
+                    <%= occurrence.postponed_until.strftime('%B %d at %I:%M %p') %>
+                    to <%= (occurrence.postponed_until + occurrence.duration.minutes).strftime('%I:%M %p') %>
+                  </p>
+                <% else %>
+                  <p class="mb-0 small text-muted">
+                    <i class="bi bi-calendar"></i> <%= occurrence.occurs_at.strftime('%B %d') %>
+                    ·
+                    <i class="bi bi-clock"></i> <%= occurrence.occurs_at.strftime('%I:%M %p') %> to <%= (occurrence.occurs_at + occurrence.duration.minutes).strftime('%I:%M %p') %>
+                  </p>
                 <% end %>
                 <% if occurrence.event.requires_mask %>
                   <span class="badge bg-info badge-sm mt-1">

@@ -89,8 +89,13 @@
               <% end %>
               <div class="<%= occurrence.banner.attached? ? 'col-md-2' : 'col-md-2 offset-md-2' %>">
                 <div class="text-center">
-                  <div class="display-6"><%= occurrence.occurs_at.day %></div>
-                  <div class="text-muted"><%= occurrence.occurs_at.strftime('%a') %></div>
+                  <% if occurrence.status == 'postponed' && occurrence.postponed_until %>
+                    <div class="display-6 text-decoration-line-through text-muted"><%= occurrence.occurs_at.day %></div>
+                    <div class="text-muted text-decoration-line-through"><%= occurrence.occurs_at.strftime('%a') %></div>
+                  <% else %>
+                    <div class="display-6"><%= occurrence.occurs_at.day %></div>
+                    <div class="text-muted"><%= occurrence.occurs_at.strftime('%a') %></div>
+                  <% end %>
                 </div>
               </div>
               <div class="col-md-5">
@@ -115,13 +120,23 @@
                     </span>
                   <% end %>
                 </h5>
-                <p class="mb-1 text-muted">
-                  <i class="bi bi-clock"></i> <%= occurrence.occurs_at.strftime('%I:%M %p') %> to <%= (occurrence.occurs_at + occurrence.duration.minutes).strftime('%I:%M %p') %>
-                  ·
-                  <i class="bi bi-person"></i> <%= occurrence.event.hosts.map { |h| h.name || h.email }.join(', ') %>
-                </p>
                 <% if occurrence.status == 'postponed' && occurrence.postponed_until %>
-                  <p class="mb-1"><strong>Rescheduled to:</strong> <%= occurrence.postponed_until.strftime('%B %d, %Y at %I:%M %p') %></p>
+                  <p class="mb-1 text-muted">
+                    <i class="bi bi-clock"></i>
+                    <span class="text-decoration-line-through"><%= occurrence.occurs_at.strftime('%I:%M %p') %> to <%= (occurrence.occurs_at + occurrence.duration.minutes).strftime('%I:%M %p') %></span>
+                    ·
+                    <i class="bi bi-person"></i> <%= occurrence.event.hosts.map { |h| h.name || h.email }.join(', ') %>
+                  </p>
+                  <p class="mb-1 fw-semibold text-warning">
+                    <strong>Rescheduled to:</strong> <%= occurrence.postponed_until.strftime('%B %d, %Y at %I:%M %p') %>
+                    to <%= (occurrence.postponed_until + occurrence.duration.minutes).strftime('%I:%M %p') %>
+                  </p>
+                <% else %>
+                  <p class="mb-1 text-muted">
+                    <i class="bi bi-clock"></i> <%= occurrence.occurs_at.strftime('%I:%M %p') %> to <%= (occurrence.occurs_at + occurrence.duration.minutes).strftime('%I:%M %p') %>
+                    ·
+                    <i class="bi bi-person"></i> <%= occurrence.event.hosts.map { |h| h.name || h.email }.join(', ') %>
+                  </p>
                 <% end %>
                 <% if occurrence.relocated_to.present? %>
                   <p class="mb-1"><strong><i class="bi bi-geo-alt-fill"></i> Moved to:</strong> <%= occurrence.relocated_to %></p>

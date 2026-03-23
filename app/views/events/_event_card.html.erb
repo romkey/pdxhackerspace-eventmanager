@@ -56,8 +56,8 @@
       %>
       <% if next_occurrence && next_occurrence.status == 'postponed' && next_occurrence.postponed_until %>
         <p class="mb-1">
-          <i class="bi bi-calendar-x" aria-hidden="true"></i> 
-          <span class="text-decoration-line-through"><%= next_occurrence.occurs_at.strftime('%B %d, %Y') %></span>
+          <i class="bi bi-calendar-x" aria-hidden="true"></i>
+          <span class="text-decoration-line-through text-muted"><%= next_occurrence.occurs_at.strftime('%B %d, %Y') %></span>
           <span class="visually-hidden">(original date, now postponed)</span>
         </p>
         <p class="mb-1 text-warning fw-bold">
@@ -65,8 +65,29 @@
         </p>
         <p class="mb-1">
           <i class="bi bi-clock" aria-hidden="true"></i>
-          <span class="visually-hidden">Time:</span>
+          <span class="visually-hidden">Original time (no longer valid):</span>
+          <span class="text-decoration-line-through text-muted"><%= next_occurrence.occurs_at.strftime('%I:%M %p') %> to <%= (next_occurrence.occurs_at + display_duration.minutes).strftime('%I:%M %p') %></span>
+        </p>
+        <p class="mb-1">
+          <i class="bi bi-clock-history" aria-hidden="true"></i>
+          <span class="visually-hidden">Rescheduled time:</span>
           <%= next_occurrence.postponed_until.strftime('%I:%M %p') %> to <%= (next_occurrence.postponed_until + display_duration.minutes).strftime('%I:%M %p') %>
+        </p>
+      <% elsif event.status == 'postponed' && event.postponed_until.present? %>
+        <p class="mb-1">
+          <i class="bi bi-calendar-x" aria-hidden="true"></i>
+          <span class="text-decoration-line-through text-muted"><%= event.start_time.strftime('%B %d, %Y') %></span>
+        </p>
+        <p class="mb-1 text-warning fw-bold">
+          <i class="bi bi-calendar-check" aria-hidden="true"></i> <%= event.postponed_until.strftime('%B %d, %Y') %> (Rescheduled)
+        </p>
+        <p class="mb-1">
+          <i class="bi bi-clock" aria-hidden="true"></i>
+          <span class="text-decoration-line-through text-muted"><%= event.start_time.strftime('%I:%M %p') %> to <%= (event.start_time + event.duration.minutes).strftime('%I:%M %p') %></span>
+        </p>
+        <p class="mb-1">
+          <i class="bi bi-clock-history" aria-hidden="true"></i>
+          <%= event.postponed_until.strftime('%I:%M %p') %> to <%= (event.postponed_until + event.duration.minutes).strftime('%I:%M %p') %>
         </p>
       <% else %>
         <p class="mb-1">
