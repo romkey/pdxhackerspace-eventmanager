@@ -48,7 +48,12 @@ class SocialMediaReminderJob < ApplicationJob
       return
     end
 
-    occurrences.each do |occurrence|
+    # Delay between posts to avoid rate limiting (in seconds)
+    post_delay = 5
+    enqueued_count = 0
+    skipped_count = 0
+
+    occurrences.each_with_index do |occurrence, index|
       Rails.logger.info "SocialMediaReminderJob: Processing '#{occurrence.event.title}' " \
                         "(occurrence ##{occurrence.id}, status: #{occurrence.status})"
 
@@ -56,29 +61,27 @@ class SocialMediaReminderJob < ApplicationJob
       if already_posted_today?(occurrence, label)
         Rails.logger.info "SocialMediaReminderJob: Skipping '#{occurrence.event.title}' - " \
                           "already posted #{label} reminder today"
+        skipped_count += 1
         next
       end
 
-      short_parts = reminder_message_with_link(occurrence, label, days_ahead: days_ahead, message_type: :short)
-      long_parts = reminder_message_with_link(occurrence, label, days_ahead: days_ahead, message_type: :long)
-
-      Rails.logger.info "SocialMediaReminderJob: Posting reminder for '#{occurrence.event.title}'"
-      SocialService.post_occurrence_reminder(occurrence, short_parts: short_parts, long_parts: long_parts)
-
-      # Small delay between posts to avoid rate limiting
-      sleep(5) if occurrences.many?
+      # Schedule the reminder with staggered delay to avoid rate limiting
+      delay = index * post_delay
+      Rails.logger.info "SocialMediaReminderJob: Scheduling reminder for '#{occurrence.event.title}' (#{label}) in #{delay}s"
+      SocialPostReminderJob.set(wait: delay.seconds).perform_later(occurrence.id, label, days_ahead)
+      enqueued_count += 1
     end
+
+    Rails.logger.info "SocialMediaReminderJob: Completed #{label} - enqueued: #{enqueued_count}, skipped: #{skipped_count}"
   end
 
   def already_posted_today?(occurrence, label)
     # Check if we've already posted a social media reminder for this occurrence today
     # This prevents duplicate posts if the job runs multiple times
-    ReminderPosting.where(
-      event_occurrence: occurrence,
-      platform: %w[bluesky instagram]
-    ).exists?(
-      ['posted_at >= ? AND message LIKE ?', Time.current.beginning_of_day, "%#{label}%"]
-    )
+    ReminderPosting.exists?(event_occurrence: occurrence,
+                            platform: %w[bluesky instagram],
+                            reminder_type: label,
+                            posted_at: Time.current.all_day)
   end
 
   def build_social_message(occurrence, label)

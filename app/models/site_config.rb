@@ -11,20 +11,12 @@ class SiteConfig < ApplicationRecord
             format: { with: URI::DEFAULT_PARSER.make_regexp(%w[http https]), message: "must be a valid URL (starting with http:// or https://)" }, allow_blank: true
 
   # Singleton pattern - only one site config should exist with id = 1
+  # Uses find_or_create_by! for atomic operation with smaller race window
   def self.instance
-    # Use find_or_create_by with a rescue for race conditions
-    find_by(id: 1) || create_singleton!
-  rescue ActiveRecord::RecordNotUnique, ActiveRecord::Deadlocked
-    # Another process created the record - just find it
-    find(1)
-  end
-
-  def self.create_singleton!
-    # Explicitly create with id = 1 to satisfy the singleton constraint
-    config = new(id: 1, organization_name: 'EventManager')
-    config.save!
-    config
-  rescue ActiveRecord::RecordNotUnique, ActiveRecord::Deadlocked
+    find_or_create_by!(id: 1) do |config|
+      config.organization_name = 'EventManager'
+    end
+  rescue ActiveRecord::RecordNotUnique
     # Another process created the record - just find it
     find(1)
   end

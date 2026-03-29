@@ -40,7 +40,7 @@ A Rails-based event management system for hackerspaces. Allows users to create, 
 - Docker Compose 2.0+
 
 ### Option 2: Native Installation
-- Ruby 3.2.2
+- Ruby 3.3.6
 - PostgreSQL 12+
 - Node.js and Yarn
 - (Optional) Authentik instance for SSO

@@ -15,9 +15,5 @@ end
 
 # CSRF Protection for OmniAuth
 # Only allow POST requests to prevent CSRF attacks (CVE-2015-9284)
+# The omniauth-rails_csrf_protection gem (2.0+) handles CSRF token verification
 OmniAuth.config.allowed_request_methods = [:post]
-
-# Disable the omniauth-rails_csrf_protection gem's token verification
-# OAuth2's state parameter provides CSRF protection for the callback
-# The gem's verification fails behind reverse proxies due to session/cookie issues
-OmniAuth.config.request_validation_phase = nil

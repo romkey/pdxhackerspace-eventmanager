@@ -138,7 +138,7 @@
     <div>
       <%= link_to "View Details", event_path(event), class: "btn btn-sm btn-primary" %>
       <% if (safe_more_info_url = safe_url(event.more_info_url)) %>
-        <%= link_to safe_more_info_url, target: "_blank", rel: "noopener", class: "btn btn-sm btn-outline-info", "aria-label": "Learn more about #{event.title} (opens in new tab)" do %>
+        <%= link_to safe_more_info_url, target: "_blank", rel: "noopener noreferrer", class: "btn btn-sm btn-outline-info", "aria-label": "Learn more about #{event.title} (opens in new tab)" do %>
           <i class="bi bi-link-45deg" aria-hidden="true"></i>
           <span class="visually-hidden">External link</span>
         <% end %>
@@ -147,13 +147,13 @@
     <div class="d-flex gap-1">
       <% if next_occurrence %>
         <div class="btn-group" role="group" aria-label="Add to calendar for <%= event.title %>">
-          <%= link_to google_calendar_url(next_occurrence), target: "_blank", rel: "noopener", class: "btn btn-sm btn-outline-primary", title: "Add to Google Calendar", "aria-label": "Add #{event.title} to Google Calendar" do %>
+          <%= link_to google_calendar_url(next_occurrence), target: "_blank", rel: "noopener noreferrer", class: "btn btn-sm btn-outline-primary", title: "Add to Google Calendar", "aria-label": "Add #{event.title} to Google Calendar" do %>
             <i class="bi bi-google" aria-hidden="true"></i>
           <% end %>
           <%= link_to apple_calendar_url(next_occurrence), class: "btn btn-sm btn-outline-secondary", title: "Add to Apple Calendar", "aria-label": "Add #{event.title} to Apple Calendar" do %>
             <i class="bi bi-apple" aria-hidden="true"></i>
           <% end %>
-          <%= link_to outlook_calendar_url(next_occurrence), target: "_blank", rel: "noopener", class: "btn btn-sm btn-outline-primary", title: "Add to Outlook", "aria-label": "Add #{event.title} to Outlook Calendar" do %>
+          <%= link_to outlook_calendar_url(next_occurrence), target: "_blank", rel: "noopener noreferrer", class: "btn btn-sm btn-outline-primary", title: "Add to Outlook", "aria-label": "Add #{event.title} to Outlook Calendar" do %>
             <i class="bi bi-microsoft" aria-hidden="true"></i>
           <% end %>
         </div>

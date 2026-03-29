@@ -246,8 +246,6 @@ class EventOccurrence < ApplicationRecord # rubocop:disable Metrics/ClassLength
     saved_changes.each do |key, (old_val, new_val)|
       next if %w[updated_at created_at].include?(key)
 
-      if %w[custom_description cancellation_reason].include?(key)
-      end
       tracked_changes[key] = { 'from' => old_val, 'to' => new_val }
     end
 

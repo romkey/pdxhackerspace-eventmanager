@@ -25,7 +25,7 @@
             <div class="d-flex justify-content-between align-items-start">
               <div>
                 <h6 class="mb-1">
-                  <%= link_to event_occurrence_path(occurrence), class: "text-decoration-none", target: "_blank" do %>
+                  <%= link_to event_occurrence_path(occurrence), class: "text-decoration-none", target: "_blank", rel: "noopener noreferrer" do %>
                     <%= occurrence.event.title %>
                   <% end %>
                   <% if occurrence.status != 'active' %>
@@ -74,7 +74,7 @@
 
 <div class="text-center mt-3">
   <small class="text-muted">
-    <%= link_to "View full calendar →", event_path(@event), target: "_blank", class: "text-decoration-none" %>
+    <%= link_to "View full calendar →", event_path(@event), target: "_blank", rel: "noopener noreferrer", class: "text-decoration-none" %>
   </small>
 </div>
 

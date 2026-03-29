@@ -37,6 +37,11 @@ module SoftDeletable
     soft_delete
   end
 
+  # Override destroy! to also soft delete (prevents accidental hard deletes)
+  def destroy!
+    soft_delete || raise(ActiveRecord::RecordNotDestroyed.new("Failed to soft delete", self))
+  end
+
   # Provide a way to permanently delete
   def really_destroy!
     self.class.unscoped { super() }

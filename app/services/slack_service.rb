@@ -37,24 +37,25 @@ class SlackService
       { success: false, error: e.message }
     end
 
-    def post_occurrence_reminder(occurrence, message)
+    def post_occurrence_reminder(occurrence, message, reminder_type: nil)
       image_url = banner_url_for(occurrence)
       result = post_message(message, image_url: image_url, image_alt: occurrence.event.title)
 
       # Record the posting if successful
-      record_posting(occurrence, message) if result[:success]
+      record_posting(occurrence, message, reminder_type) if result[:success]
 
       result[:success]
     end
 
     private
 
-    def record_posting(occurrence, message)
+    def record_posting(occurrence, message, reminder_type)
       ReminderPosting.create!(
         event: occurrence.event,
         event_occurrence: occurrence,
         platform: 'slack',
         message: message,
+        reminder_type: reminder_type,
         posted_at: Time.current
         # NOTE: Slack webhooks don't return a message ID or URL
       )

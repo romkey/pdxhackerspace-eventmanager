@@ -66,7 +66,7 @@ class SlackEventReminderJob < ApplicationJob
       Rails.logger.info "SlackEventReminderJob: [#{idx + 1}/#{occurrences.count}] #{occ.event.title} at #{occ.occurs_at} (status: #{occ.status})"
     end
 
-    posted_count = 0
+    enqueued_count = 0
     skipped_count = 0
 
     occurrences.each_with_index do |occurrence, index|
@@ -77,34 +77,22 @@ class SlackEventReminderJob < ApplicationJob
         next
       end
 
-      # Post the reminder
-      Rails.logger.info "SlackEventReminderJob: Posting reminder for '#{occurrence.event.title}' (#{label})"
-
-      message = long_reminder_message(occurrence, label, days_ahead: days_ahead)
-      if SlackService.post_occurrence_reminder(occurrence, message)
-        Rails.logger.info "SlackEventReminderJob: ✓ Posted reminder for '#{occurrence.event.title}'"
-        posted_count += 1
-      else
-        Rails.logger.warn "SlackEventReminderJob: ✗ Failed to post reminder for '#{occurrence.event.title}'"
-      end
-
-      # Delay between posts (except for the last one)
-      if index < occurrences.count - 1
-        Rails.logger.info "SlackEventReminderJob: Waiting #{POST_DELAY_SECONDS}s before next post..."
-        sleep(POST_DELAY_SECONDS)
-      end
+      # Schedule the reminder with staggered delay to avoid rate limiting
+      delay = index * POST_DELAY_SECONDS
+      Rails.logger.info "SlackEventReminderJob: Scheduling reminder for '#{occurrence.event.title}' (#{label}) in #{delay}s"
+      SlackPostReminderJob.set(wait: delay.seconds).perform_later(occurrence.id, label, days_ahead)
+      enqueued_count += 1
     end
 
-    Rails.logger.info "SlackEventReminderJob: Completed #{label} - posted: #{posted_count}, skipped: #{skipped_count}"
+    Rails.logger.info "SlackEventReminderJob: Completed #{label} - enqueued: #{enqueued_count}, skipped: #{skipped_count}"
   end
 
   def already_posted_today?(occurrence, label)
     # Check if we've already posted a Slack reminder for this occurrence today
     # This prevents duplicate posts if the job runs multiple times
-    ReminderPosting.where(
-      event_occurrence: occurrence,
-      platform: 'slack',
-      posted_at: Time.current.all_day
-    ).exists?(['message LIKE ?', "%#{label}%"])
+    ReminderPosting.exists?(event_occurrence: occurrence,
+                            platform: 'slack',
+                            reminder_type: label,
+                            posted_at: Time.current.all_day)
   end
 end

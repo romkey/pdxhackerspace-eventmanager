@@ -36,7 +36,7 @@
                   <i class="bi bi-check-circle"></i> Active
                 </span>
                 <% if posting.post_url.present? %>
-                  <%= link_to posting.post_url, target: "_blank", rel: "noopener", 
+                  <%= link_to posting.post_url, target: "_blank", rel: "noopener noreferrer", 
                       class: "btn btn-outline-primary btn-sm", title: "View post" do %>
                     <i class="bi bi-box-arrow-up-right"></i> View
                   <% end %>

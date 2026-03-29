@@ -242,7 +242,7 @@ class SocialService # rubocop:disable Metrics/ClassLength
 
     # Post reminder with separate short (Bluesky) and long (Instagram) messages
     # short_parts and long_parts should be { text: "...", link_url: "...", link_text: "..." }
-    def post_occurrence_reminder(occurrence, short_parts:, long_parts:)
+    def post_occurrence_reminder(occurrence, short_parts:, long_parts:, reminder_type: nil)
       image_url = banner_url_for(occurrence)
       image_alt = occurrence.event.title
 
@@ -261,8 +261,9 @@ class SocialService # rubocop:disable Metrics/ClassLength
 
       # Record Bluesky posting if successful
       if bluesky_result[:success]
-        record_posting(occurrence, bluesky_message, 'bluesky',
-                       post_uid: bluesky_result[:post_uid], post_url: bluesky_result[:post_url])
+        record_posting(occurrence, bluesky_message, platform: 'bluesky',
+                                                    reminder_type: reminder_type,
+                                                    post_uid: bluesky_result[:post_uid], post_url: bluesky_result[:post_url])
       end
 
       # Instagram gets long message with full URL
@@ -270,19 +271,25 @@ class SocialService # rubocop:disable Metrics/ClassLength
       instagram_result = post_instagram(instagram_message, image_url: image_url)
 
       # Record Instagram posting if successful
-      record_posting(occurrence, instagram_message, 'instagram', post_uid: instagram_result[:post_id]) if instagram_result[:success]
+      if instagram_result[:success]
+        record_posting(occurrence, instagram_message, platform: 'instagram',
+                                                      reminder_type: reminder_type, post_uid: instagram_result[:post_id])
+      end
 
       instagram_result[:success] || bluesky_result[:success]
     end
 
     private
 
-    def record_posting(occurrence, message, platform, post_uid: nil, post_url: nil)
+    # rubocop:disable Metrics/ParameterLists
+    def record_posting(occurrence, message, platform:, reminder_type: nil, post_uid: nil, post_url: nil)
+      # rubocop:enable Metrics/ParameterLists
       ReminderPosting.create!(
         event: occurrence.event,
         event_occurrence: occurrence,
         platform: platform,
         message: message,
+        reminder_type: reminder_type,
         post_uid: post_uid,
         post_url: post_url,
         posted_at: Time.current

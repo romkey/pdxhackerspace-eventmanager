@@ -21,7 +21,7 @@ class Event < ApplicationRecord
   after_create :generate_initial_occurrences
   after_create :log_creation
   after_update :log_update
-  after_update :regenerate_occurrences_if_needed
+  after_update :regenerate_occurrences_if_needed, if: :schedule_affecting_fields_changed?
   after_update :cancel_future_occurrences_if_permanently_cancelled
   after_update :reactivate_relocated_occurrences_if_no_longer_relocated
   after_save :log_banner_change
@@ -162,60 +162,15 @@ class Event < ApplicationRecord
   end
 
   # Generate future occurrences based on recurrence rules
+  # Delegates to OccurrenceGenerator service
   def generate_occurrences(limit = nil)
-    # Don't generate new occurrences for permanently cancelled or relocated events
-    return if permanently_cancelled? || permanently_relocated?
-
-    limit ||= max_occurrences || 5
-
-    # Determine status for new occurrences
-    # - cancelled if default_to_cancelled
-    # - active otherwise
-    occurrence_status = default_to_cancelled? ? 'cancelled' : 'active'
-
-    if recurrence_type == 'once'
-      # One-time event - create single occurrence if it doesn't exist
-      occ = find_or_create_occurrence_by_date(start_time, occurrence_status)
-      occ.save! if occ.changed?
-    elsif recurrence_rule.present?
-      # Recurring event - generate occurrences
-      schedule = IceCube::Schedule.from_yaml(recurrence_rule)
-      future_dates = schedule.occurrences_between(
-        Time.current.in_time_zone(Time.zone),
-        1.year.from_now.in_time_zone(Time.zone)
-      ).first(limit)
-
-      future_dates.each do |date|
-        occ = find_or_create_occurrence_by_date(date, occurrence_status)
-        occ.save! if occ.changed?
-      end
-    end
+    OccurrenceGenerator.new(self).generate(limit: limit)
   end
 
   # Find existing occurrence by date (ignoring time) or create new one
-  # If existing occurrence has wrong time, update it to the correct time
+  # Delegates to OccurrenceGenerator service
   def find_or_create_occurrence_by_date(scheduled_time, default_status)
-    # Canonicalize: extract wall-clock components from IceCube's time and re-anchor
-    # to the correct DST offset for that date. This prevents PST-offset times from
-    # being stored for dates that fall in PDT (and vice versa).
-    local = scheduled_time.in_time_zone(Time.zone)
-    canonical_time = Time.zone.local(local.year, local.month, local.day,
-                                     local.hour, local.min, local.sec)
-    scheduled_date = canonical_time.to_date
-
-    day_start = scheduled_date.beginning_of_day
-    day_end   = scheduled_date.end_of_day
-    candidates = occurrences.where(occurs_at: (day_start - 1.day)..(day_end + 1.day))
-    existing = candidates.find { |occ| occ.occurs_at.in_time_zone(Time.zone).to_date == scheduled_date }
-
-    if existing
-      existing_utc   = existing.occurs_at.utc
-      canonical_utc  = canonical_time.utc
-      existing.occurs_at = canonical_time if existing_utc != canonical_utc
-      existing
-    else
-      occurrences.build(occurs_at: canonical_time, status: default_status)
-    end
+    OccurrenceGenerator.new(self).find_or_create_occurrence_by_date(scheduled_time, default_status)
   end
 
   # Get upcoming active occurrences
@@ -273,74 +228,21 @@ class Event < ApplicationRecord
   end
 
   # Regenerate occurrences (useful after recurrence rule changes)
-  # This method updates occurrences in place to preserve URLs/slugs
+  # Delegates to OccurrenceGenerator service
   def regenerate_future_occurrences!
-    # Don't modify occurrences for permanently cancelled or relocated events
-    return if permanently_cancelled? || permanently_relocated?
-
-    # Get the scheduled future dates
-    scheduled_dates = future_scheduled_dates
-
-    # Get existing future occurrences (including non-active ones)
-    existing_future = occurrences.where('occurs_at > ?', Time.current)
-
-    # Build a hash of existing occurrences by DATE (not exact time)
-    # This handles DST shifts where the time might be off by an hour
-    existing_by_date = existing_future.index_by { |occ| occ.occurs_at.in_time_zone(Time.zone).to_date }
-
-    # Build set of scheduled dates for comparison
-    scheduled_date_set = scheduled_dates.to_set { |d| d.in_time_zone(Time.zone).to_date }
-
-    # Create or update occurrences for scheduled dates
-    occurrence_status = default_to_cancelled? ? 'cancelled' : 'active'
-    scheduled_dates.each do |scheduled_time|
-      scheduled_date = scheduled_time.in_time_zone(Time.zone).to_date
-      existing = existing_by_date[scheduled_date]
-
-      if existing
-        # Update time if it's off (DST fix) - preserves slug/status
-        update_occurrence_time_if_needed(existing, scheduled_time)
-      else
-        # Create new occurrence
-        occurrences.create!(occurs_at: scheduled_time, status: occurrence_status)
-      end
-    end
-
-    # Remove occurrences that are no longer scheduled (only active ones)
-    # Keep modified occurrences (cancelled, postponed, relocated) as they represent intentional changes
-    existing_by_date.each do |date, occ|
-      next if scheduled_date_set.include?(date) # Still scheduled
-      next unless occ.status == 'active' # Only remove unmodified active occurrences
-
-      occ.destroy
-    end
+    OccurrenceGenerator.new(self).regenerate_future!
   end
 
   # Update an occurrence's time if it doesn't match the scheduled time
+  # Delegates to OccurrenceGenerator service
   def update_occurrence_time_if_needed(occurrence, scheduled_time)
-    local = scheduled_time.in_time_zone(Time.zone)
-    canonical_time = Time.zone.local(local.year, local.month, local.day,
-                                     local.hour, local.min, local.sec)
-    return if occurrence.occurs_at.utc == canonical_time.utc
-
-    occurrence.update_column(:occurs_at, canonical_time) # rubocop:disable Rails/SkipsModelValidations
+    OccurrenceGenerator.new(self).update_occurrence_time_if_needed(occurrence, scheduled_time)
   end
 
   # Get future scheduled dates based on recurrence rule
+  # Delegates to OccurrenceGenerator service
   def future_scheduled_dates
-    limit = max_occurrences || 5
-
-    if recurrence_type == 'once'
-      start_time > Time.current ? [start_time] : []
-    elsif recurrence_rule.present?
-      schedule = IceCube::Schedule.from_yaml(recurrence_rule)
-      schedule.occurrences_between(
-        Time.current.in_time_zone(Time.zone),
-        1.year.from_now.in_time_zone(Time.zone)
-      ).first(limit)
-    else
-      []
-    end
+    OccurrenceGenerator.new(self).future_scheduled_dates
   end
 
   # Build IceCube schedule from parameters
@@ -471,6 +373,17 @@ class Event < ApplicationRecord
     end
   end
 
+  # Check if any fields that affect occurrence scheduling have changed
+  def schedule_affecting_fields_changed?
+    saved_change_to_start_time? ||
+      saved_change_to_recurrence_type? ||
+      saved_change_to_recurrence_rule? ||
+      saved_change_to_max_occurrences? ||
+      saved_change_to_permanently_cancelled? ||
+      saved_change_to_permanently_relocated? ||
+      saved_change_to_default_to_cancelled?
+  end
+
   private
 
   def generate_slug
@@ -530,9 +443,9 @@ class Event < ApplicationRecord
   end
 
   def regenerate_occurrences_if_needed
-    # Always regenerate occurrences on update to ensure consistency
-    # This handles changes to title, description, location, and other fields
-    # that should be reflected in all future occurrences
+    # Regenerate occurrences when schedule-affecting fields change
+    # Only triggered by: start_time, recurrence_type, recurrence_rule,
+    # max_occurrences, permanently_cancelled, permanently_relocated, default_to_cancelled
     regenerate_future_occurrences!
   rescue StandardError => e
     Rails.logger.error "Failed to regenerate occurrences for event #{id}: #{e.class} - #{e.message}"
@@ -584,9 +497,6 @@ class Event < ApplicationRecord
       # Skip timestamps and internal fields
       next if %w[updated_at created_at ical_token].include?(key)
 
-      # Store full text for text fields
-      if %w[title description more_info_url cancellation_reason].include?(key)
-      end
       tracked_changes[key] = { 'from' => old_val, 'to' => new_val }
     end
 

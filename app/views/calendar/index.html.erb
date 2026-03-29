@@ -196,7 +196,7 @@
             <label class="form-label fw-bold">Direct Link:</label>
             <div class="input-group">
               <input type="text" class="form-control font-monospace small" value="<%= calendar_embed_url %>" readonly onclick="this.select()">
-              <%= link_to "Open", calendar_embed_path, class: "btn btn-outline-primary", target: "_blank" %>
+              <%= link_to "Open", calendar_embed_path, class: "btn btn-outline-primary", target: "_blank", rel: "noopener noreferrer" %>
             </div>
           </div>
 
@@ -212,7 +212,7 @@
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-          <%= link_to "Preview Embed", calendar_embed_path, class: "btn btn-primary", target: "_blank" %>
+          <%= link_to "Preview Embed", calendar_embed_path, class: "btn btn-primary", target: "_blank", rel: "noopener noreferrer" %>
         </div>
       </div>
     </div>

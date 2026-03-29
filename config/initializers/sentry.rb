@@ -10,8 +10,10 @@ if ENV['SENTRY_DSN'].present?
     # Set the environment (defaults to Rails.env)
     config.environment = ENV.fetch('SENTRY_ENVIRONMENT', Rails.env)
 
-    # Set the release version if available
-    config.release = ENV['APP_VERSION'] if ENV['APP_VERSION'].present?
+    # Set the release version (from ENV or VERSION file)
+    version = ENV['APP_VERSION'].presence ||
+              (Rails.root.join('VERSION').exist? ? Rails.root.join('VERSION').read.strip : nil)
+    config.release = version if version.present?
 
     # Enable breadcrumbs for better context
     config.breadcrumbs_logger = %i[active_support_logger http_logger]

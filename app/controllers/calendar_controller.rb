@@ -3,74 +3,8 @@ class CalendarController < ApplicationController
 
   def index
     @embed = false
-    @view = params[:view] || 'calendar' # Default to calendar view
-    @current_month = params[:month] ? Date.parse(params[:month]) : Date.current.beginning_of_month
-    @open_to_filter = params[:open_to]
-
-    # Get occurrences based on view type
-    if @view == 'calendar'
-      # For calendar view, get occurrences for the full visible range (includes prev/next month days)
-      calendar_start = @current_month.beginning_of_month.beginning_of_week(:sunday)
-      calendar_end = @current_month.end_of_month.end_of_week(:sunday)
-
-      @occurrences = if current_user
-                       EventOccurrence
-                         .joins(:event)
-                         .where(event: policy_scope(Event))
-                         .where('event_occurrences.occurs_at >= ? AND event_occurrences.occurs_at <= ?',
-                                calendar_start.beginning_of_day, calendar_end.end_of_day)
-                         .where(event_occurrences: { status: %w[active postponed cancelled relocated] })
-                         .includes(event: %i[hosts user], banner_image_attachment: :blob)
-                         .order(:occurs_at)
-                     else
-                       EventOccurrence
-                         .joins(:event)
-                         .where(events: { visibility: 'public', draft: false })
-                         .where('event_occurrences.occurs_at >= ? AND event_occurrences.occurs_at <= ?',
-                                calendar_start.beginning_of_day, calendar_end.end_of_day)
-                         .where(event_occurrences: { status: %w[active postponed cancelled relocated] })
-                         .includes(event: %i[hosts user], banner_image_attachment: :blob)
-                         .order(:occurs_at)
-                     end
-
-      # Apply open_to filter if specified
-      @occurrences = @occurrences.where(events: { open_to: @open_to_filter }) if @open_to_filter.present?
-
-      # Group by date for calendar view
-      @occurrences_by_date = @occurrences.group_by { |occ| occ.occurs_at.to_date }
-
-      Rails.logger.info "Calendar view for #{@current_month.strftime('%B %Y')}: Found #{@occurrences.count} occurrences"
-      @occurrences.each do |occ|
-        Rails.logger.info "  - Occurrence ##{occ.id}: #{occ.event.title} at #{occ.occurs_at} (status: #{occ.status})"
-      end
-    else
-      # For list view, get occurrences from today forward (all statuses)
-      @occurrences = if current_user
-                       EventOccurrence
-                         .joins(:event)
-                         .where(event: policy_scope(Event))
-                         .where('event_occurrences.occurs_at >= ?', Time.current.beginning_of_day)
-                         .where(event_occurrences: { status: %w[active postponed cancelled relocated] })
-                         .includes(event: %i[hosts user], banner_image_attachment: :blob)
-                         .order(:occurs_at)
-                         .limit(50)
-                     else
-                       EventOccurrence
-                         .joins(:event)
-                         .where(events: { visibility: 'public', draft: false })
-                         .where('event_occurrences.occurs_at >= ?', Time.current.beginning_of_day)
-                         .where(event_occurrences: { status: %w[active postponed cancelled relocated] })
-                         .includes(event: %i[hosts user], banner_image_attachment: :blob)
-                         .order(:occurs_at)
-                         .limit(50)
-                     end
-
-      # Apply open_to filter if specified
-      @occurrences = @occurrences.where(events: { open_to: @open_to_filter }) if @open_to_filter.present?
-
-      # Group by month for list view
-      @occurrences_by_month = @occurrences.group_by { |occ| occ.occurs_at.beginning_of_month }
-    end
+    setup_view_params
+    fetch_occurrences(public_only: !current_user)
 
     respond_to do |format|
       format.html
@@ -79,48 +13,9 @@ class CalendarController < ApplicationController
   end
 
   def embed
-    # Same logic as index but with embed layout
-    @view = params[:view] || 'calendar' # Default to calendar view
-    @current_month = params[:month] ? Date.parse(params[:month]) : Date.current.beginning_of_month
-    @open_to_filter = params[:open_to]
-
-    # Get occurrences based on view type (public events only for embeds)
-    if @view == 'calendar'
-      # For calendar view, get occurrences for the full visible range (includes prev/next month days)
-      calendar_start = @current_month.beginning_of_month.beginning_of_week(:sunday)
-      calendar_end = @current_month.end_of_month.end_of_week(:sunday)
-
-      @occurrences = EventOccurrence
-                     .joins(:event)
-                     .where(events: { visibility: 'public', draft: false })
-                     .where('event_occurrences.occurs_at >= ? AND event_occurrences.occurs_at <= ?',
-                            calendar_start.beginning_of_day, calendar_end.end_of_day)
-                     .where(event_occurrences: { status: %w[active postponed cancelled relocated] })
-                     .includes(event: %i[hosts user], banner_image_attachment: :blob)
-                     .order(:occurs_at)
-
-      # Apply open_to filter if specified
-      @occurrences = @occurrences.where(events: { open_to: @open_to_filter }) if @open_to_filter.present?
-
-      @occurrences_by_date = @occurrences.group_by { |occ| occ.occurs_at.to_date }
-    else
-      # For list view, get occurrences from today forward (all statuses)
-      @occurrences = EventOccurrence
-                     .joins(:event)
-                     .where(events: { visibility: 'public', draft: false })
-                     .where('event_occurrences.occurs_at >= ?', Time.current.beginning_of_day)
-                     .where(event_occurrences: { status: %w[active postponed cancelled relocated] })
-                     .includes(event: %i[hosts user], banner_image_attachment: :blob)
-                     .order(:occurs_at)
-                     .limit(50)
-
-      # Apply open_to filter if specified
-      @occurrences = @occurrences.where(events: { open_to: @open_to_filter }) if @open_to_filter.present?
-
-      @occurrences_by_month = @occurrences.group_by { |occ| occ.occurs_at.beginning_of_month }
-    end
-
     @embed = true
+    setup_view_params
+    fetch_occurrences(public_only: true)
     render layout: 'embed'
   end
 
@@ -171,6 +66,61 @@ class CalendarController < ApplicationController
   end
 
   private
+
+  def setup_view_params
+    @view = params[:view] || 'calendar'
+    @current_month = params[:month] ? Date.parse(params[:month]) : Date.current.beginning_of_month
+    @open_to_filter = params[:open_to]
+  end
+
+  def fetch_occurrences(public_only:)
+    if @view == 'calendar'
+      fetch_calendar_occurrences(public_only: public_only)
+    else
+      fetch_list_occurrences(public_only: public_only)
+    end
+  end
+
+  def fetch_calendar_occurrences(public_only:)
+    calendar_start = @current_month.beginning_of_month.beginning_of_week(:sunday)
+    calendar_end = @current_month.end_of_month.end_of_week(:sunday)
+
+    @occurrences = base_occurrence_query(public_only: public_only)
+                   .where('event_occurrences.occurs_at >= ? AND event_occurrences.occurs_at <= ?',
+                          calendar_start.beginning_of_day, calendar_end.end_of_day)
+
+    @occurrences = apply_open_to_filter(@occurrences)
+    @occurrences_by_date = @occurrences.group_by { |occ| occ.occurs_at.to_date }
+  end
+
+  def fetch_list_occurrences(public_only:)
+    @occurrences = base_occurrence_query(public_only: public_only)
+                   .where('event_occurrences.occurs_at >= ?', Time.current.beginning_of_day)
+                   .limit(50)
+
+    @occurrences = apply_open_to_filter(@occurrences)
+    @occurrences_by_month = @occurrences.group_by { |occ| occ.occurs_at.beginning_of_month }
+  end
+
+  def base_occurrence_query(public_only:)
+    query = EventOccurrence
+            .joins(:event)
+            .where(event_occurrences: { status: %w[active postponed cancelled relocated] })
+            .includes(event: %i[hosts user], banner_image_attachment: :blob)
+            .order(:occurs_at)
+
+    if public_only
+      query.where(events: { visibility: 'public', draft: false })
+    else
+      query.where(event: policy_scope(Event))
+    end
+  end
+
+  def apply_open_to_filter(occurrences)
+    return occurrences if @open_to_filter.blank?
+
+    occurrences.where(events: { open_to: @open_to_filter })
+  end
 
   def allow_iframe
     response.headers.delete('X-Frame-Options')

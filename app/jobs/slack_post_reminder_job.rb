@@ -18,7 +18,7 @@ class SlackPostReminderJob < ApplicationJob
     return unless event&.slack_announce?
 
     message = long_reminder_message(occurrence, label, days_ahead: days_ahead)
-    if SlackService.post_occurrence_reminder(occurrence, message)
+    if SlackService.post_occurrence_reminder(occurrence, message, reminder_type: label)
       Rails.logger.info "SlackPostReminderJob: Posted reminder for '#{event.title}' (#{label})"
     else
       Rails.logger.warn "SlackPostReminderJob: Failed to post reminder for '#{event.title}'"
