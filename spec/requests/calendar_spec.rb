@@ -64,5 +64,149 @@ RSpec.describe "Calendar", type: :request do
         expect(response.body).to include("No upcoming event occurrences")
       end
     end
+
+    context "view parameter" do
+      it "defaults to calendar view" do
+        get calendar_path
+        expect(response).to have_http_status(:success)
+        # Calendar view should have calendar grid elements
+        expect(response.body).to include('calendar')
+      end
+
+      it "supports list view" do
+        get calendar_path(view: 'list')
+        expect(response).to have_http_status(:success)
+      end
+    end
+
+    context "month navigation" do
+      it "accepts month parameter" do
+        get calendar_path(month: '2025-06-01')
+        expect(response).to have_http_status(:success)
+        expect(response.body).to include('June')
+      end
+
+      it "defaults to current month" do
+        get calendar_path
+        expect(response).to have_http_status(:success)
+        expect(response.body).to include(Date.current.strftime('%B'))
+      end
+    end
+
+    context "open_to filter" do
+      let!(:public_open_event) { create(:event, visibility: 'public', open_to: 'public', start_time: 1.week.from_now) }
+      let!(:members_open_event) { create(:event, visibility: 'public', open_to: 'members', start_time: 2.weeks.from_now) }
+
+      it "filters by open_to parameter" do
+        get calendar_path(view: 'list', open_to: 'public')
+        expect(response.body).to include(public_open_event.title)
+        expect(response.body).not_to include(members_open_event.title)
+      end
+    end
+
+    context "JSON format" do
+      it "returns JSON response" do
+        get calendar_path(format: :json)
+        expect(response).to have_http_status(:success)
+        expect(response.content_type).to include('application/json')
+      end
+
+      it "includes occurrences in JSON" do
+        get calendar_path(format: :json)
+        json = JSON.parse(response.body)
+        expect(json).to have_key('occurrences')
+        expect(json).to have_key('generated_at')
+      end
+    end
+  end
+
+  describe "GET /calendar/embed" do
+    let!(:public_event) { create(:event, visibility: 'public', start_time: 1.week.from_now) }
+    let!(:private_event) { create(:event, :private, start_time: 2.weeks.from_now) }
+
+    it "returns success" do
+      get calendar_embed_path
+      expect(response).to have_http_status(:success)
+    end
+
+    it "uses embed layout" do
+      get calendar_embed_path
+      # Embed layout should not have standard navigation
+      expect(response.body).not_to include('Sign in')
+    end
+
+    it "shows only public events" do
+      get calendar_embed_path(view: 'list')
+      expect(response.body).to include(public_event.title)
+      expect(response.body).not_to include(private_event.title)
+    end
+
+    it "removes X-Frame-Options header" do
+      get calendar_embed_path
+      expect(response.headers['X-Frame-Options']).to be_nil
+    end
+
+    it "supports month parameter" do
+      get calendar_embed_path(month: '2025-06-01')
+      expect(response).to have_http_status(:success)
+    end
+
+    it "supports view parameter" do
+      get calendar_embed_path(view: 'list')
+      expect(response).to have_http_status(:success)
+    end
+
+    it "supports open_to filter" do
+      get calendar_embed_path(open_to: 'public')
+      expect(response).to have_http_status(:success)
+    end
+  end
+
+  describe "GET /calendar.ics" do
+    # rubocop:disable RSpec/LetSetup
+    let!(:public_event) { create(:event, visibility: 'public', start_time: 1.week.from_now, title: 'Public iCal Event') }
+    let!(:private_event) { create(:event, :private, start_time: 2.weeks.from_now, title: 'Private iCal Event') }
+    let!(:draft_event) { create(:event, visibility: 'public', draft: true, start_time: 3.weeks.from_now, title: 'Draft iCal Event') }
+    # rubocop:enable RSpec/LetSetup
+
+    it "returns iCal format" do
+      get calendar_ical_path(format: :ics)
+      expect(response).to have_http_status(:success)
+      expect(response.content_type).to include('text/calendar')
+    end
+
+    it "includes VCALENDAR structure" do
+      get calendar_ical_path(format: :ics)
+      expect(response.body).to include('BEGIN:VCALENDAR')
+      expect(response.body).to include('END:VCALENDAR')
+    end
+
+    it "includes public events" do
+      get calendar_ical_path(format: :ics)
+      expect(response.body).to include('Public iCal Event')
+    end
+
+    it "excludes private events" do
+      get calendar_ical_path(format: :ics)
+      expect(response.body).not_to include('Private iCal Event')
+    end
+
+    it "excludes draft events" do
+      get calendar_ical_path(format: :ics)
+      expect(response.body).not_to include('Draft iCal Event')
+    end
+
+    it "includes VEVENT entries" do
+      get calendar_ical_path(format: :ics)
+      expect(response.body).to include('BEGIN:VEVENT')
+      expect(response.body).to include('END:VEVENT')
+    end
+
+    it "includes event details in VEVENT" do
+      get calendar_ical_path(format: :ics)
+      expect(response.body).to include('SUMMARY:Public iCal Event')
+      expect(response.body).to include('DTSTART')
+      expect(response.body).to include('DTEND')
+    end
   end
 end

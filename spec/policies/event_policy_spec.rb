@@ -137,6 +137,28 @@ RSpec.describe EventPolicy, type: :policy do
       it 'denies deletion' do
         expect(policy.destroy?).to be false
       end
+
+      context 'with a draft event' do
+        let(:draft_event) { create(:event, draft: true, visibility: 'public', user: creator) }
+        let(:policy) { described_class.new(host_user, draft_event) }
+
+        before do
+          draft_event.add_host(host_user)
+        end
+
+        # NOTE: This test documents current behavior - hosts who are not creators
+        # cannot view draft events. This may be intentional or a bug depending on
+        # requirements. The policy check only allows author and admins.
+        it 'denies viewing draft event (current behavior)' do
+          expect(policy.show?).to be false
+        end
+
+        it 'still allows editing if they can access it' do
+          # Host can edit, but cannot view via show? - they'd need direct edit link
+          expect(policy.edit?).to be true
+          expect(policy.update?).to be true
+        end
+      end
     end
 
     context 'for a user with can_create_events permission' do
@@ -191,6 +213,75 @@ RSpec.describe EventPolicy, type: :policy do
     end
   end
 
+  describe 'draft event visibility' do
+    let(:draft_creator) { create(:user, :can_create_events) }
+    let(:draft_event) { create(:event, draft: true, visibility: 'public', user: draft_creator) }
+
+    context 'for a guest user' do
+      let(:policy) { described_class.new(nil, draft_event) }
+
+      it 'denies viewing draft events' do
+        expect(policy.show?).to be false
+      end
+    end
+
+    context 'for a regular user' do
+      let(:user) { create(:user) }
+      let(:policy) { described_class.new(user, draft_event) }
+
+      it 'denies viewing draft events' do
+        expect(policy.show?).to be false
+      end
+    end
+
+    context 'for the draft creator' do
+      let(:policy) { described_class.new(draft_creator, draft_event) }
+
+      it 'allows viewing own draft events' do
+        expect(policy.show?).to be true
+      end
+
+      it 'allows editing own draft events' do
+        expect(policy.edit?).to be true
+        expect(policy.update?).to be true
+      end
+    end
+
+    context 'for an admin' do
+      let(:admin) { create(:user, :admin) }
+      let(:policy) { described_class.new(admin, draft_event) }
+
+      it 'allows viewing any draft event' do
+        expect(policy.show?).to be true
+      end
+
+      it 'allows editing any draft event' do
+        expect(policy.edit?).to be true
+        expect(policy.update?).to be true
+      end
+    end
+
+    context 'for a non-creator host' do
+      let(:host_user) { create(:user) }
+      let(:policy) { described_class.new(host_user, draft_event) }
+
+      before do
+        draft_event.add_host(host_user)
+      end
+
+      it 'denies viewing (known limitation)' do
+        # This documents that hosts who are not the creator cannot view drafts
+        # via show?. They can only edit if they access it directly.
+        expect(policy.show?).to be false
+      end
+
+      it 'allows editing despite not being able to view' do
+        # This is arguably inconsistent - they can edit but not view
+        expect(policy.edit?).to be true
+      end
+    end
+  end
+
   describe 'Scope' do
     let!(:public_event) { create(:event, visibility: 'public') }
     let!(:members_event) { create(:event, :members_only) }
@@ -204,6 +295,12 @@ RSpec.describe EventPolicy, type: :policy do
         expect(scope).to include(public_event)
         expect(scope).not_to include(members_event, private_event)
       end
+
+      it 'excludes draft events' do
+        draft_event = create(:event, visibility: 'public', draft: true)
+        scope = Pundit.policy_scope!(nil, Event)
+        expect(scope).not_to include(draft_event)
+      end
     end
 
     context 'for a regular user' do
@@ -212,12 +309,32 @@ RSpec.describe EventPolicy, type: :policy do
         expect(scope).to include(public_event, members_event)
         expect(scope).not_to include(private_event)
       end
+
+      it 'excludes other users draft events' do
+        other_user = create(:user)
+        other_draft = create(:event, visibility: 'public', draft: true, user: other_user)
+        scope = Pundit.policy_scope!(user, Event)
+        expect(scope).not_to include(other_draft)
+      end
+
+      it 'includes their own draft events' do
+        own_draft = create(:event, visibility: 'public', draft: true, user: user)
+        scope = Pundit.policy_scope!(user, Event)
+        expect(scope).to include(own_draft)
+      end
     end
 
     context 'for an admin' do
       it 'returns all events' do
         scope = Pundit.policy_scope!(admin, Event)
         expect(scope).to include(public_event, members_event, private_event)
+      end
+
+      it 'includes all draft events' do
+        other_user = create(:user)
+        other_draft = create(:event, visibility: 'public', draft: true, user: other_user)
+        scope = Pundit.policy_scope!(admin, Event)
+        expect(scope).to include(other_draft)
       end
     end
 
@@ -228,6 +345,22 @@ RSpec.describe EventPolicy, type: :policy do
         user_private_event # Create it
         scope = Pundit.policy_scope!(user, Event)
         expect(scope).to include(user_private_event)
+      end
+    end
+
+    context 'for a non-creator host' do
+      let(:creator) { create(:user) }
+      let(:host_user) { create(:user) }
+      let!(:hosted_draft) { create(:event, visibility: 'public', draft: true, user: creator) }
+
+      before do
+        hosted_draft.add_host(host_user)
+      end
+
+      it 'does not include draft events they host but did not create (known limitation)' do
+        # This documents that non-creator hosts don't see drafts in the scope
+        scope = Pundit.policy_scope!(host_user, Event)
+        expect(scope).not_to include(hosted_draft)
       end
     end
   end
